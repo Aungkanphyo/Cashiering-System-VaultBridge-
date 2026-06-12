@@ -1,0 +1,29 @@
+# --- Root Level Ignored Files ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# --- Frontend (Vite + React) ---
+frontend-react/node_modules/
+frontend-react/dist/
+frontend-react/.env
+frontend-react/.env.local
+
+# --- Middleware (Laravel) ---
+middleware-laravel/.env
+middleware-laravel/vendor/
+middleware-laravel/bootstrap/cache/*
+middleware-laravel/storage/*.key
+middleware-laravel/storage/framework/cache/data/*
+middleware-laravel/storage/framework/sessions/*
+middleware-laravel/storage/framework/views/*
+middleware-laravel/storage/logs/*.log
+
+# --- COBOL Core Logic ---
+# To ignore the binary and temporary files that will be generated when compiling COBOL
+cobol-core/*.exe
+cobol-core/*.out
+cobol-core/*.int
+cobol-core/*.gnt
+cobol-core/*.lst
