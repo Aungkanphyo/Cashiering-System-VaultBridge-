@@ -1,0 +1,13 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. PROGRAM-NAME.
+       AUTHOR. AUTHOR.
+      *
+       ENVIRONMENT DIVISION.
+       CONFIGURATION SECTION.
+      *
+       DATA DIVISION.
+       WORKING-STORAGE SECTION.
+      *
+       PROCEDURE DIVISION.
+           DISPLAY 'Hello World'
+           STOP RUN.
