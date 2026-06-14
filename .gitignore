@@ -10,6 +10,9 @@ frontend-react/dist/
 frontend-react/.env
 frontend-react/.env.local
 
+# --- Barcode backend ---
+barcode-backend/node_modules/
+
 # --- Middleware (Laravel) ---
 middleware-laravel/.env
 middleware-laravel/vendor/
