@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('categories', function (Blueprint $table) {
             $table->id('category_id');
             $table->string('category_name');
-            $table->decimal('tax', 5, 2)->nullable(); // Tax ရာခိုင်နှုန်းအတွက်
+            $table->decimal('tax', 5, 2)->nullable();
             $table->string('discount_category')->nullable();
             $table->timestamps();
         });
