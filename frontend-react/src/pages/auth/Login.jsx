@@ -1,90 +1,137 @@
 import { ShoppingCart } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../../api/axios";
+import LoginBanner from '../../assets/cashier.png';
+import axios from "axios";
 
 const Login = () => {
     const navigate = useNavigate();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [errors, setErrors] = useState({});
+    const [processing, setProcessing] = useState(false);
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
-        // Role logic Mockup (this will need to be modified if connect to the API)
-        if (email.includes('admin')) {
-            navigate('/admin/dashboard');
-        } else {
-            navigate('/cashier/sale');
+        setProcessing(true);
+        setErrors({});
+        
+        try {
+            await axios.get("http://localhost:8000/sanctum/csrf-cookie", {
+                withCredentials: true
+            });
+
+            const response = await api.post('/login', {
+                email: email,
+                password: password,
+            });
+
+            if (response.data?.status === "success"){
+                if(response.data?.token) {
+                    localStorage.setItem('token', response.data.token);
+                }
+
+                const userRole = response.data?.user?.role;
+                if(userRole === "admin"){
+                    navigate("/admin/dashboard");
+                } else {
+                    navigate("/cashier/sale");
+                }
+            }
+        } catch (error) {
+            if(error.response && error.response.status === 422){
+                setErrors(error.response.data.errors);
+            } else if (error.response && error.response.data.message){
+                setErrors({ email: [error.response.data.message] });
+            } else {
+                setErrors({ email: ["Unable to log in, please try again later."] });
+            }
+        } finally {
+            setProcessing(false);
         }
     }
     return (
-        <div className="w-full h-screen flex bg-white font-sans">
-            {/* Left side: Login Form */}
-            <div className="w-1/2 flex flex-col justify-center items-center px-20">
-                <div className="w-full max-w-md space-y-8">
-                    <div className="flex flex-col items-center">
-                        <div className="flex items-center gap-2 text-emerald-400 font-bold text-3xl">
-                            <ShoppingCart className="w-8 h-8" />
-                            <span>Mart4U</span>
-                        </div>
-                        <p className="text-gray-400 text-xs font-semibold tracking-wider mt-1">Smart POS System</p>
+        <div className="min-h-screen flex flex-col md:flex-row bg-[#F9FAFB] font-sans">
+            {/* Left side: login form */}
+            <div className="w-full md:w-[55%] min-h-[65vh] md:min-h-screen bg-[#F9FAFB] flex justify-center items-center relative overflow-hidden p-6">
+                <div className="absolute w-55 h-55 bg-[#10B981] opacity-15 rounded-full -left-20 -bottom-20 pointer-events-none"></div>
+
+                <div className="w-full max-w-105 z-10">
+                    <div className="text-center mb-8.75">
+                        <ShoppingCart className="w-13.75 h-13.75 text-[#059669] mx-auto" />
+                        <h1 className="text-[48px] font-bold text-[#064E3B] mt-2.5 leading-none tracking-tight">Mart4U</h1>
+                        <p className="text-[#6B7280] text-[15px] mt-2 font-medium">Smart POS System</p>
                     </div>
 
-                    <form onSubmit={handleLogin} className="space-y-5 pt-4">
-                        <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email:</label>
+                    <form onSubmit={handleLogin}>
+                        {/* Email Field */}
+                        <div className="mb-5.5">
+                            <label className="block mb-2 text-[#374151] font-medium text-[15px]">Email Address</label>
                             <input
                                 type="email"
                                 value={email}
+                                placeholder="Enter your email"
+                                className="w-full h-13 px-4.5 border-2 border-[#D1D5DB] rounded-[14px] text-[15px] outline-none transition duration-300 focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15"
                                 onChange={(e) => setEmail(e.target.value)}
-                                placeholder="Enter admin@gmail.com or cashier@gmail.com"
-                                className="w-full px-4 py-3 border border-gray-200 bg-gray-50 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-sm transition-all"
                                 required
                             />
+                            {errors.email && <p className="text-red-500 text-sm mt-1.5 font-medium">{errors.email[0]}</p>}
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Password:</label>
+                        {/* Password Field */}
+                        <div className="mb-5.5">
+                            <label className="block mb-2 text-[#374151] font-medium text-[15px]">Password</label>
                             <input
                                 type="password"
                                 value={password}
+                                placeholder="Enter your password"
+                                className="w-full h-13 px-4.5 border-2 border-[#D1D5DB] rounded-[14px] text-[15px] outline-none transition duration-300 focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15"
                                 onChange={(e) => setPassword(e.target.value)}
-                                placeholder="••••••••"
-                                className="w-full px-4 py-3 border border-gray-200 bg-gray-50 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-sm transition-all"
                                 required
                             />
+                            {errors.password && <p className="text-red-500 text-sm mt-1.5 font-medium">{errors.password[0]}</p>}
                         </div>
 
-                        <button
-                            type="submit"
-                            className="w-full bg-emerald-500 hover:bg-emerald-400 text-white font-bold py-3 rounded-full shadow-lg shadow-indigo-500/20 transition-all text-sm tracking-wide"
-                        >
-                            Login
-                        </button>
-
-                        <div className="text-center pt-2">
-                            <button type="button" className="text-xs font-semibold text-gray-400 hover:text-gray-600 transition-colors">
-                                Forget Password
+                        {/* Forgot Password Link */}
+                        <div className="text-right -mt-2 mb-6">
+                            <button
+                                type="button"
+                                onClick={() => navigate("/forgot-password")}
+                                className="text-[#10B981] text-[14px] font-semibold no-underline transition duration-300 hover:text-[#047857]"
+                            >
+                                Forgot Password?
                             </button>
                         </div>
+
+                        {/* Login Button */}
+                        <button
+                            type="submit"
+                            disabled={processing}
+                            className="w-full h-13 border-none rounded-[14px] bg-linear-to-br from-[#059669] to-[#10B981] text-white text-[17px] font-bold cursor-pointer transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_25px_rgba(5,150,105,0.35)] disabled:opacity-50"
+                        >
+                            {processing ? "Logging in..." : "Login"}
+                        </button>
                     </form>
                 </div>
             </div>
 
-            {/* Right side: Graphics Banner */}
-            <div className="w-1/2 bg-emerald-500 flex flex-col justify-center items-center p-12 relative overflow-hidden">
-                <div className="bg-white p-10 rounded-2xl shadow-2xl w-full max-w-md transform translate-y-4 transition-transform duration-500">
-                    <div className="flex flex-col items-center text-center space-y-4">
-                        <div className="flex items-center gap-2 text-emerald-400 font-black text-4xl">
-                            <ShoppingCart className="w-10 h-10" />
-                            <span>Mart 4U</span>
-                        </div>
-                        <p className="text-gray-500 font-medium text-sm max-w-xs">
-                            Simply the Best for Your Retail Business
-                        </p>
-                        <div className="w-full h-40 bg-emerald-50 rounded-xl flex items-center justify-center border border-emerald-100/50">
-                            <span className="text-xs text-emerald-300 font-mono">[ Illustration Vector Workspace ]</span>
-                        </div>
-                    </div>
+            {/* Right side: graphic banner */}
+            <div className="w-full md:w-[45%] h-95 md:h-auto bg-linear-to-br from-[#065F46] via-[#059669] to-[#10B981] flex justify-center items-center relative overflow-hidden p-6">
+                <div className="absolute w-95 h-95 bg-white/5 rounded-full -top-30 -right-30 pointer-events-none"></div>
+                <div className="absolute w-65 h-65 bg-white/5 rounded-full -bottom-20 -left-20 pointer-events-none"></div>
+
+                <div className="text-center text-white w-full max-w-[85%] z-10">
+                    <img
+                        src={LoginBanner}
+                        alt="Cashier"
+                        className="relative top-5 md:top-12.5 w-65 md:w-85 max-w-full mx-auto mb-6 md:mb-6.25 drop-shadow-[0_25px_40px_rgba(0,0,0,0.35)]"
+                    />
+                    <h2 className="text-[34px] md:text-[42px] font-bold mb-3.75 text-white leading-tight">Welcome Back!</h2>
+                    <p className="text-[15px] md:text-[16px] leading-relaxed md:leading-7.5 text-emerald-50">
+                        Manage your retail business effortlessly with <strong className="text-[#D1FAE5] font-bold">Mart4U POS</strong>.<br/><br/>
+                        Fast • Secure • Smart
+                    </p>
                 </div>
             </div>
         </div>
