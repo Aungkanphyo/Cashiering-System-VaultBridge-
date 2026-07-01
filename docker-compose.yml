@@ -1,0 +1,51 @@
+services:
+  # Laravel Backend Service
+  backend:
+    build:
+      context: ./middleware-laravel
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./middleware-laravel:/var/www
+    depends_on:
+      - mysql-db
+    environment:
+      - DB_HOST=mysql-db
+
+  # React Frontend Service (Vite)
+  frontend:
+    build:
+      context: ./frontend-react
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend-react:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+
+  # MySQL Database Service
+  mysql-db:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: Cashiering
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    ports:
+      - "8080:80"
+    environment:
+      - PMA_HOST=mysql-db
+      - PMA_PORT=3306
+    depends_on:
+      - mysql-db
+
+volumes:
+  mysql_data:
