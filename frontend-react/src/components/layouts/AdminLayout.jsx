@@ -27,7 +27,6 @@ const AdminLayout = () => {
 
     // Show dynamic page title based on the current route
     const location = useLocation();
-    const [pageTitle, setPageTitle] = useState("Dashboard");
     const titleMap = {
         "dashboard": "Dashboard",
         "view-category": "View Category",
@@ -43,11 +42,8 @@ const AdminLayout = () => {
         "change-password": "Change Password",
     };
 
-    useEffect(() => {
-        const key = location.pathname.split("/").pop();
-        setPageTitle(titleMap[key] || "Admin Panel");
-    }, [location.pathname]);
-
+    const key = location.pathname.split("/").pop();
+    const pageTitle = titleMap[key] || "Admin Panel";
 
     return (
         <div className="flex w-full h-screen overflow-hidden bg-gray-50">
