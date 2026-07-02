@@ -4,9 +4,11 @@ import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
 import LoginBanner from '../../assets/cashier.png';
 import axios from "axios";
+import { useAuthStore } from "../../stores/authStore";
 
 const Login = () => {
     const navigate = useNavigate();
+    const loginUser = useAuthStore((state) => state.login);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [errors, setErrors] = useState({});
@@ -27,15 +29,17 @@ const Login = () => {
                 password: password,
             });
 
-            if (response.data?.status === "success"){
+            if (response.status === 200 || response.data?.status === "success"){
                 if(response.data?.token) {
                     localStorage.setItem('token', response.data.token);
                 }
 
-                const userRole = response.data?.user?.role;
-                if(userRole === "admin"){
+                const userData = response.data?.user;
+                loginUser(userData);
+
+                if(userData?.role === "admin"){
                     navigate("/admin/dashboard");
-                } else {
+                } else if(userData?.role === "cashier") {
                     navigate("/cashier/sale");
                 }
             }
