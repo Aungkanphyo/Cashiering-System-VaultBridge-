@@ -16,7 +16,7 @@ import CashierLayout from "../components/layouts/CashierLayout";
 import SaleWorkspace from "../pages/cashier/SaleWorkspace";
 import Report from "../pages/cashier/Report";
 import History from "../pages/cashier/History";
-
+import ChangePassword from "../pages/admin/change_password";
 const AppRoutes = () => {
   return (
     <Routes>
@@ -40,6 +40,7 @@ const AppRoutes = () => {
             <Route path="add-payment" element={<AddPayment />} />
             <Route path="view-session" element={<ViewSession />} />
             <Route path="view-history" element={<ViewHistory />} />
+            <Route path="change-password" element={<ChangePassword />} />
         </Route>
 
         {/* Cashier Terminal Routes */}

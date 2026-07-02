@@ -57,7 +57,7 @@ const CashierSidebar = () => {
             <div className="space-y-3">
                 {/* LOGOUT */}
                 <button onClick={handleLogout}
-                    className="w-full flex items-center justify-center gap-2 bg-red-700 hover:bg-red-600 text-white font-medium py-2.5 rounded-xl text-xs transition-all"
+                    className="w-full flex items-center justify-center gap-2 bg-red-700 hover:bg-red-600 text-white font-medium py-2.5 rounded-xl text-sm transition-all"
                 >
                     <LogOut className="w-3.5 h-3.5" /> Logout
                 </button>

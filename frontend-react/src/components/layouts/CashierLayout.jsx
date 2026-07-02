@@ -67,12 +67,12 @@ const CashierLayout = () => {
                     <div className="flex items-center gap-4">
 
                         {/* Current Time */}
-                        <div className="text-sm font-medium text-gray-500">
+                        <div className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
                             {time}
                         </div>
 
                         {/* Cashier Badge */}
-                        <div className="bg-[#07a876] text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-sm">
+                        <div className="flex items-center gap-2 bg-[#07a876] text-gray-50 px-5 py-3 text-sm font-semibold rounded-xl border border-emerald-200 shadow-sm hover:bg-[#06956a] transition">
                             {cashierName}
                         </div>
 
