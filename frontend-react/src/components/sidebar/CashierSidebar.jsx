@@ -1,12 +1,25 @@
 import { BarChart3, History, LogOut, ShoppingCart, ShoppingBasket } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
+import { useAuthStore } from "../../stores/authStore";
+import api from "../../api/axios";
+import { useState } from "react";
 
 const CashierSidebar = () => {
     const navigate = useNavigate();
+    const logoutUser = useAuthStore((state) => state.logout);
 
-    const handleLogout = () => {
-        localStorage.clear();
-        navigate("/login");
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+
+    const handleLogout = async() => {
+        setIsConfirmOpen(false);
+        try {
+            await api.post("/logout");
+        } catch (error) {
+            console.error("Backend logout failed:", error);
+        } finally {
+            logoutUser();
+            navigate("/login");
+        }
     };
 
     const activeClass =
@@ -56,12 +69,45 @@ const CashierSidebar = () => {
             {/* Bottom Section */}
             <div className="space-y-3">
                 {/* LOGOUT */}
-                <button onClick={handleLogout}
+                <button onClick={() => setIsConfirmOpen(true)}
                     className="w-full flex items-center justify-center gap-2 bg-red-700 hover:bg-red-600 text-white font-medium py-2.5 rounded-xl text-sm transition-all"
                 >
                     <LogOut className="w-3.5 h-3.5" /> Logout
                 </button>
             </div>
+
+            {/* Logout Confirmation Modal Popup */}
+            {isConfirmOpen && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in">
+                    <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl text-center transform transition-all scale-100">
+                        <div className="w-14 h-14 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-100">
+                            <LogOut className="w-6 h-6" />
+                        </div>
+
+                        <h3 className="text-gray-900 text-lg font-bold mb-2">Are you sure you want to log out?</h3>
+                        <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+                            Logging out will stop current operations.
+                        </p>
+
+                        <div className="flex gap-3 justify-center">
+                            {/* Cancel Button */}
+                            <button 
+                                onClick={() => setIsConfirmOpen(false)}
+                                className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold rounded-xl transition"
+                            >
+                                Cancel
+                            </button>
+                            {/* Confirm Button */}
+                            <button 
+                                onClick={handleLogout}
+                                className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl shadow-sm shadow-red-200 transition"
+                            >
+                                Confirm
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

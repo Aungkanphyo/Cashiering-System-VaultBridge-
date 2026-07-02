@@ -14,9 +14,6 @@ const CashierLayout = () => {
     // Current time
     const [time, setTime] = useState("");
 
-    // Dynamic page title
-    const [pageTitle, setPageTitle] = useState("Cashier Panel");
-
     // Get cashier name from localStorage (change the key if yours is different)
     const cashierName = localStorage.getItem("userName") || "Cashier";
 
@@ -41,11 +38,13 @@ const CashierLayout = () => {
         return () => clearInterval(interval);
     }, []);
 
+    const key = location.pathname.split("/").pop();
+    const pageTitle = titleMap[key] || "Cashier Panel";
     // Update page title when route changes
-    useEffect(() => {
-        const key = location.pathname.split("/").pop();
-        setPageTitle(titleMap[key] || "Cashier Panel");
-    }, [location.pathname]);
+    // useEffect(() => {
+    //     const key = location.pathname.split("/").pop();
+    //     setPageTitle(titleMap[key] || "Cashier Panel");
+    // }, [location.pathname]);
 
     return (
         <div className="flex w-full h-screen overflow-hidden bg-gray-50">

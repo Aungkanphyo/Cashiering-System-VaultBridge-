@@ -31,4 +31,19 @@ class AuthenticatedSessionController extends Controller
             ]
         ]);
     }
+
+    public function destroy(Request $request): JsonResponse
+    {
+        Auth::guard('web')->logout();
+
+        // Change the Session ID to a new one and destroy all data from the previous session (for security)
+        $request->session()->invalidate();
+
+        $request->session()->regenerateToken();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Logged out successfully'
+        ]);
+    }
 }
