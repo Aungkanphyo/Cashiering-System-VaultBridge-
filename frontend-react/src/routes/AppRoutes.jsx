@@ -2,20 +2,23 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import Login from "../pages/auth/Login";
 import AdminLayout from "../components/layouts/AdminLayout";
 import Dashboard from "../pages/admin/Dashboard";
-import CategoriesView from "../pages/admin/CategoriesView";
-import AddCategory from "../pages/admin/AddCategory";
-import ProductsView from "../pages/admin/ProductsView";
-import AddProduct from "../pages/admin/AddProduct";
-import UserCashiers from "../pages/admin/UserCashiers";
-import PaymentMethods from "../pages/admin/PaymentMethods";
-import RegisterSessions from "../pages/admin/RegisterSessions";
-import SalesAndPayments from "../pages/admin/SalesAndPayments";
+import ViewCategory from "../pages/admin/category/ViewCategory";
+import AddCategory from "../pages/admin/category/AddCategory";
+import ViewProduct from "../pages/admin/product/ViewProduct";
+import AddProduct from "../pages/admin/product/AddProduct";
+import ViewStaff from "../pages/admin/staff/ViewStaff";
+import AddStaff from "../pages/admin/staff/AddStaff";
+import ViewPayment from "../pages/admin/payment/ViewPayment";
+import AddPayment from "../pages/admin/payment/AddPayment";
+import ViewSession from "../pages/admin/audits/ViewSession";
+import ViewHistory from "../pages/admin/audits/ViewHistory";
 import CashierLayout from "../components/layouts/CashierLayout";
 import SaleWorkspace from "../pages/cashier/SaleWorkspace";
 import Report from "../pages/cashier/Report";
 import History from "../pages/cashier/History";
 import ProtectedRoute from "../components/ProtectedRoute";
 import GuestRoute from "../components/GuestRoute";
+import ChangePassword from "../pages/admin/change_password";
 
 const AppRoutes = () => {
   return (
@@ -31,16 +34,19 @@ const AppRoutes = () => {
       {/* Admin Panel Routes (Nested Routes) */}
       <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
         <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<Navigate to="dashboard" replace />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="categories-view" element={<CategoriesView />} />
-          <Route path="add-category" element={<AddCategory />} />
-          <Route path="products-view" element={<ProductsView />} />
-          <Route path="add-product" element={<AddProduct />} />
-          <Route path="users-cashiers" element={<UserCashiers />} />
-          <Route path="payment-methods" element={<PaymentMethods />} />
-          <Route path="register-sessions" element={<RegisterSessions />} />
-          <Route path="sales-split-payments" element={<SalesAndPayments />} />
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="view-category" element={<ViewCategory />} />
+            <Route path="add-category" element={<AddCategory />} />
+            <Route path="view-product" element={<ViewProduct />} />
+            <Route path="add-product" element={<AddProduct />} />
+            <Route path="view-staff" element={<ViewStaff />} />
+            <Route path="add-staff" element={<AddStaff />} />
+            <Route path="view-payment" element={<ViewPayment />} />
+            <Route path="add-payment" element={<AddPayment />} />
+            <Route path="view-session" element={<ViewSession />} />
+            <Route path="view-history" element={<ViewHistory />} />
+            <Route path="change-password" element={<ChangePassword />} />
         </Route>
       </Route>
 
