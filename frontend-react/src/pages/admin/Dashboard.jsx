@@ -1,4 +1,5 @@
 import { CalendarDays, Banknote, Wallet, QrCode, ChartColumn, TriangleAlert, ShieldCheck, RotateCcw, } from "lucide-react";
+import { useEffect, useState } from "react";
 
 const stats = [
   {
@@ -12,22 +13,22 @@ const stats = [
     title: "TOTAL CASH RECEIVED",
     amount: 46780,
     icon: Wallet,
-    bg: "bg-blue-100",
-    color: "text-blue-600",
+    bg: "bg-yellow-100",
+    color: "text-yellow-600",
   },
   {
     title: "TOTAL KPAY RECEIVED",
     amount: 20000,
     icon: QrCode,
-    bg: "bg-purple-100",
-    color: "text-purple-600",
+    bg: "bg-blue-100",
+    color: "text-blue-600",
   },
   {
     title: "TOTAL WAVEPAY RECEIVED",
     amount: 0,
     icon: QrCode,
-    bg: "bg-purple-100",
-    color: "text-purple-600",
+    bg: "bg-blue-100",
+    color: "text-blue-600",
   },
 ];
 
@@ -35,32 +36,32 @@ const products = [
   {
     name: "Premier Coffee Mix 30s",
     qty: 20,
-    stock : 8,
+    stock: 8,
     color: "bg-orange-500",
   },
   {
     name: "Nestlé Milo Powder",
     qty: 15,
-    stock : 12,
+    stock: 12,
     color: "bg-emerald-500",
   },
   {
     name: "Pringles Original",
     qty: 10,
-    stock : 8,
+    stock: 8,
     color: "bg-cyan-500",
   },
   {
     name: "Tissue Soft Roll (Pack of 10)",
     qty: 5,
-    stock : 5,
-    color: "bg-teal-500",
+    stock: 5,
+    color: "bg-purple-500",
   },
 
   {
     name: "Oreo Chocolate Biscuit",
     qty: 8,
-    stock : 3,
+    stock: 3,
     color: "bg-amber-500",
   },
 ];
@@ -70,6 +71,9 @@ const totalQty = sortedProducts.reduce((sum, item) => sum + item.qty, 0);
 const lowStockProducts = products.filter((item) => item.stock <= 5);
 
 export default function Dashboard() {
+  const [animate, setAnimate] = useState(false);
+  useEffect(() => {setAnimate(true);}, []);
+
   return (
     <div className="min-h-screen">
 
@@ -90,12 +94,12 @@ export default function Dashboard() {
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
             <label className="text-sm font-semibold">FROM:</label>
-            <input type="date" className="border rounded-lg px-3 py-2" />
+            <input type="date" className="border rounded-lg px-3 py-2 cursor-text focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15" />
           </div>
 
           <div className="flex items-center gap-2">
             <label className="text-sm font-semibold">TO:</label>
-            <input type="date" className="border rounded-lg px-3 py-2" />
+            <input type="date" className="border rounded-lg px-3 py-2 cursor-text focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15" />
           </div>
 
           <button className="flex items-center gap-2 rounded-lg bg-red-600 text-gray-50 hover:bg-red-300 px-4 py-2">
@@ -150,7 +154,8 @@ export default function Dashboard() {
                 </div>
 
                 <div className="w-full bg-slate-200 rounded-full h-4 overflow-hidden">
-                  <div className={`${product.color} h-4 rounded-full transition-all duration-500`} style={{ width: `${percent}%` }} />
+                  <div className={`${product.color} h-4 rounded-full transition-all duration-700 ease-out`}
+                      style={{ width: animate ? `${percent}%` : "0%" }}/>
                 </div>
               </div>
             );

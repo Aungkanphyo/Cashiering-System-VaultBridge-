@@ -51,7 +51,7 @@ export default function Report() {
                             <div className="relative">
                                 <input type="number" placeholder="e.g. 96780" value={actualCash}
                                     onChange={(e) => setActualCash(e.target.value)}
-                                    className="h-14 w-full rounded-xl border px-4 text-md outline-none focus:border-green-600" />
+                                    className="h-14 w-full rounded-xl border px-4 text-md outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15" />
                             </div>
                         </div>
                     </div>
