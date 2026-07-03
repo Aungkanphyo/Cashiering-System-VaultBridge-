@@ -86,7 +86,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-
         {/* Filter Section */}
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
@@ -170,7 +169,7 @@ export default function Dashboard() {
               {lowStockProducts.map((product, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between rounded-xl border border-red-100 bg-red-50 p-4"
+                  className="flex items-center justify-between rounded-xl border border-red-100 bg-red-50 p-4 hover:bg-red-100 transition-colors"
                 >
                   <div>
                     <h3 className="font-semibold text-slate-800">
