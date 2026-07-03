@@ -18,7 +18,9 @@ import Report from "../pages/cashier/Report";
 import History from "../pages/cashier/History";
 import ProtectedRoute from "../components/ProtectedRoute";
 import GuestRoute from "../components/GuestRoute";
-import ChangePassword from "../pages/admin/change_password";
+import ChangePassword from "../pages/admin/ChangePassword";
+import ForgotPassword from "../pages/auth/ForgotPassword";
+import ResetPassword from "../pages/auth/ResetPassword";
 
 const AppRoutes = () => {
   return (
@@ -29,6 +31,8 @@ const AppRoutes = () => {
       {/* Public Route */}
       <Route element={<GuestRoute/>}>
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword/>} />
+        <Route path="/reset-password" element={<ResetPassword/>} />
       </Route>
 
       {/* Admin Panel Routes (Nested Routes) */}
