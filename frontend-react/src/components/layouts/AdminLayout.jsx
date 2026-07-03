@@ -58,12 +58,6 @@ const AdminLayout = () => {
     const key = location.pathname.split("/").pop();
     const pageTitle = titleMap[key] || "Admin Panel";
 
-    // useEffect(() => {
-    //     const key = location.pathname.split("/").pop();
-    //     setPageTitle(titleMap[key] || "Admin Panel");
-    // }, [location.pathname]);
-
-
     return (
         <div className="flex w-full h-screen overflow-hidden bg-gray-50">
             <AdminSidebar />
