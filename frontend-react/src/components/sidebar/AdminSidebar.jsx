@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp, CreditCard, DollarSign, History, Layers, LayoutDashboard, LogOut, PlusCircle, ShoppingBag, Users } from "lucide-react";
+import { ChevronDown, ChevronUp, CreditCard, DollarSign, History, Layers, LayoutDashboard, LogOut, PlusCircle, ShoppingBag, Users, ShoppingBasket, ClipboardList  } from "lucide-react";
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 
@@ -8,126 +8,192 @@ const AdminSidebar = () => {
     // Dropdown states
     const [isCategoryOpen, setIsCategoryOpen] = useState(true);
     const [isProductOpen, setIsProductOpen] = useState(false);
+    const [isStaffOpen, setIsStaffOpen] = useState(false);
+    const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+    const [isAuditsOpen, setIsAuditsOpen] = useState(false);
 
     const handleLogout = () => {
         localStorage.clear();
         navigate('/login');
     };
 
-    const activeClass = "flex items-center px-4 py-2.5 bg-[#1e2640] text-emerald-400 rounded-lg text-sm font-medium transition-all duration-200";
-    const inactiveClass = "flex items-center px-4 py-2.5 text-gray-400 hover:bg-[#151b30] hover:text-white rounded-lg text-sm font-medium transition-all duration-200";
+    const activeClass =
+        "flex items-center px-4 py-3 bg-[#07a876] text-white rounded-xl text-sm font-medium shadow-md transition-all";
+
+    const inactiveClass =
+        "flex items-center px-4 py-3 text-gray-50 hover:bg-white/10 hover:text-white rounded-xl text-sm font-medium transition-all";
+
 
     return (
-        <div className="w-64 h-screen bg-[#0b0f19] text-white flex flex-col justify-between p-4 font-sans border-r border-gray-800">
+        <div className="w-64 h-screen bg-[#08694b] text-white flex flex-col justify-between p-4">
+            {/* Top Section */}
             <div>
-                {/* Brand Header */}
-                <div className="flex items-center gap-3 px-2 py-4 border-b border-gray-800 mb-6">
-                    <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center font-bold text-xl text-white">M</div>
+                {/* Brand */}
+                <div className="flex items-center gap-3 px-2 pt-4 pb-2 mb-6">
+                    <div className="w-11 h-11 bg-white text-emerald-600 rounded-xl flex items-center justify-center shadow-md">
+                        <ShoppingBasket className="w-6 h-6" />
+                    </div>
+
                     <div>
-                        <h1 className="font-bold text-base leading-tight tracking-wide">MANDALAY MART</h1>
-                        <p className="text-xs text-gray-500 uppercase tracking-widest font-semibold mt-0.5">Admin Control Panel</p>
+                        <h1 className="font-bold text-base tracking-wide">MART4U </h1>
+                        <p className="text-xs text-white/70 uppercase tracking-widest">Admin Dashboard</p>
                     </div>
                 </div>
 
+                {/* Navigation Line */}
+                <div className="border-b border-white/10 mb-4" />
+
                 {/* Navigation Items */}
                 <nav className="space-y-1.5 overflow-y-auto max-h-[calc(100vh-180px)] pr-1">
-                    {/* Dashboard */}
+                    {/* Dashboard Section*/}
                     <NavLink to="/admin/dashboard" className={({ isActive }) => isActive ? activeClass : inactiveClass}>
-                        <LayoutDashboard className="w-4 h-4 mr-3" />
-                        Dashboard
+                        <LayoutDashboard className="w-4 h-4 mr-4" /> Dashboard
                     </NavLink>
 
-                    {/* Category Settings Dropdown */}
-                    <div>
-                        <button
-                            onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-                            className="w-full flex items-center justify-between px-4 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider hover:text-gray-300 mt-4 mb-1"
+                    {/* Category Section Dropdown*/}
+                    <div className="pt-2">
+                        <button onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                            className="w-full flex items-center justify-between px-4 py-2 text-xs font-bold text-gray-50 uppercase tracking-wider hover:text-gray-300 mt-4 mb-1"
                         >
-                            <span>Category Settings</span>
+                            <div className="flex items-center gap-2">
+                                <Layers className="w-4 h-4 mr-2" />
+                                <span>Category</span>
+                            </div>
                             {isCategoryOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                         </button>
 
+                        {/* Category Items Open Section */}
                         {isCategoryOpen && (
                             <div className="pl-2 space-y-1">
-                                <NavLink to="/admin/categories-view" className={({ isActive }) => isActive ? activeClass : inactiveClass}>
-                                    <Layers className="w-4 h-4 mr-3" />
-                                    Categories View
+                                {/* View Category */}
+                                <NavLink to="/admin/view-category" className={({ isActive }) => isActive ? activeClass : inactiveClass}>
+                                    <Layers className="w-4 h-4 mr-3" /> View Category
                                 </NavLink>
+
+                                {/* Add Category */}
                                 <NavLink to="/admin/add-category" className={({ isActive }) => isActive ? activeClass : inactiveClass}>
-                                    <PlusCircle className="w-4 h-4 mr-3" />
-                                    Add Category
+                                    <PlusCircle className="w-4 h-4 mr-3" /> Add Category
                                 </NavLink>
                             </div>
                         )}
                     </div>
 
-                    {/* Product Settings Dropdown */}
-                    <div>
-                        <button
-                            onClick={() => setIsProductOpen(!isProductOpen)}
-                            className="w-full flex items-center justify-between px-4 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider hover:text-gray-300 mt-4 mb-1"
+                    {/* Product Section Dropdown */}
+                    <div className="pt-2">
+                        <button onClick={() => setIsProductOpen(!isProductOpen)}
+                            className="w-full flex items-center justify-between px-4 py-2 text-xs font-bold text-gray-50 uppercase tracking-wider hover:text-gray-300 mt-4 mb-1"
                         >
-                            <span>Product Settings</span>
+                            <div className="flex items-center gap-2">
+                                <ShoppingBag className="w-4 h-4 mr-2" />
+                                <span>Product</span>
+                            </div>
                             {isProductOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                         </button>
 
+                        {/* Product Items Open Section */}
                         {isProductOpen && (
                             <div className="pl-2 space-y-1">
-                                <NavLink to="/admin/products-view" className={({ isActive }) => isActive ? activeClass : inactiveClass}>
-                                    <ShoppingBag className="w-4 h-4 mr-3" />
-                                    Products View
+                                {/* View Product */}
+                                <NavLink to="/admin/view-product" className={({ isActive }) => isActive ? activeClass : inactiveClass}>
+                                    <ShoppingBag className="w-4 h-4 mr-3" />View Product
                                 </NavLink>
+
+                                {/* Add Product */}
                                 <NavLink to="/admin/add-product" className={({ isActive }) => isActive ? activeClass : inactiveClass}>
-                                    <PlusCircle className="w-4 h-4 mr-3" />
-                                    Add Product
+                                    <PlusCircle className="w-4 h-4 mr-3" /> Add Product
                                 </NavLink>
                             </div>
                         )}
                     </div>
 
-                    {/* Staff & Security */}
+                    {/* Staff Section Dropdown */}
                     <div className="pt-2">
-                        <span className="px-4 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Staff & Security</span>
-                        <NavLink to="/admin/users-cashiers" className={({ isActive }) => isActive ? activeClass : inactiveClass}>
-                            <Users className="w-4 h-4 mr-3" />
-                            User & Cashiers
-                        </NavLink>
+                        <button onClick={() => setIsStaffOpen(!isStaffOpen)}
+                            className="w-full flex items-center justify-between px-4 py-2 text-xs font-bold text-gray-50 uppercase tracking-wider hover:text-gray-300 mt-4 mb-1"
+                        >
+                            <div className="flex items-center gap-2">
+                                <Users className="w-4 h-4 mr-2" />
+                                <span>Staff</span>
+                            </div>
+                            {isStaffOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                        </button>
+
+                        {/* Staff Items Open Section */}
+                        {isStaffOpen && (
+                            <div className="pl-2 space-y-1">
+                                {/* View Staff */}
+                                <NavLink to="/admin/view-staff" className={({ isActive }) => isActive ? activeClass : inactiveClass}>
+                                    <Users className="w-4 h-4 mr-3" /> View Staff
+                                </NavLink>
+
+                                {/* Add Staff */}
+                                <NavLink to="/admin/add-staff" className={({ isActive }) => isActive ? activeClass : inactiveClass}>
+                                    <PlusCircle className="w-4 h-4 mr-3" /> Add Staff
+                                </NavLink>
+                            </div>
+                        )}
                     </div>
 
-                    {/* System Settings */}
+                    {/* Payment Section Dropdown */}
                     <div className="pt-2">
-                        <span className="px-4 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">System Settings</span>
-                        <NavLink to="/admin/payment-methods" className={({ isActive }) => isActive ? activeClass : inactiveClass}>
-                            <CreditCard className="w-4 h-4 mr-3" />
-                            Payment Methods
-                        </NavLink>
+                        <button onClick={() => setIsPaymentOpen(!isPaymentOpen)}
+                            className="w-full flex items-center justify-between px-4 py-2 text-xs font-bold text-gray-50 uppercase tracking-wider hover:text-gray-300 mt-4 mb-1"
+                        >
+                            <div className="flex items-center gap-2">
+                                <CreditCard className="w-4 h-4 mr-2" />
+                                <span>Payment</span>
+                            </div>
+                            {isPaymentOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                        </button>
+
+                        {/* Payment Items Open Section */}
+                        {isPaymentOpen && (
+                            <div className="pl-2 space-y-1">
+                                {/* View Payment */}
+                                <NavLink to="/admin/view-payment" className={({ isActive }) => isActive ? activeClass : inactiveClass}>
+                                    <CreditCard className="w-4 h-4 mr-3" /> View Payment
+                                </NavLink>
+
+                                {/* Add Payment */}
+                                <NavLink to="/admin/add-payment" className={({ isActive }) => isActive ? activeClass : inactiveClass}>
+                                    <PlusCircle className="w-4 h-4 mr-3" /> Add Payment
+                                </NavLink>
+                            </div>
+                        )}
                     </div>
 
-                    {/* Audits */}
+                    {/* Audits Section Dropdown*/}
                     <div className="pt-2">
-                        <span className="px-4 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Audits</span>
-                        <NavLink to="/admin/register-sessions" className={({ isActive }) => isActive ? activeClass : inactiveClass}>
-                            <History className="w-4 h-4 mr-3" />
-                            Register Sessions
-                        </NavLink>
-                        <NavLink to="/admin/sales-split-payments" className={({ isActive }) => isActive ? activeClass : inactiveClass}>
-                            <DollarSign className="w-4 h-4 mr-3" />
-                            Sales & Payments
-                        </NavLink>
+                        <button onClick={() => setIsAuditsOpen(!isAuditsOpen)}
+                            className="w-full flex items-center justify-between px-4 py-2 text-xs font-bold text-gray-50 uppercase tracking-wider hover:text-gray-300 mt-4 mb-1"
+                        >
+                            <div className="flex items-center gap-2">
+                                <ClipboardList className="w-4 h-4 mr-2" />
+                                <span>Audits</span>
+                            </div>
+                            {isAuditsOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                        </button>
+
+                        {/* Audits Items Open Section */}
+                        {isAuditsOpen && (
+                            <div className="pl-2 space-y-1">
+                                {/* View Audits */}
+                                <NavLink to="/admin/view-session" className={({ isActive }) => isActive ? activeClass : inactiveClass}>
+                                    <History className="w-4 h-4 mr-3" /> Register Sessions
+                                </NavLink>
+
+                                {/* Sales & Payments */}
+                                <NavLink to="/admin/view-history" className={({ isActive }) => isActive ? activeClass : inactiveClass}>
+                                    <DollarSign className="w-4 h-4 mr-3" /> Sales History
+                                </NavLink>
+                            </div>
+                        )}
+
                     </div>
                 </nav>
             </div>
-
-            {/* Logout Button */}
-            <button
-                onClick={handleLogout}
-                className="w-full flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-700 text-white font-medium py-2.5 rounded-xl text-sm transition-all duration-200 mt-auto shadow-md shadow-rose-900/20"
-            >
-                <LogOut className="w-4 h-4" />
-                LOGOUT
-            </button>
         </div>
     )
 }
 
-export default AdminSidebar
+export default AdminSidebar;
