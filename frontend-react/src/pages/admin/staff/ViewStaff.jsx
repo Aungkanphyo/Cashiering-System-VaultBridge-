@@ -12,6 +12,8 @@ const ViewStaff = () => {
     const [selectedStaff, setSelectedStaff] = useState(null);
     const [loading, setLoading] = useState(false);
 
+    const [refreshTrigger, setRefreshTrigger] = useState(false);
+
     // Modals Visibility States
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [isAddOpen, setIsAddOpen] = useState(false);
@@ -43,7 +45,11 @@ const ViewStaff = () => {
 
         fetchStaffs();
 
-    }, [statusFilter, appliedSearch])
+    }, [statusFilter, appliedSearch, refreshTrigger])
+
+    const handleTriggerRefresh = () => {
+        setRefreshTrigger(prev => prev + 1);
+    }
 
     const handleSearchSubmit = (e) => {
         e.preventDefault();
@@ -70,7 +76,7 @@ const ViewStaff = () => {
     const handleToggleStatus = async (id) => {
         if (confirm("Are you sure you want to change this employee's status?")) {
             try {
-                const response = await api.patch('/staff/${id}/toggle-status');
+                const response = await api.patch(`/staff/${id}/toggle-status`);
                 if (response.data.status === 'success') {
                     setStaffs(staffs.map(staff =>
                         staff.user_id === id ? { ...staff, status: response.data.updated_status } : staff
@@ -183,9 +189,25 @@ const ViewStaff = () => {
                 </table>
             </div>
 
-            <StaffDetailModal isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} staff={selectedStaff} />
-            <AddStaffModal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} onSuccess={fetchStaffs} />
-            <EditStaffModal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} staff={selectedStaff} />
+            <StaffDetailModal
+                isOpen={isDetailOpen}
+                onClose={() => setIsDetailOpen(false)}
+                staff={selectedStaff}
+            />
+            <AddStaffModal
+                isOpen={isAddOpen}
+                onClose={() => setIsAddOpen(false)}
+                onSuccess={handleTriggerRefresh}
+            />
+
+            {isEditOpen && selectedStaff && (
+                <EditStaffModal
+                    key={selectedStaff?.user_id}
+                    onClose={() => setIsEditOpen(false)}
+                    staff={selectedStaff}
+                    onSuccess={handleTriggerRefresh}
+                />
+            )}
         </div>
     )
 }

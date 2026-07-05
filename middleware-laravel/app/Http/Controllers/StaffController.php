@@ -48,7 +48,7 @@ class StaffController extends Controller
             ->whereNotNull('void_reason')
             ->where('void_reason', '!=', '')
             ->select('void_reason', DB::raw('count(*) as total'))
-            ->groupBy('void_reason')
+            ->groupBy('void_reason', 'cash_register_sessions.user_id')
             ->get();
 
         // Adding the Total Errors Count
