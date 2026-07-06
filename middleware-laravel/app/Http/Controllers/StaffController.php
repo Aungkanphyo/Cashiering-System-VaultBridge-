@@ -14,29 +14,30 @@ class StaffController extends Controller
 {
     public function index(Request $request)
     {
-        $query = User::query()->where('role', '!=', 'admin');
-
-        // Search by name
-        if ($request->filled('search')) {
-            $query->where('username', 'like', '%' . $request->search . '%');
-        }
-
-        // Filter by Status (Active / Inactive)
-        if ($request->filled('status') && $request->status !== 'All') {
-            $query->where('status', $request->status);
-        }
-
-        $staffs = $query->orderBy('user_id', 'desc')->get();
+        $staffs = User::query()
+            ->where('role', '!=', 'admin')
+        
+            ->when($request->filled('search'), function ($query) use ($request) {
+                return $query->where('username', 'like', '%' . $request->search . '%');
+            })
+        
+            ->when($request->filled('status') && $request->status !== 'All', function ($query) use ($request) {
+                return $query->where('status', $request->status);
+            })
+            ->orderBy('user_id', 'desc')
+            ->get();
 
         $staffs->transform(function ($staff) {
-            $staff->join_date = $staff->join_date ? Carbon::parse($staff->join_date)->format('Y-m-d') : '-';
+            $staff->join_date = $staff->join_date 
+                ? Carbon::parse($staff->join_date)->format('Y-m-d') 
+                : '-';
             return $staff;
         });
 
         return response()->json([
             'status' => 'success',
             'data' => $staffs
-        ]);
+        ], 200);
     }
 
     // Displaying details of each staff in a popup

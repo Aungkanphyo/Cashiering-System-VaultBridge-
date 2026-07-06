@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 const ViewStaff = () => {
     const [staffs, setStaffs] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [appliedSearch, setAppliedSearch] = useState('');
+    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
     const [selectedStaff, setSelectedStaff] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -20,6 +20,14 @@ const ViewStaff = () => {
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
 
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearchTerm(searchTerm);
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [searchTerm])
+
     // Auto refresh data every time you change the filter
     useEffect(() => {
         // Retrieve Staff Data from the Backend
@@ -28,7 +36,7 @@ const ViewStaff = () => {
                 setLoading(true);
                 const response = await api.get('/staff', {
                     params: {
-                        search: appliedSearch,
+                        search: debouncedSearchTerm,
                         status: statusFilter
                     }
                 });
@@ -47,15 +55,10 @@ const ViewStaff = () => {
 
         fetchStaffs();
 
-    }, [statusFilter, appliedSearch, refreshTrigger])
+    }, [statusFilter, debouncedSearchTerm, refreshTrigger])
 
     const handleTriggerRefresh = () => {
         setRefreshTrigger(prev => prev + 1);
-    }
-
-    const handleSearchSubmit = (e) => {
-        e.preventDefault();
-        setAppliedSearch(searchTerm);
     }
 
     const handleOpenDetail = async (id) => {
@@ -103,18 +106,15 @@ const ViewStaff = () => {
 
             {/* Search and Filter Controls */}
             <div className="flex justify-between items-center mb-4 gap-4">
-                <form onSubmit={handleSearchSubmit} className="flex gap-2">
+                <div className="flex gap-2">
                     <input
                         type="text"
-                        placeholder="Search by name"
+                        placeholder="Search by name..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="border border-gray-400 px-3 py-1.5 rounded w-64 focus:outline-none focus:border-emerald-600"
+                        className="border border-gray-400 px-3 py-1.5 rounded w-72 focus:outline-none focus:border-emerald-600"
                     />
-                    <button type="submit" className="bg-gray-200 px-4 py-1.5 rounded hover:bg-gray-300 font-medium">
-                        Search
-                    </button>
-                </form>
+                </div>
 
                 <div className="flex items-center gap-3">
                     <select
