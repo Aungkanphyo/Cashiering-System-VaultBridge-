@@ -1,36 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 
 const SaleWorkspace = () => {
-  // Mock Database
-  const availableProducts = [
-    { id: 101, code: 'P0001', name: 'Premier Coffee Mix 30s', price: 12000, discountPercent: 0 },
-    { id: 102, code: 'P0002', name: 'Nestlé Milo Powder', price: 8500, discountPercent: 0 },
-    { id: 103, code: 'P0003', name: 'Pringles Original', price: 7000, discountPercent: 10 },
-    { id: 104, code: 'P0004', name: 'Tissue Soft Roll (Pack of 10)', price: 6000, discountPercent: 15 },
-    { id: 105, code: 'P0005', name: 'Coca Cola', price: 1200, discountPercent: 0 },
-    { id: 106, code: 'P0006', name: 'Apple', price: 2000, discountPercent: 0 },
-    { id: 107, code: 'P0007', name: 'Banna', price: 8500, discountPercent: 0 },
-    { id: 108, code: 'P0008', name: 'Jason Shampoo', price: 7000, discountPercent: 10 },
-    { id: 109, code: 'P0009', name: 'Simple Soap', price: 6000, discountPercent: 15 },
-    { id: 110, code: 'P0019', name: 'Jmix Coffee', price: 1200, discountPercent: 0 },
-    { id: 111, code: 'P0011', name: 'Cona Easer', price: 12000, discountPercent: 0 },
-    { id: 112, code: 'P0012', name: 'Power Powder Pad', price: 8500, discountPercent: 0 },
-    { id: 113, code: 'P0013', name: 'Oki Cleaning Powder', price: 7000, discountPercent: 10 },
-    { id: 114, code: 'P0014', name: 'Clean Water', price: 6000, discountPercent: 15 },
-    { id: 115, code: 'P0015', name: 'Sunday Coffeee', price: 1200, discountPercent: 0 },
-    { id: 116, code: 'P0016', name: 'Super Coffee Mix 30s', price: 12000, discountPercent: 0 },
-    { id: 117, code: 'P0017', name: 'One Tea Milk Powder', price: 8500, discountPercent: 0 },
-    { id: 118, code: 'P0018', name: 'Speed Juice', price: 7000, discountPercent: 10 },
-    { id: 119, code: 'P0019', name: 'Shadow Facial Foam', price: 6000, discountPercent: 15 },
-    { id: 120, code: 'P0020', name: 'Merry Shampoo', price: 1200, discountPercent: 0 },
-  ];
+  // --- States for Backend API Integration ---
+  const [availableProducts, setAvailableProducts] = useState([]); // API ကလာမည့် ပစ္စည်းစာရင်း
+  const [loading, setLoading] = useState(true); // Loading state
+  const [error, setError] = useState(null); // Error handling state
 
   // Current Cart Setup
-  const [cartItems, setCartItems] = useState([
-    { id: 104, code: 'P0004', name: 'Tissue Soft Roll (Pack of 10)', price: 6000, quantity: 2, discountPercent: 15 },
-    { id: 101, code: 'P0001', name: 'Premier Coffee Mix 30s', price: 12000, quantity: 1, discountPercent: 0 },
-    { id: 103, code: 'P0003', name: 'Pringles Original', price: 7000, quantity: 1, discountPercent: 10 }
-  ]);
+  const [cartItems, setCartItems] = useState([]);
   
   const [searchQuery, setSearchQuery] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('Cash');
@@ -38,16 +15,64 @@ const SaleWorkspace = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [recentProductId, setRecentProductId] = useState(null); 
   const [showToast, setShowToast] = useState(false); 
-  const [voucherId, setVoucherId] = useState(1001); // Auto increment voucher initial state
+  const [voucherId, setVoucherId] = useState(1001); 
   const dropdownRef = useRef(null);
+
+  // --- Laravel API မှ Data ဆွဲယူခြင်း (Fetch Products) ---
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        
+        const response = await fetch('http://localhost:8000/api/products', {
+          headers: {
+            'Accept': 'application/json',
+          }
+        }); 
+        
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error('The route api/products could not be found.');
+          }
+          throw new Error('Failed to fetch products from backend server.');
+        }
+
+        const data = await response.json();
+        
+        const formattedProducts = data.map((product, index) => {
+        // Laravel ဘက်က product_id သို့မဟုတ် id ဘာလာလာ စိတ်ချရအောင် ယူခြင်း
+        const productId = product.id || product.product_id || (index + 1); 
+        
+        return {
+          id: productId,
+          // #Pundefined မဖြစ်စေဘဲ စိတ်ချရသော code ပုံစံထုတ်ခြင်း
+          code: product.code || product.product_code || `P${String(productId).padStart(4, '0')}`,
+          name: product.name || product.product_name,
+          price: parseFloat(product.price || product.selling_price || 0),
+          discountPercent: parseFloat(product.discount_percent || 0)
+        };
+      });
+
+        setAvailableProducts(formattedProducts);
+        setError(null);
+      } catch (err) {
+        console.error("API Error:", err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   // Search Logic
   const filteredProducts = availableProducts.filter(product => {
     const query = searchQuery.toLowerCase().trim();
     if (!query) return true; 
     return (
-      product.name.toLowerCase().includes(query) || 
-      product.code.toLowerCase().includes(query)
+      product.name?.toLowerCase().includes(query) || 
+      product.code?.toLowerCase().includes(query)
     );
   });
 
@@ -127,13 +152,8 @@ const SaleWorkspace = () => {
   const handleProcessSale = () => {
     if (cartItems.length === 0) return;
     
-    // Show static confirmation toast (without bounce animation)
     setShowToast(true);
-    
-    // Auto-increment voucher ID for next transaction
     setVoucherId(prevId => prevId + 1);
-    
-    // Reset Cart
     handleClearCart();
   };
 
@@ -182,8 +202,9 @@ const SaleWorkspace = () => {
               <span className="absolute left-4 top-3 text-slate-400 text-lg">🔍</span>
               <input
                 type="text"
-                placeholder="Search product name or barcode..."
-                className="w-full pl-11 pr-4 py-3 text-base font-medium border border-slate-200 rounded-xl bg-slate-50/50 focus:outline-none focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-50 transition-all text-slate-700 shadow-inner"
+                disabled={loading || !!error}
+                placeholder={error ? "Cannot search due to server error..." : "Search product name or barcode..."}
+                className="w-full pl-11 pr-4 py-3 text-base font-medium border border-slate-200 rounded-xl bg-slate-50/50 focus:outline-none focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-50 transition-all text-slate-700 shadow-inner disabled:opacity-60"
                 value={searchQuery}
                 onFocus={() => setShowDropdown(true)}
                 onChange={(e) => {
@@ -193,7 +214,7 @@ const SaleWorkspace = () => {
               />
 
               {/* SEARCH DROPDOWN LIST */}
-              {showDropdown && searchQuery.trim().length > 0 && (
+              {showDropdown && searchQuery.trim().length > 0 && !loading && !error && (
                 <div className="absolute left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto divide-y divide-slate-100">
                   {filteredProducts.map(p => (
                     <div
@@ -235,46 +256,65 @@ const SaleWorkspace = () => {
 
             {/* Catalog Grid Container with Fixed Height & Scrollbar */}
             <div className="max-h-[380px] overflow-y-auto pr-1 chunk-scrollbar">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {filteredProducts.map(p => (
-                  <button
-                    key={p.id}
-                    onClick={() => handleAddProduct(p)}
-                    className={`relative border-2 p-4 rounded-xl text-left transition-all shadow-sm hover:shadow-md active:scale-95 flex flex-col justify-between h-36 group ${
-                      recentProductId === p.id 
-                        ? 'bg-emerald-50/40 border-emerald-500' 
-                        : 'bg-white border-slate-100 hover:border-emerald-500'
-                    }`}
-                  >
-                    {p.discountPercent > 0 && (
-                      <span className="absolute top-20 bg-red-50 text-red-600 font-sans text-xs font-extrabold px-1.5 py-0.5 ">
-                        -{p.discountPercent}%
-                      </span>
-                    )}
-                    
-                    <div>
-                      <h4 className={`text-sm font-bold transition-colors line-clamp-2 leading-snug ${
-                        recentProductId === p.id ? 'text-emerald-700' : 'text-slate-800 group-hover:text-emerald-700'
-                      }`}>
-                        {p.name}
-                      </h4>
-                      <p className="text-xs font-sans font-medium text-slate-400 mt-1">
-                        #{p.code}
-                      </p>
-                    </div>
+              
+              {/* 1. Loading UI */}
+              {loading && (
+                <div className="text-center py-12 text-sm font-medium text-slate-500 flex flex-col items-center justify-center gap-2">
+                  <span className="animate-spin text-xl">⏳</span>
+                  <span>Loading products from backend...</span>
+                </div>
+              )}
 
-                    <div className="text-sm font-extrabold text-slate-900 font-sans mt-2">
-                      {p.price.toLocaleString()} <span className="text-xs font-sans font-normal text-slate-400">Ks</span>
+              {/* 2. Error Display UI (As requested in image_b342bd.jpg) */}
+              {error && (
+                <div className="flex items-center justify-center p-6 my-4 bg-red-50/50 border border-red-100 rounded-xl text-red-600 font-medium text-sm gap-2">
+                  <span>⚠️</span> {error}
+                </div>
+              )}
+
+              {/* 3. Success Grid Render */}
+              {!loading && !error && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {filteredProducts.map(p => (
+                    <button
+                      key={p.id}
+                      onClick={() => handleAddProduct(p)}
+                      className={`relative border-2 p-4 rounded-xl text-left transition-all shadow-sm hover:shadow-md active:scale-95 flex flex-col justify-between h-36 group ${
+                        recentProductId === p.id 
+                          ? 'bg-emerald-50/40 border-emerald-500' 
+                          : 'bg-white border-slate-100 hover:border-emerald-500'
+                      }`}
+                    >
+                      {p.discountPercent > 0 && (
+                        <span className="absolute top-20 bg-red-50 text-red-600 font-sans text-xs font-extrabold px-1.5 py-0.5 ">
+                          -{p.discountPercent}%
+                        </span>
+                      )}
+                      
+                      <div>
+                        <h4 className={`text-sm font-bold transition-colors line-clamp-2 leading-snug ${
+                          recentProductId === p.id ? 'text-emerald-700' : 'text-slate-800 group-hover:text-emerald-700'
+                        }`}>
+                          {p.name}
+                        </h4>
+                        <p className="text-xs font-sans font-medium text-slate-400 mt-1">
+                          #{p.code}
+                        </p>
+                      </div>
+
+                      <div className="text-sm font-extrabold text-slate-900 font-sans mt-2">
+                        {p.price.toLocaleString()} <span className="text-xs font-sans font-normal text-slate-400">Ks</span>
+                      </div>
+                    </button>
+                  ))}
+                  
+                  {filteredProducts.length === 0 && (
+                    <div className="col-span-full text-center py-8 text-sm font-medium text-slate-400">
+                      No products found matching "{searchQuery}"
                     </div>
-                  </button>
-                ))}
-                
-                {filteredProducts.length === 0 && (
-                  <div className="col-span-full text-center py-8 text-sm font-medium text-slate-400">
-                    No products found matching "{searchQuery}"
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -284,19 +324,19 @@ const SaleWorkspace = () => {
             {/* Basket Listing */}
             <div className="flex flex-col flex-1 min-h-0">
               
-              {/* Voucher No Title Box (Left Aligned) */}
-            <div className="flex justify-between items-center pb-2 border-b border-slate-100 mb-3">
-              <h3 className="text-xs font-black text-slate-900 tracking-wide uppercase flex items-center gap-1.5">
-                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-600"></span> 
-                 Voucher No: #{voucherId}
-              </h3>
-              <button 
-                onClick={handleClearCart}
-                className="text-[10px] font-bold text-red-500 hover:underline"
-              >
-                Clear All
-              </button>
-            </div>
+              {/* Voucher No Title Box */}
+              <div className="flex justify-between items-center pb-2 border-b border-slate-100 mb-3">
+                <h3 className="text-xs font-black text-slate-900 tracking-wide uppercase flex items-center gap-1.5">
+                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-600"></span> 
+                   Voucher No: #{voucherId}
+                </h3>
+                <button 
+                  onClick={handleClearCart}
+                  className="text-[10px] font-bold text-red-500 hover:underline"
+                >
+                  Clear All
+                </button>
+              </div>
 
               {/* Items Render Rows */}
               <div className="space-y-1.5 flex-1 overflow-y-auto pr-0.5 min-h-0">
@@ -328,7 +368,7 @@ const SaleWorkspace = () => {
                       </div>
                     </div>
 
-                    {/* Editable Quantity Input Selector */}
+                    {/* Quantity Input Selector */}
                     <div className="flex items-center border border-slate-200 bg-white rounded-md overflow-hidden">
                       <button 
                         onClick={() => handleUpdateQty(item.id, -1)}
@@ -359,7 +399,7 @@ const SaleWorkspace = () => {
                       {((item.price - (item.price * item.discountPercent / 100)) * item.quantity).toLocaleString()} <span className="text-[9px] font-sans font-normal text-slate-400">Ks</span>
                     </div>
 
-                    {/* Simple Cross Icon Button for Deletion */}
+                    {/* Delete Button */}
                     <button
                       onClick={() => handleDeleteItem(item.id)}
                       className="p-1 text-slate-400 hover:text-red-500 font-sans text-base font-medium rounded-md hover:bg-red-50 active:scale-95 transition-all leading-none ml-0.5"
@@ -394,7 +434,7 @@ const SaleWorkspace = () => {
               </div>
             </div>
 
-            {/* PAYMENT SELECTOR & CALCULATOR */}
+            {/* PAYMENT SELECTOR */}
             <div className="mt-3 pt-2 border-t border-slate-100 grid grid-cols-12 gap-2.5 items-center bg-white">
               <div className="col-span-4">
                 <label className="block text-[9px] font-black text-slate-400 uppercase mb-1">
@@ -447,7 +487,7 @@ const SaleWorkspace = () => {
               </div>
             </div>
 
-            {/* Pay action trigger button */}
+            {/* Pay Action Button */}
             <div className="pt-3 bg-white">
               <button
                 disabled={cartItems.length === 0}
@@ -459,9 +499,7 @@ const SaleWorkspace = () => {
             </div>
 
           </div>
-
         </div>
-
       </div>
     </div>
   );
