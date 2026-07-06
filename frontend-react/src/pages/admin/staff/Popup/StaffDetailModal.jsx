@@ -4,6 +4,14 @@ import { User, X } from "lucide-react";
 const StaffDetailModal = ({ isOpen, onClose, staff }) => {
     if (!isOpen || !staff) return null;
 
+    const formatDate = (dateStr) => {
+        if (!dateStr || dateStr === "-") return "-";
+        if (typeof dateStr === 'string' && dateStr.includes("T")) {
+            return dateStr.split("T")[0];
+        }
+        return dateStr;
+    }
+
     return (
         <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-md flex justify-center items-center z-50 p-4">
             <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden border border-gray-100 flex flex-col">
@@ -14,7 +22,9 @@ const StaffDetailModal = ({ isOpen, onClose, staff }) => {
                         <User className="w-5 h-5 text-emerald-600" strokeWidth={2.5} />
                         <div>
                             <h3 className="text-lg font-bold text-gray-800 leading-tight">{staff.username}</h3>
-                            <p className="text-xs text-gray-400 font-medium mt-0.5">{staff.working_year_text || 'Staff Profile'}</p>
+                            <p className="text-xs text-gray-400 font-medium mt-0.5">
+                                Work Experience: {staff.working_duration || 'Staff Profile'}
+                            </p>
                         </div>
                     </div>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition">
@@ -39,7 +49,7 @@ const StaffDetailModal = ({ isOpen, onClose, staff }) => {
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <span className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-0.5">Date of Birth</span>
-                            <span className="font-semibold">{staff.date_of_birth || "-"}</span>
+                            <span className="font-semibold">{formatDate(staff.date_of_birth) || "-"}</span>
                         </div>
                         <div>
                             <span className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-0.5">Gender</span>
@@ -49,7 +59,17 @@ const StaffDetailModal = ({ isOpen, onClose, staff }) => {
 
                     <div>
                         <span className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-0.5">Joining Date</span>
-                        <span className="font-semibold">{staff.join_date || "-"}</span>
+                        <div className="flex flex-col gap-1">
+                            {/* Date you started working (e.g. 2026-07-05) */}
+                            <span className="font-semibold text-gray-800">{formatDate(staff.join_date) || "-"}</span>
+                            
+                            {/* Longevity of employment is indicated by a green badge. */}
+                            {staff.working_duration && (
+                                <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded w-max mt-0.5">
+                                    ({staff.working_duration} of experience)
+                                </span>
+                            )}
+                        </div>
                     </div>
 
                     <div>

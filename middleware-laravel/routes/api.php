@@ -11,6 +11,8 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
 // Admin only access routes
 Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::get('/staff', [StaffController::class, 'index']); // Staff List (+ Search & Filter)
+    Route::post('/staff', [StaffController::class, 'store']);
+    Route::put('/staff/{id}', [StaffController::class, 'update']);
     Route::get('/staff/{id}', [StaffController::class, 'show']); // View Staff Detail (Popup)
     Route::patch('/staff/{id}/toggle-status', [StaffController::class, 'toggleStatus']);
 

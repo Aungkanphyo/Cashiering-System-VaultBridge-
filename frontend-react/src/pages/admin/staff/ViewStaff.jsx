@@ -3,6 +3,7 @@ import api from "../../../api/axios";
 import StaffDetailModal from "./Popup/StaffDetailModal";
 import AddStaffModal from "./Popup/AddStaffModal";
 import EditStaffModal from "./Popup/EditStaffModal";
+import toast from 'react-hot-toast';
 
 const ViewStaff = () => {
     const [staffs, setStaffs] = useState([]);
@@ -37,7 +38,8 @@ const ViewStaff = () => {
                 }
             } catch (error) {
                 console.error("Error fetching staff data:", error);
-                alert("There was an error retrieving staff information.");
+                toast.error("There was an error retrieving staff information.");
+                // alert("There was an error retrieving staff information.");
             } finally {
                 setLoading(false);
             }
