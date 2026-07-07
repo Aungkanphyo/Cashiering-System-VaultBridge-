@@ -1,21 +1,14 @@
-import { ChevronDown, ChevronUp, CreditCard, DollarSign, History, Layers, LayoutDashboard, LogOut, PlusCircle, ShoppingBag, Users, ShoppingBasket, ClipboardList  } from "lucide-react";
+import { ChevronDown, ChevronUp, CreditCard, DollarSign, History, Layers, LayoutDashboard, PlusCircle, ShoppingBag, Users, ShoppingBasket, ClipboardList  } from "lucide-react";
 import { useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
 const AdminSidebar = () => {
-    const navigate = useNavigate();
-
     // Dropdown states
     const [isCategoryOpen, setIsCategoryOpen] = useState(true);
     const [isProductOpen, setIsProductOpen] = useState(false);
     const [isStaffOpen, setIsStaffOpen] = useState(false);
     const [isPaymentOpen, setIsPaymentOpen] = useState(false);
     const [isAuditsOpen, setIsAuditsOpen] = useState(false);
-
-    const handleLogout = () => {
-        localStorage.clear();
-        navigate('/login');
-    };
 
     const activeClass =
         "flex items-center px-4 py-3 bg-[#07a876] text-white rounded-xl text-sm font-medium shadow-md transition-all";
@@ -127,9 +120,9 @@ const AdminSidebar = () => {
                                 </NavLink>
 
                                 {/* Add Staff */}
-                                <NavLink to="/admin/add-staff" className={({ isActive }) => isActive ? activeClass : inactiveClass}>
+                                {/* <NavLink to="/admin/add-staff" className={({ isActive }) => isActive ? activeClass : inactiveClass}>
                                     <PlusCircle className="w-4 h-4 mr-3" /> Add Staff
-                                </NavLink>
+                                </NavLink> */}
                             </div>
                         )}
                     </div>

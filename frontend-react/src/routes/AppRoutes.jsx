@@ -7,7 +7,6 @@ import AddCategory from "../pages/admin/category/AddCategory";
 import ViewProduct from "../pages/admin/product/ViewProduct";
 import AddProduct from "../pages/admin/product/AddProduct";
 import ViewStaff from "../pages/admin/staff/ViewStaff";
-import AddStaff from "../pages/admin/staff/AddStaff";
 import ViewPayment from "../pages/admin/payment/ViewPayment";
 import AddPayment from "../pages/admin/payment/AddPayment";
 import ViewSession from "../pages/admin/audits/ViewSession";
@@ -18,7 +17,12 @@ import Report from "../pages/cashier/Report";
 import History from "../pages/cashier/History";
 import ProtectedRoute from "../components/ProtectedRoute";
 import GuestRoute from "../components/GuestRoute";
-import ChangePassword from "../pages/admin/change_password";
+import ChangePassword from "../pages/admin/ChangePassword";
+import ForgotPassword from "../pages/auth/ForgotPassword";
+import ResetPassword from "../pages/auth/ResetPassword";
+import AddStaffModal from "../pages/admin/staff/Popup/AddStaffModal";
+import EditStaffModal from "../pages/admin/staff/Popup/EditStaffModal";
+import StaffDetailModal from "../pages/admin/staff/Popup/StaffDetailModal";
 
 const AppRoutes = () => {
   return (
@@ -29,6 +33,8 @@ const AppRoutes = () => {
       {/* Public Route */}
       <Route element={<GuestRoute/>}>
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword/>} />
+        <Route path="/reset-password" element={<ResetPassword/>} />
       </Route>
 
       {/* Admin Panel Routes (Nested Routes) */}
@@ -41,7 +47,9 @@ const AppRoutes = () => {
             <Route path="view-product" element={<ViewProduct />} />
             <Route path="add-product" element={<AddProduct />} />
             <Route path="view-staff" element={<ViewStaff />} />
-            <Route path="add-staff" element={<AddStaff />} />
+            <Route path="add-staff" element={<AddStaffModal />} />
+            <Route path="edit-staff" element={<EditStaffModal />} />
+            <Route path="detail-staff" element={<StaffDetailModal />} />
             <Route path="view-payment" element={<ViewPayment />} />
             <Route path="add-payment" element={<AddPayment />} />
             <Route path="view-session" element={<ViewSession />} />

@@ -54,4 +54,17 @@ class User extends Authenticatable
     {
         return $this->hasMany(CashRegisterSession::class, 'user_id', 'user_id');
     }
+
+    // Relation: Retrieve all vouchers sold through the user
+    public function vouchers()
+    {
+        return $this->hasManyThrough(
+            Voucher::class, // Target Model you want to get
+            CashRegisterSession::class, // Model of the medium to be traversed
+            'user_id', // Foreign Key on the CashRegisterSession table
+            'session_id', // Foreign Key on Voucher table
+            'user_id', // Local Key on the User table
+            'session_id' // Local Key on the CashRegisterSession table
+        );
+    }
 }
