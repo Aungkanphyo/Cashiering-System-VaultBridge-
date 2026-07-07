@@ -1,68 +1,69 @@
 import React, { useState, useRef, useEffect } from 'react';
+import api from '../../api/axios';
+import Voucher from './Voucher'; // voucher import for right column
 
 const SaleWorkspace = () => {
-  // Mock Database
-  const availableProducts = [
-    { id: 101, code: 'P0001', name: 'Premier Coffee Mix 30s', price: 12000, discountPercent: 0 },
-    { id: 102, code: 'P0002', name: 'Nestlé Milo Powder', price: 8500, discountPercent: 0 },
-    { id: 103, code: 'P0003', name: 'Pringles Original', price: 7000, discountPercent: 10 },
-    { id: 104, code: 'P0004', name: 'Tissue Soft Roll (Pack of 10)', price: 6000, discountPercent: 15 },
-    { id: 105, code: 'P0005', name: 'Coca Cola', price: 1200, discountPercent: 0 },
-    { id: 106, code: 'P0006', name: 'Apple', price: 2000, discountPercent: 0 },
-    { id: 107, code: 'P0007', name: 'Banna', price: 8500, discountPercent: 0 },
-    { id: 108, code: 'P0008', name: 'Jason Shampoo', price: 7000, discountPercent: 10 },
-    { id: 109, code: 'P0009', name: 'Simple Soap', price: 6000, discountPercent: 15 },
-    { id: 110, code: 'P0019', name: 'Jmix Coffee', price: 1200, discountPercent: 0 },
-    { id: 111, code: 'P0011', name: 'Cona Easer', price: 12000, discountPercent: 0 },
-    { id: 112, code: 'P0012', name: 'Power Powder Pad', price: 8500, discountPercent: 0 },
-    { id: 113, code: 'P0013', name: 'Oki Cleaning Powder', price: 7000, discountPercent: 10 },
-    { id: 114, code: 'P0014', name: 'Clean Water', price: 6000, discountPercent: 15 },
-    { id: 115, code: 'P0015', name: 'Sunday Coffeee', price: 1200, discountPercent: 0 },
-    { id: 116, code: 'P0016', name: 'Super Coffee Mix 30s', price: 12000, discountPercent: 0 },
-    { id: 117, code: 'P0017', name: 'One Tea Milk Powder', price: 8500, discountPercent: 0 },
-    { id: 118, code: 'P0018', name: 'Speed Juice', price: 7000, discountPercent: 10 },
-    { id: 119, code: 'P0019', name: 'Shadow Facial Foam', price: 6000, discountPercent: 15 },
-    { id: 120, code: 'P0020', name: 'Merry Shampoo', price: 1200, discountPercent: 0 },
-  ];
+  // --- States for Backend API Integration ---
+  const [availableProducts, setAvailableProducts] = useState([]); 
+  const [loading, setLoading] = useState(true); 
+  const [error, setError] = useState(null); 
 
   // Current Cart Setup
-  const [cartItems, setCartItems] = useState([
-    { id: 104, code: 'P0004', name: 'Tissue Soft Roll (Pack of 10)', price: 6000, quantity: 2, discountPercent: 15 },
-    { id: 101, code: 'P0001', name: 'Premier Coffee Mix 30s', price: 12000, quantity: 1, discountPercent: 0 },
-    { id: 103, code: 'P0003', name: 'Pringles Original', price: 7000, quantity: 1, discountPercent: 10 }
-  ]);
+  const [cartItems, setCartItems] = useState([]);
   
   const [searchQuery, setSearchQuery] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('Cash');
   const [payAmount, setPayAmount] = useState('');
-  const [showDropdown, setShowDropdown] = useState(false);
   const [recentProductId, setRecentProductId] = useState(null); 
-  const [showToast, setShowToast] = useState(false); 
-  const [voucherId, setVoucherId] = useState(1001); // Auto increment voucher initial state
-  const dropdownRef = useRef(null);
+  
+  // Toast notifications configuration (English Commands Only)
+  const [toastConfig, setToastConfig] = useState({ show: false, type: 'success', message: '' }); 
+  const [voucherId, setVoucherId] = useState(1001); 
 
-  // Search Logic
+  // --- Laravel API (Fetch Products) ---  
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);       
+        const response = await api.get('/products');      
+        const data = response.data; 
+
+        const formattedProducts = data.map((product, index) => {
+        const productId = product.id ? Number(product.id) : (product.product_id ? Number(product.product_id) : (index + 1)); 
+        return {
+          id: productId,          
+          code: product.barcode || product.code || product.product_code || `P${String(productId).padStart(4, '0')}`, 
+          name: product.name || product.product_name || product.product_name,
+          price: parseFloat(product.price || product.selling_price || 0),
+          discountPercent: parseFloat(product.discount_percent || product.discount_rate || 0)
+        };
+      });
+
+        setAvailableProducts(formattedProducts);
+        setError(null);
+      } catch (err) {
+        console.error("API Error via Axios:", err);        
+        const errorMsg = err.response?.data?.message || err.message || 'Failed to fetch products.';
+        setError(errorMsg);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  // Search / Filter Logic 
   const filteredProducts = availableProducts.filter(product => {
     const query = searchQuery.toLowerCase().trim();
     if (!query) return true; 
     return (
-      product.name.toLowerCase().includes(query) || 
-      product.code.toLowerCase().includes(query)
+      product.name?.toLowerCase().includes(query) || 
+      product.code?.toLowerCase().includes(query)
     );
   });
 
-  // Dropdown Click Outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setShowDropdown(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Math Computations
+  // --- 🧮 Calculation Logics ---
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const totalDiscount = cartItems.reduce((sum, item) => sum + ((item.price * item.discountPercent / 100) * item.quantity), 0); 
   const finalTotal = subtotal - totalDiscount;
@@ -86,7 +87,6 @@ const SaleWorkspace = () => {
   const handleDirectQtyChange = (id, value) => {
     setRecentProductId(id);
     const parsedQty = parseInt(value, 10);
-    
     setCartItems(prev => prev.map(item => {
       if (item.id === id) {
         return { ...item, quantity: isNaN(parsedQty) || parsedQty < 0 ? 0 : parsedQty };
@@ -114,7 +114,6 @@ const SaleWorkspace = () => {
       return [...prev, { ...product, quantity: 1 }];
     });
     setSearchQuery(''); 
-    setShowDropdown(false);
   };
 
   const handleClearCart = () => {
@@ -123,45 +122,72 @@ const SaleWorkspace = () => {
     setRecentProductId(null);
   };
 
-  // Handle Pay Action
+  // ---  Process Sale with Dynamic Error Validation ---
   const handleProcessSale = () => {
     if (cartItems.length === 0) return;
+
+    // Validation: Cash payment check
+    if (paymentMethod === 'Cash') {
+      if (!payAmount || parseFloat(payAmount) <= 0) {
+        setToastConfig({
+          show: true,
+          type: 'error',
+          message: 'Enter pay amount from Customer'
+        });
+        return;
+      }
+      
+      if (parseFloat(payAmount) < finalTotal) {
+        setToastConfig({
+          show: true,
+          type: 'error',
+          message: 'Insufficient pay amount provided'
+        });
+        return;
+      }
+    }
     
-    // Show static confirmation toast (without bounce animation)
-    setShowToast(true);
-    
-    // Auto-increment voucher ID for next transaction
-    setVoucherId(prevId => prevId + 1);
-    
-    // Reset Cart
+    // If all checks pass, succeed transaction
+    setToastConfig({
+      show: true,
+      type: 'success',
+      message: 'Transaction completed successfully'
+    });
+    setVoucherId(prevId => prevId + 1); 
     handleClearCart();
   };
 
-  // Auto-hide banner after 3.5 seconds
+  // Auto-hide toast handler
   useEffect(() => {
-    if (showToast) {
+    if (toastConfig.show) {
       const timer = setTimeout(() => {
-        setShowToast(false);
-      }, 3500);
+        setToastConfig(prev => ({ ...prev, show: false }));
+      } , 3500);
       return () => clearTimeout(timer);
     }
-  }, [showToast]);
+  }, [toastConfig.show]);
 
   return (
     <div className="w-full min-h-screen bg-[#F8FAFC] font-sans flex text-slate-800 antialiased px-4 pt-0 pb-4 relative">
       
-      {/* STATIC CONFIRM PAY TOAST BANNER (NO BOUNCE) */}
-      {showToast && (
-        <div className="fixed top-5 right-5 z-50 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-xl flex items-center gap-3 border border-slate-800 transition-all duration-300">
-          <div className="h-6 w-6 rounded-full bg-emerald-500 flex items-center justify-center text-xs text-white font-bold">
-            ✓
+      {/* NOTIFICATION TOAST */}
+      {toastConfig.show && (
+        <div className={`fixed top-5 right-5 z-50 px-5 py-3 rounded-xl shadow-xl flex items-center gap-3 border transition-all duration-300 bg-slate-900 text-white border-slate-800`}>
+          <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${
+            toastConfig.type === 'success' ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'
+          }`}>
+            {toastConfig.type === 'success' ? '✓' : '!'}
           </div>
           <div className="flex flex-col">
-            <span className="text-xs font-black tracking-wide text-emerald-400 uppercase">Sales Successful</span>
-            <span className="text-[11px] text-slate-400 font-medium">Transaction has been completed successfully.</span>
+            <span className={`text-xs font-black tracking-wide uppercase ${
+              toastConfig.type === 'success' ? 'text-emerald-400' : 'text-red-400'
+            }`}>
+              {toastConfig.type === 'success' ? 'Sales Successful' : 'Validation Error'}
+            </span>
+            <span className="text-[11px] text-slate-300 font-medium">{toastConfig.message}</span>
           </div>
           <button 
-            onClick={() => setShowToast(false)} 
+            onClick={() => setToastConfig(prev => ({ ...prev, show: false }))} 
             className="ml-2 text-slate-500 hover:text-slate-300 text-lg font-bold"
           >
             &times;
@@ -170,298 +196,123 @@ const SaleWorkspace = () => {
       )}
 
       <div className="flex-1 flex flex-col overflow-y-auto">
-        
-        {/* WORKSPACE CONTENT SPLIT */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start flex-1 mt-2">
           
-          {/* LEFT COLUMN: CATALOG & SEARCH BAR (7 COLS) */}
-          <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-            
-            {/* Search Bar Area */}
-            <div className="relative w-full mb-6" ref={dropdownRef}>
-              <span className="absolute left-4 top-3 text-slate-400 text-lg">🔍</span>
-              <input
-                type="text"
-                placeholder="Search product name or barcode..."
-                className="w-full pl-11 pr-4 py-3 text-base font-medium border border-slate-200 rounded-xl bg-slate-50/50 focus:outline-none focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-50 transition-all text-slate-700 shadow-inner"
-                value={searchQuery}
-                onFocus={() => setShowDropdown(true)}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setShowDropdown(true);
-                }}
-              />
+          {/* LEFT COLUMN: CATALOG & SEARCH BAR */}
+          {/* LEFT COLUMN: CATALOG & SEARCH BAR */}
+<div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm flex flex-col">
+  <div className="relative w-full mb-6">
+    <span className="absolute left-4 top-3.5 text-slate-400 text-base">🔍</span>
+    <input
+      type="text"
+      disabled={loading || !!error}
+      placeholder={error ? "Cannot search due to server error..." : "Search product name or barcode..."}
+      className="w-full pl-11 pr-4 py-3 text-sm font-medium border border-slate-200 rounded-xl bg-slate-50/50 focus:outline-none focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 transition-all text-slate-700 shadow-inner disabled:opacity-60"
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+    />
+  </div>
 
-              {/* SEARCH DROPDOWN LIST */}
-              {showDropdown && searchQuery.trim().length > 0 && (
-                <div className="absolute left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto divide-y divide-slate-100">
-                  {filteredProducts.map(p => (
-                    <div
-                      key={p.id}
-                      onClick={() => handleAddProduct(p)}
-                      className="flex items-center justify-between p-3 hover:bg-slate-50 cursor-pointer transition-colors"
-                    >
-                      <div className="flex flex-col">
-                        <span className="text-sm font-bold text-slate-800">{p.name}</span>
-                        <span className="text-xs font-sans text-slate-400">#{p.code}</span>
-                      </div>
-                      <div className="text-right flex items-center gap-2">
-                        {p.discountPercent > 0 && (
-                          <span className="bg-red-50 text-red-600 font-sans text-[10px] font-bold px-1.5 py-0.5 rounded border border-red-100">
-                            -{p.discountPercent}%
-                          </span>
-                        )}
-                        <span className="text-sm font-black text-slate-900 font-sans">
-                          {p.price.toLocaleString()} Ks
+  <div className="mb-4 flex items-center justify-between">
+    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+      {searchQuery.trim() ? "SEARCH RESULTS" : "QUICK CLICK ITEMS"}
+    </h3>
+    {!loading && !error && (
+      <span className="text-[11px] font-semibold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
+        {filteredProducts.length} Items
+      </span>
+    )}
+  </div>
+
+  <div className="max-h-[420px] overflow-y-auto pr-1 chunk-scrollbar flex-1">
+    {loading && <div className="text-center py-12 text-sm text-slate-500 animate-pulse">Loading products...</div>}
+    {error && <div className="p-4 text-center text-red-600 bg-red-50 border border-red-100 rounded-xl text-sm">⚠️ {error}</div>}
+
+    {!loading && !error && (
+      <>
+        {filteredProducts.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 p-0.5">
+            {filteredProducts.map(p => {
+              const isRecent = recentProductId && p.id && recentProductId === p.id;
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => handleAddProduct(p)}
+                  className={`relative border rounded-xl text-left p-4 transition-all duration-200 flex flex-col justify-between h-30 group transform select-none ${
+                    isRecent 
+                      ? 'bg-emerald-50/40 border-emerald-500 ring-2 ring-emerald-500/20 shadow-sm' 
+                      : 'bg-white border-slate-200/80 hover:border-slate-300 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98]'
+                  }`}
+                >
+                  {/* PRODUCT NAME (TOP) */}
+                  <div className="w-full">
+                    <h4 className={`text-[13px] font-bold leading-snug tracking-tight transition-colors line-clamp-2 ${
+                      isRecent ? 'text-emerald-800' : 'text-slate-700 group-hover:text-emerald-600'
+                    }`}>
+                      {p.name}
+                    </h4>
+                  </div>
+
+                  {/* BOTTOM BLOCK (METADATA & PRICE) */}
+                  <div className="w-full mt-auto pt-2 flex flex-col gap-1.5">
+                    {/* Discount Line if exists */}
+                    <div className="h-5 flex items-center">
+                      {p.discountPercent > 0 ? (
+                        <span className="text-[10px] font-extrabold bg-rose-50 text-rose-600 px-1.5 py-0.5 rounded border border-rose-100 uppercase tracking-wider animate-pulse">
+                           {p.discountPercent}%
                         </span>
-                      </div>
+                      ) : (
+                        // Placeholder to keep spacing identical across all cards
+                        <span className="text-[10px] font-medium text-slate-300 opacity-0 select-none">No Disc</span>
+                      )}
                     </div>
-                  ))}
-                  {filteredProducts.length === 0 && (
-                    <div className="p-4 text-center text-sm text-slate-400">
-                      No results for "{searchQuery}"
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Section Title */}
-            <div className="mb-4">
-              <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider">
-                QUICK CLICK ITEMS
-              </h3>
-            </div>
-
-            {/* Catalog Grid Container with Fixed Height & Scrollbar */}
-            <div className="max-h-[380px] overflow-y-auto pr-1 chunk-scrollbar">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {filteredProducts.map(p => (
-                  <button
-                    key={p.id}
-                    onClick={() => handleAddProduct(p)}
-                    className={`relative border-2 p-4 rounded-xl text-left transition-all shadow-sm hover:shadow-md active:scale-95 flex flex-col justify-between h-36 group ${
-                      recentProductId === p.id 
-                        ? 'bg-emerald-50/40 border-emerald-500' 
-                        : 'bg-white border-slate-100 hover:border-emerald-500'
-                    }`}
-                  >
-                    {p.discountPercent > 0 && (
-                      <span className="absolute top-20 bg-red-50 text-red-600 font-sans text-xs font-extrabold px-1.5 py-0.5 ">
-                        -{p.discountPercent}%
-                      </span>
-                    )}
                     
-                    <div>
-                      <h4 className={`text-sm font-bold transition-colors line-clamp-2 leading-snug ${
-                        recentProductId === p.id ? 'text-emerald-700' : 'text-slate-800 group-hover:text-emerald-700'
-                      }`}>
-                        {p.name}
-                      </h4>
-                      <p className="text-xs font-sans font-medium text-slate-400 mt-1">
-                        #{p.code}
-                      </p>
-                    </div>
-
-                    <div className="text-sm font-extrabold text-slate-900 font-sans mt-2">
-                      {p.price.toLocaleString()} <span className="text-xs font-sans font-normal text-slate-400">Ks</span>
-                    </div>
-                  </button>
-                ))}
-                
-                {filteredProducts.length === 0 && (
-                  <div className="col-span-full text-center py-8 text-sm font-medium text-slate-400">
-                    No products found matching "{searchQuery}"
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* RIGHT COLUMN: ACTIVE CART & PAYMENT (5 COLS) */}
-          <div className="lg:col-span-5 bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between h-[calc(100vh-16px)] sticky top-0">
-            
-            {/* Basket Listing */}
-            <div className="flex flex-col flex-1 min-h-0">
-              
-              {/* Voucher No Title Box (Left Aligned) */}
-            <div className="flex justify-between items-center pb-2 border-b border-slate-100 mb-3">
-              <h3 className="text-xs font-black text-slate-900 tracking-wide uppercase flex items-center gap-1.5">
-                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-600"></span> 
-                 Voucher No: #{voucherId}
-              </h3>
-              <button 
-                onClick={handleClearCart}
-                className="text-[10px] font-bold text-red-500 hover:underline"
-              >
-                Clear All
-              </button>
-            </div>
-
-              {/* Items Render Rows */}
-              <div className="space-y-1.5 flex-1 overflow-y-auto pr-0.5 min-h-0">
-                {cartItems.map((item) => (
-                  <div 
-                    key={item.id} 
-                    className={`flex items-center justify-between p-2 rounded-lg border transition-all duration-300 ${
-                      recentProductId === item.id 
-                        ? 'bg-emerald-50/70 border-emerald-400 ring-2 ring-emerald-100' 
-                        : 'bg-slate-50 border-slate-100'
-                    }`}
-                  >
-                    <div className="w-[42%]">
-                      <p className={`text-xs font-bold line-clamp-1 ${
-                        recentProductId === item.id ? 'text-emerald-800 font-extrabold' : 'text-slate-800'
-                      }`}>
-                        {item.name}
-                      </p>
+                    {/* Price Tag Line */}
+                    <div className="flex items-baseline justify-between w-full">
                       
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <p className="text-[9px] text-slate-400 font-sans font-medium">
-                          {item.price.toLocaleString()} ks
-                        </p>
-                        {item.discountPercent > 0 && (
-                          <span className="bg-red-50 text-red-600 font-sans text-[9px] font-extrabold px-1 ">
-                            -{item.discountPercent}%
-                          </span>
-                        )}
+                      <div className={`text-sm font-black font-sans tracking-tight ${isRecent ? 'text-emerald-600' : 'text-slate-900'}`}>
+                        {p.price.toLocaleString()} <span className="text-[10px] font-normal text-slate-400">Ks</span>
                       </div>
                     </div>
-
-                    {/* Editable Quantity Input Selector */}
-                    <div className="flex items-center border border-slate-200 bg-white rounded-md overflow-hidden">
-                      <button 
-                        onClick={() => handleUpdateQty(item.id, -1)}
-                        className="px-1.5 py-0.5 text-[10px] bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold"
-                      >
-                        -
-                      </button>
-                      <input
-                        type="number"
-                        min="1"
-                        value={item.quantity === 0 ? '' : item.quantity}
-                        onChange={(e) => handleDirectQtyChange(item.id, e.target.value)}
-                        onBlur={() => {
-                          if (item.quantity === 0) handleDirectQtyChange(item.id, 1);
-                        }}
-                        className="w-8 text-[11px] font-sans font-bold text-slate-800 text-center focus:outline-none bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                      />
-                      <button 
-                        onClick={() => handleUpdateQty(item.id, 1)}
-                        className="px-1.5 py-0.5 text-[10px] bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold"
-                      >
-                        +
-                      </button>
-                    </div>
-
-                    {/* Pricing Column */}
-                    <div className="text-right font-sans text-xs font-bold text-slate-900 min-w-[55px]">
-                      {((item.price - (item.price * item.discountPercent / 100)) * item.quantity).toLocaleString()} <span className="text-[9px] font-sans font-normal text-slate-400">Ks</span>
-                    </div>
-
-                    {/* Simple Cross Icon Button for Deletion */}
-                    <button
-                      onClick={() => handleDeleteItem(item.id)}
-                      className="p-1 text-slate-400 hover:text-red-500 font-sans text-base font-medium rounded-md hover:bg-red-50 active:scale-95 transition-all leading-none ml-0.5"
-                      title="Remove item"
-                    >
-                      &times;
-                    </button>
                   </div>
-                ))}
-                
-                {cartItems.length === 0 && (
-                  <div className="text-center py-8 text-xs text-slate-400 font-medium">
-                    Your cart is empty.
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Bill Statement Box */}
-            <div className="border-t border-slate-100 pt-3 mt-3 space-y-1.5 text-xs font-medium bg-white">
-              <div className="flex justify-between text-slate-500">
-                <span>Subtotal:</span>
-                <span className="font-sans text-slate-800">{subtotal.toLocaleString()} Ks</span>
-              </div>
-              <div className="flex justify-between text-red-500">
-                <span>Discount:</span>
-                <span className="font-sans">-{totalDiscount.toLocaleString()} Ks</span>
-              </div>
-              <div className="flex justify-between items-center pt-2 border-t border-dashed border-slate-200 text-sm font-black text-slate-900">
-                <span>Total (Inclusive Tax):</span>
-                <span className="font-sans text-sm text-emerald-600">{finalTotal.toLocaleString()} Ks</span>
-              </div>
-            </div>
-
-            {/* PAYMENT SELECTOR & CALCULATOR */}
-            <div className="mt-3 pt-2 border-t border-slate-100 grid grid-cols-12 gap-2.5 items-center bg-white">
-              <div className="col-span-4">
-                <label className="block text-[9px] font-black text-slate-400 uppercase mb-1">
-                  Method
-                </label>
-                <div className="flex gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
-                  <button
-                    onClick={() => setPaymentMethod('Cash')}
-                    className={`flex-1 py-1 text-[9px] font-bold rounded-md transition-all ${
-                      paymentMethod === 'Cash' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
-                    }`}
-                  >
-                    💵 Cash
-                  </button>
-                  <button
-                    onClick={() => setPaymentMethod('KPay')}
-                    className={`flex-1 py-1 text-[9px] font-bold rounded-md transition-all ${
-                      paymentMethod === 'KPay' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
-                    }`}
-                  >
-                    📱 KPay
-                  </button>
-                </div>
-              </div>
-
-              <div className="col-span-8 grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-[9px] font-black text-slate-400 uppercase mb-1">
-                    Pay Amount
-                  </label>
-                  <input
-                    type="number"
-                    placeholder="0"
-                    className={`w-full px-2 py-0.5 h-7 text-xs font-sans font-bold border rounded-md focus:outline-none ${
-                      paymentMethod === 'KPay' ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' : 'bg-white text-slate-800 border-slate-200 focus:border-emerald-500'
-                    }`}
-                    value={paymentMethod === 'KPay' ? finalTotal : payAmount}
-                    onChange={(e) => setPayAmount(e.target.value)}
-                    disabled={paymentMethod === 'KPay'}
-                  />
-                </div>
-                <div>
-                  <label className="block text-[9px] font-black text-slate-400 uppercase mb-1">
-                    Change Due
-                  </label>
-                  <div className="w-full px-2 py-0.5 h-7 flex items-center text-xs font-sans font-black text-emerald-600 bg-emerald-50 rounded-md border border-emerald-100">
-                    {changeDue.toLocaleString()}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Pay action trigger button */}
-            <div className="pt-3 bg-white">
-              <button
-                disabled={cartItems.length === 0}
-                onClick={handleProcessSale}
-                className="w-full py-2 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs border border-emerald-700 shadow-xs active:scale-[0.99] transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <span>🧾</span> Pay
-              </button>
-            </div>
-
+                </button>
+              );
+            })}
           </div>
+        ) : (
+          <div className="text-center py-16 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+            <span className="text-2xl block mb-2">📦</span>
+            <div className="text-sm text-slate-400 font-medium">
+              No products found matching "{searchQuery}"
+            </div>
+          </div>
+        )}
+      </>
+    )}
+  </div>
+</div>
+
+          {/* RIGHT COLUMN: VOUCHER DETAILS & PAYMENT */}
+          <Voucher 
+            voucherId={voucherId}
+            cartItems={cartItems}
+            recentProductId={recentProductId}
+            subtotal={subtotal}
+            totalDiscount={totalDiscount}
+            finalTotal={finalTotal}
+            paymentMethod={paymentMethod}
+            payAmount={payAmount}
+            changeDue={changeDue}
+            setPaymentMethod={setPaymentMethod}
+            setPayAmount={setPayAmount}
+            handleUpdateQty={handleUpdateQty}
+            handleDirectQtyChange={handleDirectQtyChange}
+            handleDeleteItem={handleDeleteItem}
+            handleClearCart={handleClearCart}
+            handleProcessSale={handleProcessSale}
+          />
 
         </div>
-
       </div>
     </div>
   );
