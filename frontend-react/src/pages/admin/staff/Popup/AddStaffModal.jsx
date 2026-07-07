@@ -3,9 +3,13 @@ import api from "../../../../api/axios";
 import { UserPlus, X } from "lucide-react";
 import nrcData from "../../../../data/nrc.json";
 import toast from 'react-hot-toast';
+import useScrollLock from "../../../../hooks/useScrollLock";
 
 
 const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
+
+    useScrollLock(isOpen);
+
     const [formData, setFormData] = useState({
         username: '', password: '', role: 'staff', status: 'Active',
         phone_number: '', nrc: '', date_of_birth: '', address: '',

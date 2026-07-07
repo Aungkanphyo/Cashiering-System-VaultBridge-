@@ -7,7 +7,8 @@ function App() {
   return (
     <BrowserRouter>
       <Toaster
-        position="top-right"
+        position="top-center"
+        containerClassName="mt-10"
         reverseOrder={false}
         toastOptions={{
           className: "font-medium text-sm rounded-xl border border-gray-100 shadow-xl px-4 py-3 bg-white text-gray-800 tracking-wide",
