@@ -1,6 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import api from '../../api/axios';
 import Voucher from './Voucher'; // voucher import for right column
+import { io } from 'socket.io-client';
+import toast from 'react-hot-toast';
 
 const SaleWorkspace = () => {
 	// --- States for Backend API Integration ---
@@ -16,9 +18,15 @@ const SaleWorkspace = () => {
 	const [payAmount, setPayAmount] = useState('');
 	const [recentProductId, setRecentProductId] = useState(null);
 
-	// Toast notifications configuration (English Commands Only)
-	const [toastConfig, setToastConfig] = useState({ show: false, type: 'success', message: '' });
 	const [voucherId, setVoucherId] = useState(1001);
+
+	// For real-time barcode
+	const productRef = useRef(availableProducts);
+
+	// The Ref will be updated whenever availableProducts change
+	useEffect(() => {
+		productRef.current = availableProducts;
+	}, [availableProducts])
 
 	// --- Laravel API (Fetch Products) ---  
 	useEffect(() => {
@@ -52,6 +60,42 @@ const SaleWorkspace = () => {
 
 		fetchProducts();
 	}, []);
+
+	// socket.io integration for barcode scanner
+	useEffect(() => {
+		const socket = io('http://localhost:5000');
+
+		socket.on('display-barcode', (scannedBarcode) => {
+			console.log("Barcode received from phone:", scannedBarcode);
+
+			const cleanBarcode = scannedBarcode.trim();
+
+			// Searching for a product with the same barcode from a Ref
+			const matchedProduct = productRef.current.find(
+				(product) => product.code && product.code.trim() === cleanBarcode
+			);
+
+			if(matchedProduct) {
+				// immediate put into the cart
+				setRecentProductId(matchedProduct.id);
+				setCartItems((prev) => {
+					const exist = prev.find((item) => item.id === matchedProduct.id);
+					if(exist) {
+						return prev.map((item) => item.id === matchedProduct.id ? { ...item, quantity: item.quantity + 1 } : item);
+					}
+					return [...prev, {...matchedProduct, quantity: 1}];
+				});
+
+				toast.success(`Scanned: ${matchedProduct.name} added to cart.`);
+			} else {
+				toast.error(`Product Code [${cleanBarcode}] Not Found in Database!`);
+			}
+		});
+
+		return () => {
+			socket.disconnect();
+		}
+	}, [])
 
 	// Search / Filter Logic 
 	const filteredProducts = availableProducts.filter(product => {
@@ -129,70 +173,24 @@ const SaleWorkspace = () => {
 		// Validation: Cash payment check
 		if (paymentMethod === 'Cash') {
 			if (!payAmount || parseFloat(payAmount) <= 0) {
-				setToastConfig({
-					show: true,
-					type: 'error',
-					message: 'Enter pay amount from Customer'
-				});
+				toast.error('Enter pay amount from Customer');
 				return;
 			}
 
 			if (parseFloat(payAmount) < finalTotal) {
-				setToastConfig({
-					show: true,
-					type: 'error',
-					message: 'Insufficient pay amount provided'
-				});
+				toast.error('Insufficient pay amount provided');
 				return;
 			}
 		}
 
 		// If all checks pass, succeed transaction
-		setToastConfig({
-			show: true,
-			type: 'success',
-			message: 'Transaction completed successfully'
-		});
+		toast.success('Transaction completed successfully');
 		setVoucherId(prevId => prevId + 1);
 		handleClearCart();
 	};
 
-	// Auto-hide toast handler
-	useEffect(() => {
-		if (toastConfig.show) {
-			const timer = setTimeout(() => {
-				setToastConfig(prev => ({ ...prev, show: false }));
-			}, 3500);
-			return () => clearTimeout(timer);
-		}
-	}, [toastConfig.show]);
-
 	return (
 		<div className="w-full min-h-screen bg-[#F8FAFC] font-sans flex text-slate-800 antialiased px-4 pt-0 pb-4 relative">
-
-			{/* NOTIFICATION TOAST */}
-			{toastConfig.show && (
-				<div className={`fixed top-5 right-5 z-50 px-5 py-3 rounded-xl shadow-xl flex items-center gap-3 border transition-all duration-300 bg-slate-900 text-white border-slate-800`}>
-					<div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${toastConfig.type === 'success' ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'
-						}`}>
-						{toastConfig.type === 'success' ? '✓' : '!'}
-					</div>
-					<div className="flex flex-col">
-						<span className={`text-xs font-black tracking-wide uppercase ${toastConfig.type === 'success' ? 'text-emerald-400' : 'text-red-400'
-							}`}>
-							{toastConfig.type === 'success' ? 'Sales Successful' : 'Validation Error'}
-						</span>
-						<span className="text-[11px] text-slate-300 font-medium">{toastConfig.message}</span>
-					</div>
-					<button
-						onClick={() => setToastConfig(prev => ({ ...prev, show: false }))}
-						className="ml-2 text-slate-500 hover:text-slate-300 text-lg font-bold"
-					>
-						&times;
-					</button>
-				</div>
-			)}
-
 			<div className="flex-1 flex flex-col overflow-y-auto">
 				<div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start flex-1 mt-2">
 
