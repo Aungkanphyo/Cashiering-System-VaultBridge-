@@ -21,9 +21,9 @@ class ProductSeeder extends Seeder
                 'price'            => 6000.00,
                 'stock_quantity'   => 150,
                 'min_stock_level'  => 20,
-                'sale_price'       => 5100.00, // 6000 ရဲ့ 15% discount နုတ်ပြီးသားစျေး
-                'discount_rate'    => 15.00,   // discount_product နေရာမှာ အစားထိုးသည်
-                'discount_price'   => 900.00,  // discount ပမာဏ
+                'sale_price'       => 5100.00, 
+                'discount_rate'    => 15.00,   
+                'discount_price'   => 900.00,  
                 'status'           => 'active',
                 'created_at'       => Carbon::now(),
                 'updated_at'       => Carbon::now(),
@@ -63,7 +63,7 @@ class ProductSeeder extends Seeder
                 'price'            => 1800.00,
                 'stock_quantity'   => 12,
                 'min_stock_level'  => 20,
-                'sale_price'       => 1710.00, // 1800 ရဲ့ 5% discount နုတ်ပြီးသားစျေး
+                'sale_price'       => 1710.00, 
                 'discount_rate'    => 5.00,
                 'discount_price'   => 900.00,
                 'status'           => 'active',
