@@ -20,7 +20,8 @@ return new class extends Migration
             $table->integer('quantity');
             $table->decimal('sub_total', 15, 2);
             $table->decimal('unit_price', 15, 2);
-            $table->decimal('total_discount', 15, 2)->default(0);
+            $table->decimal('change', 15, 2);
+            $table->decimal('payment_received', 15, 2)->default(0);
             $table->decimal('total', 15, 2);
             $table->timestamps();
         });

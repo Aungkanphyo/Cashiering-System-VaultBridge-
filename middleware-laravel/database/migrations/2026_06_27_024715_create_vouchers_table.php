@@ -17,8 +17,7 @@ return new class extends Migration
             $table->foreignId('session_id')->constrained('cash_register_sessions', 'session_id')->onDelete('cascade');
             $table->foreignId('payment_id')->constrained('sale_payments', 'payment_id')->onDelete('cascade');
 
-            $table->dateTime('sale_date');
-            $table->decimal('final_amount', 15, 2);
+            $table->dateTime('sale_date');            
             $table->string('status');
             $table->text('void_reason')->nullable();
             $table->dateTime('voided_at')->nullable();
