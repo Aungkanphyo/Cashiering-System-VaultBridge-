@@ -12,8 +12,6 @@ use Illuminate\Database\Eloquent\Model;
     'quantity',
     'sub_total',
     'unit_price',
-    'change',
-    'payment_received',
     'total_discount',
     'total',
 ])]
@@ -25,9 +23,7 @@ class VoucherDetail extends Model
     protected $casts = [
         'quantity' => 'integer',
         'sub_total' => 'decimal:2',
-        'unit_price' => 'decimal:2',
-        'change' => 'decimal:2',
-        'payment_received' => 'decimal:2',
+        'unit_price' => 'decimal:2',        
         'total_discount' => 'decimal:2',
         'total' => 'decimal:2',
     ];

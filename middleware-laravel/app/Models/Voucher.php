@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Model;
     'payment_id',
     'sale_date',    
     'status',
+    'change',
+    'payment_received',    
     'void_reason',
     'voided_at',
 ])]
@@ -21,6 +23,8 @@ class Voucher extends Model
 
     protected $casts = [
         'sale_date' => 'datetime',
+        'change' => 'decimal:2',
+        'payment_received' => 'decimal:2',
         'voided_at' => 'datetime',
         'final_amount' => 'decimal:2',
     ];
