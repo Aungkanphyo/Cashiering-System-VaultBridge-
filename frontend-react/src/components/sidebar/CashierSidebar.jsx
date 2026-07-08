@@ -91,17 +91,13 @@ const CashierSidebar = () => {
 
                         <div className="flex gap-3 justify-center">
                             {/* Cancel Button */}
-                            <button 
-                                onClick={() => setIsConfirmOpen(false)}
-                                className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold rounded-xl transition"
-                            >
+                            <button onClick={() => setIsConfirmOpen(false)}
+                                className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold rounded-xl transition">
                                 Cancel
                             </button>
                             {/* Confirm Button */}
-                            <button 
-                                onClick={handleLogout}
-                                className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl shadow-sm shadow-red-200 transition"
-                            >
+                            <button onClick={handleLogout}
+                                className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl shadow-sm shadow-red-200 transition">
                                 Confirm
                             </button>
                         </div>
