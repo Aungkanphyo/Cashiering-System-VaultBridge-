@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import AdminSidebar from "../sidebar/AdminSidebar";
 import { useAuthStore } from "../../stores/authStore";
 import api from "../../api/axios";
-// import ChangePassword from "../../pages/admin/change_password";
+import ChangePassword from "../../pages/admin/ChangePassword";
+
 const AdminLayout = () => {
     // Show current time in the header
     const [time, setTime] = useState("");
@@ -13,6 +14,7 @@ const AdminLayout = () => {
     const logoutUser = useAuthStore((state) => state.logout);
 
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
 
     const handleLogout = async () => {
         setIsConfirmOpen(false);
@@ -58,12 +60,6 @@ const AdminLayout = () => {
     const key = location.pathname.split("/").pop();
     const pageTitle = titleMap[key] || "Admin Panel";
 
-    // useEffect(() => {
-    //     const key = location.pathname.split("/").pop();
-    //     setPageTitle(titleMap[key] || "Admin Panel");
-    // }, [location.pathname]);
-
-
     return (
         <div className="flex w-full h-screen overflow-hidden bg-gray-50">
             <AdminSidebar />
@@ -91,7 +87,7 @@ const AdminLayout = () => {
 
                             {isAdminMenuOpen && (
                                 <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden z-50">
-                                    <button onClick={() => { setIsAdminMenuOpen(false); navigate("/admin/change-password"); }}
+                                    <button onClick={() => { setIsAdminMenuOpen(false); setIsChangePasswordOpen(true); }}
                                         className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-[#21bf8f] hover:text-white transition"
                                     >
                                         <Key className="w-4 h-4" /> Change Password
@@ -139,6 +135,12 @@ const AdminLayout = () => {
                                 </div>
                             </div>
                         )}
+
+                        {/* Change Password Modal Popup */}
+                        <ChangePassword 
+                            isOpen={isChangePasswordOpen} 
+                            onClose={() => setIsChangePasswordOpen(false)} 
+                        />
                     </div>
                 </header>
 

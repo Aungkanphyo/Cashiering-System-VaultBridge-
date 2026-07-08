@@ -6,6 +6,14 @@ import EditStaffModal from "./Popup/EditStaffModal";
 import toast from 'react-hot-toast';
 
 const ViewStaff = () => {
+    const formatDate = (dateStr) => {
+        if (!dateStr || dateStr === "-") return "-";
+        if (typeof dateStr === 'string' && dateStr.includes("T")) {
+            return dateStr.split("T")[0];
+        }
+        return dateStr;
+    }
+
     const [staffs, setStaffs] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
@@ -161,7 +169,7 @@ const ViewStaff = () => {
                                     <td className="p-3 text-center font-bold">{index + 1}.</td>
                                     <td className="p-3 font-bold">{staff.username}</td>
                                     <td className="p-3">{staff.gender}</td>
-                                    <td className="p-3">{staff.join_date}</td>
+                                    <td className="p-3">{formatDate(staff.join_date)}</td>
                                     <td className="p-3">
                                         <span className={staff.status === 'Active' ? 'text-emerald-500 font-semibold' : 'text-red-500 font-semibold'}>
                                             {staff.status}

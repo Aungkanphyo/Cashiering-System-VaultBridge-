@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import api from "../../../../api/axios";
-import { UserPlus, X } from "lucide-react";
+import { Eye, EyeOff, UserPlus, X } from "lucide-react";
 import nrcData from "../../../../data/nrc.json";
 import toast from 'react-hot-toast';
 import useScrollLock from "../../../../hooks/useScrollLock";
@@ -15,6 +15,9 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
         phone_number: '', nrc: '', date_of_birth: '', address: '',
         gender: 'Male', email: '', join_date: ''
     });
+
+    // password visibility state
+    const [showPassword, setShowPassword] = useState(false);
 
     // nrc states
     const [nrcState, setNrcState] = useState("");
@@ -76,6 +79,7 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
                 setNrcState("");
                 setNrcTownship("");
                 setNrcNumber("");
+                setShowPassword(false);
                 onSuccess();
                 onClose();
             }
@@ -110,7 +114,23 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
                         </div>
                         <div>
                             <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Password</label>
-                            <input type="password" name="password" required onChange={handleChange} className="w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition text-gray-800" />
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    name="password"
+                                    required
+                                    onChange={handleChange}
+                                    className="w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition text-gray-800"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                                >
+                                    {showPassword ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                                </button>
+                            </div>
+
                         </div>
                     </div>
 
