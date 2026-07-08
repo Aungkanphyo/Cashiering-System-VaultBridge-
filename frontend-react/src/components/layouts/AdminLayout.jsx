@@ -44,12 +44,15 @@ const AdminLayout = () => {
         "dashboard": "Dashboard",
         "view-category": "View Category",
         "add-category": "Add Category",
+        "edit-category": "Edit Category",
         "view-product": "View Product",
         "add-product": "Add Product",
+        "edit-product": "Edit Product",
         "view-staff": "View Staff",
         "add-staff": "Add Staff",
         "view-payment": "View Payment",
         "add-payment": "Add Payment",
+        "edit-product": "Edit Product",
         "view-session": "View Sessions",
         "view-history": "View History",
         "change-password": "Change Password",
@@ -97,7 +100,7 @@ const AdminLayout = () => {
                                         <Key className="w-4 h-4" /> Change Password
                                     </button>
 
-                                    <button onClick={() => {setIsAdminMenuOpen(false); setIsConfirmOpen(true);}}
+                                    <button onClick={() => { setIsAdminMenuOpen(false); setIsConfirmOpen(true); }}
                                         className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-[#21bf8f] hover:text-white transition"
                                     >
                                         <LogOut className="w-4 h-4" />Logout

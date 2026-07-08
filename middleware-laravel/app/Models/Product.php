@@ -23,6 +23,11 @@ class Product extends Model
     use HasFactory;
     protected $primaryKey = 'product_id';
 
+    // Exposes `discount_value` in JSON responses (mirrors discount_rate),
+    // since the React admin pages read/write this field name.
+    
+
+    
     protected $casts = [
         'price' => 'decimal:2',
         'sale_price' => 'decimal:2',

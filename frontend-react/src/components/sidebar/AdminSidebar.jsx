@@ -70,10 +70,7 @@ const AdminSidebar = () => {
                                     <Layers className="w-4 h-4 mr-3" /> View Category
                                 </NavLink>
 
-                                {/* Add Category */}
-                                <NavLink to="/admin/add-category" className={({ isActive }) => isActive ? activeClass : inactiveClass}>
-                                    <PlusCircle className="w-4 h-4 mr-3" /> Add Category
-                                </NavLink>
+                                
                             </div>
                         )}
                     </div>
@@ -98,10 +95,7 @@ const AdminSidebar = () => {
                                     <ShoppingBag className="w-4 h-4 mr-3" />View Product
                                 </NavLink>
 
-                                {/* Add Product */}
-                                <NavLink to="/admin/add-product" className={({ isActive }) => isActive ? activeClass : inactiveClass}>
-                                    <PlusCircle className="w-4 h-4 mr-3" /> Add Product
-                                </NavLink>
+                                
                             </div>
                         )}
                     </div>
@@ -154,10 +148,7 @@ const AdminSidebar = () => {
                                     <CreditCard className="w-4 h-4 mr-3" /> View Payment
                                 </NavLink>
 
-                                {/* Add Payment */}
-                                <NavLink to="/admin/add-payment" className={({ isActive }) => isActive ? activeClass : inactiveClass}>
-                                    <PlusCircle className="w-4 h-4 mr-3" /> Add Payment
-                                </NavLink>
+                                
                             </div>
                         )}
                     </div>

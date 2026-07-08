@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
     'category_name',
     'tax',
     'discount_category',
+    'status',
 ])]
 class Category extends Model
 {
@@ -18,6 +19,7 @@ class Category extends Model
 
     protected $casts = [
         'tax' => 'decimal:2',
+        'discount_category' => 'decimal:2',
     ];
 
     // Relationship: There can be many products under one category

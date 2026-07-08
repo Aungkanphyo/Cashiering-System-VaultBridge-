@@ -16,7 +16,7 @@ return new class extends Migration
             // Foreign key to categories table
             $table->foreignId('category_id')->constrained('categories', 'category_id')->onDelete('cascade');
 
-            $table->string('barcode')->unique();
+            $table->unsignedBigInteger('barcode')->unique();
             $table->string('product_name');
             $table->decimal('price', 15, 2);
             $table->integer('stock_quantity');
