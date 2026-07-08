@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phone Barcode Scanner</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body style="font-family: sans-serif; text-align: center;">
+    <h2>Barcode Scanner</h2>
+    <div id="interactive" style="width: 100%; max-width: 400px; margin: auto;"></div>
+    <p>Status: <span id="status" style="color: red;">Connecting...</span></p>
+
+    <script>
+        const socket = io(); // will connect to the current server
+
+        socket.on('connect', () => {
+            document.getElementById('status').innerText = 'Connected to server';
+            document.getElementById('status').style.color = 'green';
+        });
+
+        // do when the barcode is successfully read
+        function onScanSuccess(decodedText) {
+            // will send the barcode number to the server.
+            socket.emit('scan-barcode', decodedText);
+            
+            // to stop and read again (so as not to read too much at once)
+            alert("Scanned: " + decodedText); 
+        }
+
+        // Setup to open the camera and scan the barcode
+        let config = { fps: 10, qrbox: { width: 300, height: 150 } };
+        let html5QrcodeScanner = new Html5QrcodeScanner("interactive", config, false);
+        html5QrcodeScanner.render(onScanSuccess);
+    </script>
+</body>
+</html>
