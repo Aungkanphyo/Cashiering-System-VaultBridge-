@@ -19,6 +19,8 @@ return new class extends Migration
 
             $table->dateTime('sale_date');            
             $table->string('status');
+            $table->decimal('change', 15, 2);
+            $table->decimal('payment_received', 15, 2)->default(0);
             $table->text('void_reason')->nullable();
             $table->dateTime('voided_at')->nullable();
 
