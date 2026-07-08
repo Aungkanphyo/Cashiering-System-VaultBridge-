@@ -9,8 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 #[Fillable([
     'session_id',
     'payment_id',
-    'sale_date',
-    'final_amount',
+    'sale_date',    
     'status',
     'void_reason',
     'voided_at',

@@ -9,12 +9,12 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
 });
 
 
+// Cashier only access routes
 
-Route::get('/products', [SaleController::class, 'index']);
+Route::middleware(['auth:sanctum', 'cashier'])->group(function (){
+    Route::get('/products', [SaleController::class, 'index']);
+});
 
-// Route::middleware(['auth:sanctum'])->group(function () {
-//     Route::get('/products', [SaleController::class, 'index']);
-// });
 // Admin only access routes
 Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::get('/staff', [StaffController::class, 'index']); // Staff List (+ Search & Filter)

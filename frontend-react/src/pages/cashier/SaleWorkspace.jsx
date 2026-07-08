@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import api from '../../api/axios';
 import Voucher from './Voucher'; // voucher import for right column
 
