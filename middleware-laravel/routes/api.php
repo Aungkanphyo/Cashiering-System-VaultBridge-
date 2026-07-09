@@ -18,7 +18,7 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
 Route::middleware(['auth:sanctum', 'cashier'])->group(function (){
     Route::get('/products', [SaleController::class, 'index']);
     Route::post('/vouchers', [SaleController::class, 'store']);
-    
+    Route::get('/vouchers/next-id', [SaleController::class, 'getNextVoucherId']);
 });
 
 // Admin only access routes
