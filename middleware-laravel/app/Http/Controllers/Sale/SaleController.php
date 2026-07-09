@@ -12,9 +12,6 @@ use Illuminate\Support\Facades\DB;
 
 class SaleController extends Controller
 {
-    /**
-     * POS Quick Click Items 
-     */
     public function index(): JsonResponse
     {
         try {
@@ -27,8 +24,6 @@ class SaleController extends Controller
             ], 500);
         }
     }
-
-    
 
     /**
      * Store a newly created sale/voucher in storage.
@@ -83,6 +78,24 @@ class SaleController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Database Error: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getNextVoucherId(): JsonResponse
+    {
+        try {
+            $maxId = Voucher::max('voucher_id') ?? Voucher::max('id') ?? 1000;
+            $nextId = $maxId + 1;
+
+            return response()->json([
+                'success' => true,
+                'next_voucher_id' => $nextId
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching next voucher ID: ' . $e->getMessage()
             ], 500);
         }
     }

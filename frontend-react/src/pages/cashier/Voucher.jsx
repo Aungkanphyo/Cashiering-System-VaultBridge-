@@ -86,8 +86,8 @@ const Voucher = ({
       <div className="flex flex-col flex-1 min-h-0">
         <div className="flex justify-between items-center pb-2 border-b border-slate-100 mb-3">
           <h3 className="text-xs font-black text-slate-900 tracking-wide uppercase flex items-center gap-1.5">
-             <span className="h-1.5 w-1.5 rounded-full bg-emerald-600"></span> 
-             VOUCHER NO: #{voucherId}
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-600"></span>
+            VOUCHER NO: #{voucherId}
           </h3>
           <button onClick={handleClearCart} className="text-[10px] font-bold text-red-500 hover:underline">
             Clear All
@@ -100,18 +100,16 @@ const Voucher = ({
             const itemFinalRowTotal = itemDiscountPrice * item.quantity;
 
             return (
-              <div 
-                key={item.id} 
-                className={`flex items-center justify-between p-2 rounded-lg border transition-all duration-300 ${
-                  (recentProductId && item.id && recentProductId === item.id)
-                    ? 'bg-emerald-50/70 border-emerald-400 ring-2 ring-emerald-100' 
+              <div
+                key={item.id}
+                className={`flex items-center justify-between p-2 rounded-lg border transition-all duration-300 ${(recentProductId && item.id && recentProductId === item.id)
+                    ? 'bg-emerald-50/70 border-emerald-400 ring-2 ring-emerald-100'
                     : 'bg-slate-50 border-slate-100'
-                }`}
+                  }`}
               >
                 <div className="w-[45%]">
-                  <p className={`text-xs font-bold line-clamp-1 ${
-                    (recentProductId && item.id && recentProductId === item.id) ? 'text-emerald-800 font-extrabold' : 'text-slate-800'
-                  }`}>
+                  <p className={`text-xs font-bold line-clamp-1 ${(recentProductId && item.id && recentProductId === item.id) ? 'text-emerald-800 font-extrabold' : 'text-slate-800'
+                    }`}>
                     {item.name}
                   </p>
                   <div className="flex items-center gap-2 mt-0.5">
@@ -191,9 +189,8 @@ const Voucher = ({
             <input
               type="number"
               placeholder={paymentMethod === 'Cash' ? "Enter Cash" : "0"}
-              className={`w-full px-2 py-0.5 h-7 text-xs font-sans font-bold border rounded-md focus:outline-none bg-white text-slate-800 border-slate-200 focus:border-emerald-500 ${
-                paymentMethod === 'KPay' ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' : ''
-              }`}
+              className={`w-full px-2 py-0.5 h-7 text-xs font-sans font-bold border rounded-md focus:outline-none bg-white text-slate-800 border-slate-200 focus:border-emerald-500 ${paymentMethod === 'KPay' ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' : ''
+                }`}
               value={paymentMethod === 'KPay' ? finalTotal : payAmount}
               onChange={(e) => setPayAmount(e.target.value)}
               disabled={paymentMethod === 'KPay'}
@@ -216,7 +213,7 @@ const Voucher = ({
             cartItems.length === 0 
               ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-60' 
               : 'bg-emerald-600 hover:bg-emerald-700 border-emerald-700 text-white active:scale-[0.99]'
-          }`}
+            }`}
         >
           <span>🧾</span> Pay & Print
         </button>

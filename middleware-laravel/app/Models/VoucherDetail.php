@@ -2,9 +2,19 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+#[Fillable([
+    'voucher_id',
+    'product_id',
+    'quantity',
+    'sub_total',
+    'unit_price',
+    'total_discount',
+    'total',
+])]
 class VoucherDetail extends Model
 {
     use HasFactory;
@@ -27,6 +37,7 @@ class VoucherDetail extends Model
         'quantity' => 'integer',
         'sub_total' => 'decimal:2',
         'unit_price' => 'decimal:2',
+        'total_discount' => 'decimal:2',
         'total' => 'decimal:2',
     ];
 

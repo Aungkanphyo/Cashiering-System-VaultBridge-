@@ -2,9 +2,20 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+#[Fillable([
+    'session_id',
+    'payment_id',
+    'sale_date',    
+    'status',
+    'change',
+    'payment_received',
+    'void_reason',
+    'voided_at',
+])]
 class Voucher extends Model
 {
     use HasFactory;
