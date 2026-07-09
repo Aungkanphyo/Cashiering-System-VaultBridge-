@@ -18,8 +18,7 @@ const SaleWorkspace = () => {
     const [payAmount, setPayAmount] = useState('');
     const [recentProductId, setRecentProductId] = useState(null);
 
-    // Voucher ID State (ကနဦးတွင် 1001 ထားရှိပြီး useEffect မှ ဒေတာဘေ့စ် ID အမှန်ဖြင့် အစားထိုးပါမည်)
-    const [voucherId, setVoucherId] = useState(1001);
+    const [voucherId, setVoucherId] = useState();
 
     // For real-time barcode
     const productRef = useRef(availableProducts);
@@ -28,12 +27,10 @@ const SaleWorkspace = () => {
         productRef.current = availableProducts;
     }, [availableProducts]);
 
-    // 🎯 ၁။ စာမျက်နှာ စဖွင့်ဖွင့်ချင်းတွင် ဒေတာဘေ့စ်မှ နောက်ဆုံး voucher_id + 1 ကို လှမ်းယူမည့် useEffect
     useEffect(() => {
         fetchNextVoucherId();
     }, []);
 
-    // 🎯 ၂။ နောက်ဆုံး Voucher ID ကို လှမ်းယူပြီး State မြှင့်ပေးသည့် Function
     const fetchNextVoucherId = async () => {
         try {
             const response = await api.get('/vouchers/next-id');
@@ -42,7 +39,7 @@ const SaleWorkspace = () => {
             }
         } catch (err) {
             console.error("Error fetching next voucher ID, using default 1001:", err);
-            setVoucherId(1001); // Error တက်ပါက 1001 အတိုင်း ဆက်ပြထားမည်
+            setVoucherId(1001);
         }
     };
 
