@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\VoucherController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\PaymentMethodController;
@@ -28,6 +29,8 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::get('/staff/{id}', [StaffController::class, 'show']); // View Staff Detail (Popup)
     Route::patch('/staff/{id}/toggle-status', [StaffController::class, 'toggleStatus']);
 
+    // Voucher History API Endpoint
+    Route::get('/admin/vouchers', [VoucherController::class, 'index']);
 });
 
 Route::middleware(['auth:sanctum'])->group(function () {

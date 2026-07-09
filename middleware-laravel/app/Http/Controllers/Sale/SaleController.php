@@ -12,9 +12,6 @@ use Illuminate\Support\Facades\DB;
 
 class SaleController extends Controller
 {
-    /**
-     * POS Quick Click Items 
-     */
     public function index(): JsonResponse
     {
         try {
