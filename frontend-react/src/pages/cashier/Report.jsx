@@ -2,6 +2,7 @@ import { Clock, Info, BarChart3, NotepadText } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
+import toast from "react-hot-toast";
 import { useAuthStore } from "../../stores/authStore";
 
 export default function Report() {
@@ -68,11 +69,11 @@ export default function Report() {
             await api.post("/cash-register/close", { actual_closing_cash: Number(actualCash), report_text: getReportText() });
             await api.post("/logout");
             logout();
-            alert("Session closed successfully");
+            toast.success("Session closed successfully");
             navigate("/login", { replace: true });
         } catch (error) {
             console.error("Logout error:", error.response?.data);
-            alert("Logout failed");
+            toast.error("Logout failed");
         }
     };
 
