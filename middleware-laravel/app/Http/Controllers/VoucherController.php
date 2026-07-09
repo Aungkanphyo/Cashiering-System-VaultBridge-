@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Voucher;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -19,14 +20,29 @@ class VoucherController extends Controller
 
             $perPage = $request->get('per_page', 10);
 
-            $vouchers = Voucher::with(['salePayment','details'])
-                        ->latest('voucher_id')
-                        ->paginate($perPage);
+            // Get current open session
+            $session = DB::table('cash_register_sessions')
+                ->where('user_id', Auth::user()->user_id)
+                ->whereNull('closing_time')
+                ->first();
+
+            if (!$session) {
+                return response()->json([
+                    'message' => 'No active cashier session found'
+                ], 404);
+            }
+
+            // Get only vouchers from current session
+            $vouchers = Voucher::with(['salePayment', 'details'])
+                ->where('session_id', $session->session_id)
+                ->latest('voucher_id')
+                ->paginate($perPage);
+
 
             $data = $vouchers->through(function ($voucher) {
                 $subTotal = $voucher->details->sum('sub_total');
-                $discount = $voucher->details->sum('total_discount');
                 $grandTotal = $voucher->details->sum('total');
+                $discount = $subTotal - $grandTotal;
 
                 return [
                     'voucher_id' => $voucher->voucher_id,
@@ -41,51 +57,50 @@ class VoucherController extends Controller
             });
 
             return response()->json($data);
-
         } catch (Throwable $e) {
             return response()->json([
                 'message' => $e->getMessage(),
                 'line' => $e->getLine(),
-            ],500);
+            ], 500);
         }
     }
 
     /**
      * Void Voucher
      */
-    public function void(Request $request,$id)
+    public function void(Request $request, $id)
     {
-        $request->validate(['void_reason'=>'required|string']);
+        $request->validate(['void_reason' => 'required|string']);
 
         DB::beginTransaction();
 
-        try{
+        try {
             $voucher = Voucher::with('details.product')->findOrFail($id);
 
-            if($voucher->status === 'voided'){
+            if ($voucher->status === 'voided') {
                 return response()->json([
-                    'message'=>'Voucher already voided'
-                ],400);
+                    'message' => 'Voucher already voided'
+                ], 400);
             }
 
-            foreach($voucher->details as $detail){
+            foreach ($voucher->details as $detail) {
                 $product = $detail->product;
-                $product->increment('stock_quantity',$detail->quantity);
+                $product->increment('stock_quantity', $detail->quantity);
             }
 
             $voucher->update([
-                'status'=>'voided',
-                'void_reason'=>$request->void_reason,
-                'voided_at'=>now(),
+                'status' => 'voided',
+                'void_reason' => $request->void_reason,
+                'voided_at' => now(),
             ]);
             DB::commit();
-            return response()->json(['message'=>'Voucher voided successfully']);
-        }catch(Throwable $e){
+            return response()->json(['message' => 'Voucher voided successfully']);
+        } catch (Throwable $e) {
             DB::rollBack();
             return response()->json([
-                'message'=>$e->getMessage(),
-                'line'=>$e->getLine(),
-            ],500);
+                'message' => $e->getMessage(),
+                'line' => $e->getLine(),
+            ], 500);
         }
     }
 }
