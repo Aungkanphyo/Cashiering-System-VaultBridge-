@@ -81,17 +81,17 @@ const ViewDetails = ({ isOpen, onClose, transaction }) => {
 							<div className="space-y-1.5 text-xs font-semibold text-gray-600">
 								<div className="flex justify-between">
 									<span>Subtotal:</span>
-									<span className="font-mono text-gray-900">{(transaction.subtotal || 0).toLocaleString()} MMK</span>
+									<span className="font-mono text-gray-900">{(transaction.subtotal || 0).toLocaleString()} Ks</span>
 								</div>
 								<div className="flex justify-between text-red-500">
 									<span>(-) Total Discount:</span>
-									<span className="font-mono">-{(transaction.totalDiscount || 0).toLocaleString()} MMK</span>
+									<span className="font-mono">-{(transaction.totalDiscount || 0).toLocaleString()} Ks</span>
 								</div>
 
 								<div className="border-t border-dashed border-gray-200 pt-2 flex justify-between items-baseline">
 									<span className="text-sm font-bold text-gray-900">Grand Total:</span>
 									<span className="text-base font-black text-[#08694b] font-mono">
-										{(transaction.finalAmount || 0).toLocaleString()} MMK
+										{(transaction.finalAmount || 0).toLocaleString()} Ks
 									</span>
 								</div>
 							</div>
@@ -107,7 +107,7 @@ const ViewDetails = ({ isOpen, onClose, transaction }) => {
 								<div className="p-2.5 bg-purple-50 border border-purple-100 rounded-lg flex justify-between items-center text-xs font-semibold text-purple-700">
 									<span>{transaction.paymentMethod} Received:</span>
 									<span className="font-mono text-sm font-bold">
-										{(transaction.paidAmount || transaction.finalAmount).toLocaleString()} MMK
+										{(transaction.paidAmount || transaction.finalAmount).toLocaleString()} Ks
 									</span>
 								</div>
 
@@ -115,7 +115,7 @@ const ViewDetails = ({ isOpen, onClose, transaction }) => {
 								<div className="p-2.5 bg-amber-50 border border-amber-100 rounded-lg flex justify-between items-center text-xs font-semibold text-amber-700">
 									<span>(-) Change:</span>
 									<span className="font-mono text-sm font-black">
-										{(transaction.changeAmount || 0).toLocaleString()} MMK
+										{(transaction.changeAmount || 0).toLocaleString()} Ks
 									</span>
 								</div>
 							</div>
