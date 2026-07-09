@@ -145,8 +145,6 @@ const ViewHistory = () => {
 									<th className="py-4 px-5 w-16">No.</th>
 									<th className="py-4 px-5">Sale ID</th>
 									<th className="py-4 px-5">Date & Time</th>
-									<th className="py-4 px-5 text-right">Subtotal</th>
-									<th className="py-4 px-5 text-right">Total Discount</th>
 									<th className="py-4 px-5 text-right">Total Grand</th>
 									<th className="py-4 px-5 text-right">Change</th>
 									<th className="py-4 px-5 text-center">Payment Method</th>
@@ -157,13 +155,13 @@ const ViewHistory = () => {
 							<tbody className="divide-y divide-gray-100 text-sm font-medium text-gray-700">
 								{isLoading ? (
 									<tr>
-										<td colSpan="10" className="text-center py-12 text-emerald-600 font-bold animate-pulse">
+										<td colSpan="8" className="text-center py-12 text-emerald-600 font-bold animate-pulse">
 											Loading data from database...
 										</td>
 									</tr>
 								) : error ? (
 									<tr>
-										<td colSpan="10" className="text-center py-12 text-red-500 font-semibold">
+										<td colSpan="8" className="text-center py-12 text-red-500 font-semibold">
 											{error}
 										</td>
 									</tr>
@@ -184,14 +182,6 @@ const ViewHistory = () => {
 
 											<td className="py-4 px-5 text-gray-500 font-mono text-xs whitespace-nowrap">
 												{tx.dateTime}
-											</td>
-
-											<td className={`py-4 px-5 text-right font-mono whitespace-nowrap ${tx.status === "VOIDED" ? "text-gray-400 line-through" : "text-gray-900"}`}>
-												{tx.subtotal.toLocaleString()} Ks
-											</td>
-
-											<td className={`py-4 px-5 text-right font-mono text-red-500 whitespace-nowrap ${tx.status === "VOIDED" ? "opacity-40" : ""}`}>
-												{tx.totalDiscount > 0 ? `-${tx.totalDiscount.toLocaleString()} Ks` : "0"}
 											</td>
 
 											<td className="py-4 px-5 text-right font-mono font-black text-slate-900 whitespace-nowrap" >

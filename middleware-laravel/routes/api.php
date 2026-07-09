@@ -1,10 +1,10 @@
 <?php
 
-use App\Http\Controllers\Admin\VoucherController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\PaymentMethodController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\Admin\AdminVoucherController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Sale\SaleController; 
@@ -30,7 +30,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::patch('/staff/{id}/toggle-status', [StaffController::class, 'toggleStatus']);
 
     // Voucher History API Endpoint
-    Route::get('/admin/vouchers', [VoucherController::class, 'index']);
+    Route::get('/admin/vouchers', [AdminVoucherController::class, 'index']);
 });
 
 Route::middleware(['auth:sanctum'])->group(function () {
