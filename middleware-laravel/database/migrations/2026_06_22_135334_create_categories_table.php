@@ -15,7 +15,8 @@ return new class extends Migration
             $table->id('category_id');
             $table->string('category_name');
             $table->decimal('tax', 5, 2)->nullable();
-            $table->string('discount_category')->nullable();
+            $table->decimal('discount_category',5,2)->nullable();
+            $table->string('status')->default('active');
             $table->timestamps();
         });
     }
