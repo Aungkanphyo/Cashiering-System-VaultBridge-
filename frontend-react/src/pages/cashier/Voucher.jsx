@@ -1,4 +1,7 @@
-import React from 'react';
+import React, { useRef } from 'react';
+import { useReactToPrint } from 'react-to-print';
+import VoucherPrinter from './VoucherPrinter';
+import toast from 'react-hot-toast';
 
 const Voucher = ({
   voucherId,
@@ -18,9 +21,68 @@ const Voucher = ({
   handleClearCart,
   handleProcessSale
 }) => {
-  return (
-    <div className="lg:col-span-5 bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between h-[calc(100vh-16px)] sticky top-0">
+  
+  const printComponentRef = useRef();
+
+  // Print trigger integration that resets cart on safe execution without window reloads
+  const handlePrintFn = useReactToPrint({
+    contentRef: printComponentRef,
+    onAfterPrint: () => {
+      handleClearCart();
+      toast.success('Sale processed successfully!');
+    }
+  });
+
+  // Action flow control with interactive UI form validation
+  const handlePayAndPrint = async () => {
+    if (cartItems.length === 0) {
+      toast.error('No products in the cart to process sale.');
+      return;
+    }
+
+    if (paymentMethod === 'Cash') {
+      const parsedPayAmount = parseFloat(payAmount);
       
+      if (!payAmount || isNaN(parsedPayAmount) || parsedPayAmount <= 0) {
+        toast.error('Please enter a received payment amount!');
+        return; 
+      }
+
+      if (parsedPayAmount < finalTotal) {
+        toast.error(`Insufficient amount! Received amount is less than ${finalTotal.toLocaleString()} Ks.`);
+        return; 
+      }
+    }
+
+    try {
+      // 1. Persist data record update to API Database pipeline
+      await handleProcessSale();
+      
+      // 2. Safely trigger print preview overlay context on success
+      handlePrintFn();
+
+    } catch (error) {
+      console.error("Sale processing failed:", error);
+      toast.error("Failed to save transaction to database.");
+    }
+  };
+
+  return (
+    <div className="lg:col-span-5 bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between h-[calc(90vh-16px)] sticky top-0">
+      
+      {/* Hidden Voucher Element Target Node Container */}
+      <VoucherPrinter 
+        ref={printComponentRef}
+        voucherId={voucherId}
+        cartItems={cartItems}
+        subtotal={subtotal}
+        totalDiscount={totalDiscount}
+        finalTotal={finalTotal}
+        paymentMethod={paymentMethod}
+        payAmount={payAmount}
+        changeDue={changeDue}
+      />
+
       <div className="flex flex-col flex-1 min-h-0">
         <div className="flex justify-between items-center pb-2 border-b border-slate-100 mb-3">
           <h3 className="text-xs font-black text-slate-900 tracking-wide uppercase flex items-center gap-1.5">
@@ -103,7 +165,7 @@ const Voucher = ({
         </div>
       </div>
 
-      {/* PAYMENT TYPE METHOD SELECTOR */}
+      {/* METHOD SELECTOR */}
       <div className="mt-3 pt-2 border-t border-slate-100 grid grid-cols-12 gap-2.5 items-center bg-white">
         <div className="col-span-4">
           <label className="block text-[9px] font-black text-slate-400 uppercase mb-1">Method</label>
@@ -146,18 +208,17 @@ const Voucher = ({
         </div>
       </div>
 
-      {/* Pay Action Submit Button */}
       <div className="pt-3 bg-white">
         <button
-          disabled={cartItems.length === 0}
-          onClick={handleProcessSale}
+          disabled={cartItems.length === 0} 
+          onClick={handlePayAndPrint} 
           className={`w-full py-2 px-4 rounded-lg font-bold text-xs border shadow-xs transition-all flex items-center justify-center gap-1.5 ${
             cartItems.length === 0 
               ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-60' 
               : 'bg-emerald-600 hover:bg-emerald-700 border-emerald-700 text-white active:scale-[0.99]'
           }`}
         >
-          <span>🧾</span> Pay
+          <span>🧾</span> Pay & Print
         </button>
       </div>
 

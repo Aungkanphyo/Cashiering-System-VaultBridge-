@@ -18,7 +18,6 @@ const SaleWorkspace = () => {
     const [payAmount, setPayAmount] = useState('');
     const [recentProductId, setRecentProductId] = useState(null);
 
-    // Voucher ID State (ကနဦးတွင် 1001 ထားရှိပြီး useEffect မှ ဒေတာဘေ့စ် ID အမှန်ဖြင့် အစားထိုးပါမည်)
     const [voucherId, setVoucherId] = useState(1001);
 
     // For real-time barcode
@@ -233,17 +232,16 @@ const SaleWorkspace = () => {
             const response = await api.post('/vouchers', salePayload);
 
             if (response.status === 200 || response.status === 201 || response.data.success) {
-                toast.success(`Transaction is successfully completed!`);
+                
                 
                 // 🎯 ၃။ စာရင်းသိမ်းဆည်းပြီးနောက် နောက်ထပ်ထွက်မည့် Voucher ID အသစ်ကို API ထံမှ ထပ်မံတောင်းယူပြီး Update လုပ်ခြင်း
-                fetchNextVoucherId();
-                
-                handleClearCart();
+                fetchNextVoucherId();                
             }
         } catch (error) {
             console.error("Sale Process Backend Error:", error);
             const serverError = error.response?.data?.message || error.response?.data?.error || "Failed to process sale. Please try again.";
             toast.error(serverError);
+            throw error; // Re-throwing for potential further handling
         }
     };
 
