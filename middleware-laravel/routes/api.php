@@ -13,6 +13,8 @@ Route::post('/logout',[AuthenticatedSessionController::class, 'destroy']);
 // Cashier only access routes
 Route::middleware(['auth:sanctum', 'cashier'])->group(function (){
     Route::get('/products', [SaleController::class, 'index']);
+    Route::post('/vouchers', [SaleController::class, 'store']);
+    
 });
 
 // Admin only access routes
