@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\CashRegisterSession;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -53,7 +54,7 @@ class AuthenticatedSessionController extends Controller
             'user' => [
                 'username' => $user->username,
                 'email' => $user->email,
-                'role' => $user->role, // admin or cashier
+                'role' => $user->role,
             ]
         ]);
     }
@@ -87,15 +88,14 @@ class AuthenticatedSessionController extends Controller
         }
 
         Auth::guard('web')->logout();
-
-        // Change the Session ID to a new one and destroy all data from the previous session (for security)
+        // Clear session
         $request->session()->invalidate();
-
+        // Create new CSRF token
         $request->session()->regenerateToken();
 
         return response()->json([
-            'status' => 'success',
-            'message' => 'Logged out successfully'
+            "status" => "success",
+            "message" => "Logged out successfully"
         ]);
     }
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import api from '../../api/axios';
 import Voucher from './Voucher'; // voucher import for right column
 import { io } from 'socket.io-client';
@@ -20,6 +20,9 @@ const SaleWorkspace = () => {
 
     const [voucherId, setVoucherId] = useState();
 
+    // To save Payment Methods from the Database
+    const [dbPaymentMethods, setDbPaymentMethods] = useState([]);
+
     // For real-time barcode
     const productRef = useRef(availableProducts);
 
@@ -27,21 +30,34 @@ const SaleWorkspace = () => {
         productRef.current = availableProducts;
     }, [availableProducts]);
 
-    useEffect(() => {
-        fetchNextVoucherId();
-    }, []);
-
-    const fetchNextVoucherId = async () => {
+    const fetchNextVoucherId = useCallback(async () => {
         try {
             const response = await api.get('/vouchers/next-id');
             if (response.data && response.data.success) {
                 setVoucherId(Number(response.data.next_voucher_id));
             }
         } catch (err) {
-            console.error("Error fetching next voucher ID, using default 1001:", err);
-            setVoucherId(1001);
+            console.error("Error fetching next voucher ID", err);
         }
-    };
+    }, []);
+
+    const fetchPaymentMethods = useCallback(async () => {
+        try {
+            const response = await api.get('/payment-methods');
+            setDbPaymentMethods(response.data || []);
+        } catch (err) {
+            console.error("Error fetching payment methods:", err);
+        }
+    }, []);
+
+    useEffect(() => {
+        const initializeData = async () => {
+            fetchNextVoucherId();
+            fetchPaymentMethods();
+        };
+
+        initializeData();
+    }, [fetchNextVoucherId, fetchPaymentMethods]);
 
     // --- Laravel API (Fetch Products) ---  
     useEffect(() => {
@@ -55,7 +71,7 @@ const SaleWorkspace = () => {
                     const productId = product.id ? Number(product.id) : (product.product_id ? Number(product.product_id) : (index + 1));
                     return {
                         id: productId,
-                        code: product.barcode || product.code || product.product_code || `P${String(productId).padStart(4, '0')}`,
+                        code: String(product.barcode || product.code || product.product_code || `P${String(productId).padStart(4, '0')}`),
                         name: product.name || product.product_name,
                         price: parseFloat(product.price || product.selling_price || 0),
                         discountPercent: parseFloat(product.discount_percent || product.discount_rate || 0),
@@ -82,14 +98,13 @@ const SaleWorkspace = () => {
         const socket = io('http://localhost:5000');
 
         socket.on('display-barcode', (scannedBarcode) => {
-            console.log("Barcode received from phone:", scannedBarcode);
             const cleanBarcode = scannedBarcode.trim();
 
             const matchedProduct = productRef.current.find(
                 (product) => product.code && product.code.trim() === cleanBarcode
             );
 
-            if(matchedProduct) {
+            if (matchedProduct) {
                 if (matchedProduct.status === 'inactive') {
                     toast.error(`"${matchedProduct.name}" cannot be added.`);
                     return;
@@ -98,10 +113,10 @@ const SaleWorkspace = () => {
                 setRecentProductId(matchedProduct.id);
                 setCartItems((prev) => {
                     const exist = prev.find((item) => item.id === matchedProduct.id);
-                    if(exist) {
+                    if (exist) {
                         return prev.map((item) => item.id === matchedProduct.id ? { ...item, quantity: item.quantity + 1 } : item);
                     }
-                    return [...prev, {...matchedProduct, quantity: 1}];
+                    return [...prev, { ...matchedProduct, quantity: 1 }];
                 });
 
                 toast.success(`Scanned: ${matchedProduct.name} added to cart.`);
@@ -185,7 +200,7 @@ const SaleWorkspace = () => {
         setRecentProductId(null);
     };
 
-    // --- 🎯 Process Sale with Laravel API Integration ---
+    // Process Sale with Laravel API Integration ---
     const handleProcessSale = async () => {
         if (cartItems.length === 0) {
             toast.error('No products in the cart to process sale.');
@@ -204,34 +219,33 @@ const SaleWorkspace = () => {
             }
         }
 
-        // Payload Framework 
+        const matchedPaymentObj = dbPaymentMethods.find(
+            method => method.payment_name.toLowerCase() === paymentMethod.toLowerCase()
+        );
+
+        if (!matchedPaymentObj) {
+            toast.error(`The selected payment method [${paymentMethod}] was not found in the database.`);
+            return;
+        }
+
         const salePayload = {
-            session_id: 2, // temporary static for session_id 
-            payment_id: paymentMethod === 'Cash' ? 1 : 2, 
-            sale_date: new Date().toISOString().slice(0, 19).replace('T', ' '), // YYYY-MM-DD HH:MM:SS
+            payment_id: matchedPaymentObj.payment_id,
             status: 'completed',
-            change: changeDue,
-            payment_received: paymentMethod === 'KPay' ? finalTotal : parseFloat(payAmount), 
-            
-            items: cartItems.map(item => {
-                const discountAmount = (item.price * (item.discountPercent || 0)) / 100;
-                const finalItemPrice = item.price - discountAmount;
-                return {
-                    product_id: Number(item.id),
-                    quantity: parseInt(item.quantity, 10),
-                    sub_total: item.price * item.quantity,
-                    unit_price: item.price,              
-                    total: finalItemPrice * item.quantity 
-                };
-            })
+            payment_received: paymentMethod === 'KPay' ? finalTotal : parseFloat(payAmount),
+
+            items: cartItems.map(item => ({
+                product_id: Number(item.id),
+                quantity: parseInt(item.quantity, 10),
+            }))
         };
 
         try {
             const response = await api.post('/vouchers', salePayload);
 
             if (response.status === 200 || response.status === 201 || response.data.success) {
-                
-                fetchNextVoucherId();                
+                toast.success(`Transaction is successfully completed!`);
+                fetchNextVoucherId();
+                handleClearCart();
             }
         } catch (error) {
             console.error("Sale Process Backend Error:", error);
@@ -288,18 +302,16 @@ const SaleWorkspace = () => {
                                                         key={p.id}
                                                         onClick={() => handleAddProduct(p)}
                                                         disabled={isInactive}
-                                                        className={`relative border rounded-xl text-left p-4 transition-all duration-200 flex flex-col justify-between h-30 group transform select-none ${
-                                                            isInactive
-                                                                ? 'bg-slate-100 border-slate-200 opacity-50 cursor-not-allowed shadow-none' 
-                                                                : isRecent
+                                                        className={`relative border rounded-xl text-left p-4 transition-all duration-200 flex flex-col justify-between h-30 group transform select-none ${isInactive
+                                                            ? 'bg-slate-100 border-slate-200 opacity-50 cursor-not-allowed shadow-none'
+                                                            : isRecent
                                                                 ? 'bg-emerald-50/40 border-emerald-500 ring-2 ring-emerald-500/20 shadow-sm'
                                                                 : 'bg-white border-slate-200/80 hover:border-slate-300 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98]'
-                                                        }`}
+                                                            }`}
                                                     >
                                                         <div className="w-full">
-                                                            <h4 className={`text-[13px] font-bold leading-snug tracking-tight transition-colors line-clamp-2 ${
-                                                                isInactive ? 'text-slate-400' : isRecent ? 'text-emerald-800' : 'text-slate-700 group-hover:text-emerald-600'
-                                                            }`}>
+                                                            <h4 className={`text-[13px] font-bold leading-snug tracking-tight transition-colors line-clamp-2 ${isInactive ? 'text-slate-400' : isRecent ? 'text-emerald-800' : 'text-slate-700 group-hover:text-emerald-600'
+                                                                }`}>
                                                                 {p.name}
                                                             </h4>
                                                         </div>
@@ -320,9 +332,8 @@ const SaleWorkspace = () => {
                                                             </div>
 
                                                             <div className="flex items-baseline justify-between w-full">
-                                                                <div className={`text-sm font-black font-sans tracking-tight ${
-                                                                    isInactive ? 'text-slate-400' : isRecent ? 'text-emerald-600' : 'text-slate-900'
-                                                                }`}>
+                                                                <div className={`text-sm font-black font-sans tracking-tight ${isInactive ? 'text-slate-400' : isRecent ? 'text-emerald-600' : 'text-slate-900'
+                                                                    }`}>
                                                                     {p.price.toLocaleString()} <span className="text-[10px] font-normal text-slate-400">Ks</span>
                                                                 </div>
                                                             </div>
