@@ -38,7 +38,7 @@ class AuthenticatedSessionController extends Controller
                 if (!$activeSession) {
                     CashRegisterSession::create([
                         'user_id'               => $user->user_id,
-                        'opening_time'          => Carbon::now(), // Set auto current time
+                        'opening_time'          => Carbon::now()->toDateTimeString(),
                         'expected_closing_cash' => 0.00,          // Default opening cash amount to 0
                     ]);
                 }
@@ -76,7 +76,7 @@ class AuthenticatedSessionController extends Controller
                 // If an active session is found, close it automatically using the current system time
                 if ($activeSession) {
                     $activeSession->update([
-                        'closing_time'        => Carbon::now(), // Close with auto current time
+                        'closing_time'        => Carbon::now()->toDateTimeString(), // Close with auto current time
                         'actual_closing_cash' => 0.00,          // Default to 0 for later calculation in Admin Panel
                         'discrepancy'         => 0.00,
                     ]);

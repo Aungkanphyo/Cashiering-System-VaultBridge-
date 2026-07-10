@@ -32,18 +32,14 @@ class AdminVoucherController extends Controller
 
         // Status Select Box Filter (COMPLETED / VOIDED)
         if ($request->filled('status') && $request->input('status') !== 'ALL') {
-            $status = $request->input('status');
-            
-            $query->where(function ($q) use ($status) {
-                if ($status === 'voided') {
-                    
-                    $q->where('void_reason', 'like', "%{$status}%");
-                } else if ($status === 'completed') {
-                    
-                    $q->whereNull('void_reason');
-                }
-            });
-        }
+    $status = strtolower($request->input('status'));
+    
+    if ($status === 'voided') {
+        $query->where('status', 'VOIDED');
+    } else if ($status === 'completed') {
+        $query->where('status', 'COMPLETED')->whereNull('void_reason');
+    }
+}
 
         //  Date Range Filter 
         if ($request->filled('from_date')) {

@@ -206,7 +206,7 @@ const SaleWorkspace = () => {
 
         // Payload Framework 
         const salePayload = {
-            session_id: 1, // temporary static for session_id 
+            session_id: 2, // temporary static for session_id 
             payment_id: paymentMethod === 'Cash' ? 1 : 2, 
             sale_date: new Date().toISOString().slice(0, 19).replace('T', ' '), // YYYY-MM-DD HH:MM:SS
             status: 'completed',
@@ -231,8 +231,6 @@ const SaleWorkspace = () => {
 
             if (response.status === 200 || response.status === 201 || response.data.success) {
                 
-                
-                // 🎯 ၃။ စာရင်းသိမ်းဆည်းပြီးနောက် နောက်ထပ်ထွက်မည့် Voucher ID အသစ်ကို API ထံမှ ထပ်မံတောင်းယူပြီး Update လုပ်ခြင်း
                 fetchNextVoucherId();                
             }
         } catch (error) {

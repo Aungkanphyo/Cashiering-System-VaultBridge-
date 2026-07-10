@@ -10,11 +10,12 @@ import {
   ChevronsLeft,
   ChevronLeft,
   ChevronRight,
-  ChevronsRight
+  ChevronsRight,
+  Trash2
 } from "lucide-react";
 
 const ViewSession = () => {
-  // 🌟 Server-side State Management
+  //  Server-side State Management
   const [sessions, setSessions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -29,7 +30,7 @@ const ViewSession = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
 
-  // 🌟 Fetch session data via API inside useEffect
+  //  Fetch session data via API inside useEffect
   useEffect(() => {
     const fetchSessions = async () => {
       try {
@@ -73,6 +74,20 @@ const ViewSession = () => {
     setFromDate("");
     setToDate("");
     setCurrentPage(1);
+  };
+
+  // Time formatting function to display date and time in Myanmar Standard Time (MMT) format
+  const formatRawDatabaseTime = (dateString) => {
+    if (!dateString) return "-";
+    
+    
+    if (dateString.includes('T')) {
+      const [datePart, timePart] = dateString.split('T');
+      const cleanTime = timePart.split('.')[0]; 
+      return `${datePart} ${cleanTime}`;        // YYYY-MM-DD HH:mm:ss
+    }
+    
+    return dateString;
   };
 
   return (
@@ -182,22 +197,19 @@ const ViewSession = () => {
                         </div>
                       </td>
 
-                      {/* Opening Time */}
-                      <td className="py-4 px-5 text-gray-500 font-mono text-xs whitespace-nowrap">
-                        {session.opening_time}
-                      </td>
+               {/* Opening Time */}
+              <td className="py-4 px-5 text-gray-500 font-mono text-xs whitespace-nowrap">
+                {formatRawDatabaseTime(session.opening_time)}
+              </td>
 
-                      {/* Closing Time / Running Status */}
-                      <td className="py-4 px-5 font-mono text-xs whitespace-nowrap">
-                        {isRunning ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-sans font-bold uppercase tracking-wide text-[10px]">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-                            Running
-                          </span>
-                        ) : (
-                          <span className="text-gray-500">{session.closing_time}</span>
-                        )}
-                      </td>
+              {/* Closing Time */}
+              <td className="py-4 px-5 font-mono text-xs whitespace-nowrap">
+                {isRunning ? (
+                  <span className="inline-flex ...">Running</span>
+                ) : (
+                  <span className="text-gray-500">{formatRawDatabaseTime(session.closing_time)}</span>
+                )}
+              </td>
 
                       {/* Expected Cash */}
                       <td className="py-4 px-5 text-right text-gray-900 font-mono whitespace-nowrap">

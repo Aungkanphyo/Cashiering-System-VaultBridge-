@@ -40,4 +40,11 @@ class CashRegisterSession extends Model
     {
         return $this->hasMany(Voucher::class, 'session_id', 'session_id');
     }
+    
+
+    // Timezone handling for opening and closing times
+    protected function serializeDate(\DateTimeInterface $date)
+    {
+        return $date->format('Y-m-d H:i:s');
+    } 
 }
