@@ -115,23 +115,72 @@ export default function Dashboard() {
       {/* Bottom Section*/}
       <div className="grid xl:grid-cols-3 gap-6 mt-8">
         {/* Best Sellers Items Section */}
+        {/* Best Sellers Items Section */}
         <div className="xl:col-span-2 bg-white rounded-2xl border shadow-sm p-6">
           <div className="flex items-center gap-3 mb-8">
             <ChartColumn className="text-emerald-500" size={28} />
             <h2 className="font-bold text-xl">Best Seller Items</h2>
           </div>
 
-          {(dashboard.bestSeller || []).map((product, index) => {
-            const totalQty = dashboard.bestSeller.reduce((sum, item) => sum + Number(item.qty), 0);
-            const percent = (product.qty / totalQty) * 100;
+          <div className="space-y-5">
+            {(() => {
+              // Calculate total quantity once outside the loop
+              const totalQty = (dashboard.bestSeller || []).reduce((sum, item) => sum + Number(item.qty), 0);
 
-            return (
-              <div key={product.product_name}>
-                {product.product_name}
-                {product.qty} Units
-              </div>
-            )
-          })}
+              const barColors = [
+                "bg-cyan-500",    
+                "bg-orange-500", 
+                "bg-rose-500",  
+                "bg-emerald-500",  
+                "bg-purple-500"    
+              ];
+
+              const badgeColors = [
+                "bg-cyan-100 text-cyan-600",
+                "bg-orange-100 text-orange-600",
+                "bg-rose-100 text-rose-600",
+                "bg-emerald-100 text-emerald-600",
+                "bg-purple-100 text-purple-600"
+              ];
+
+              if (totalQty === 0) {
+                return (
+                  <div className="text-center py-10 text-slate-400">
+                    No sales data available for this period.
+                  </div>
+                );
+              }
+
+              return (dashboard.bestSeller || []).map((product, index) => {
+                const percent = totalQty > 0 ? (Number(product.qty) / totalQty) * 100 : 0;
+                const currentBarColor = barColors[index] || "bg-slate-500";
+                const currentBadgeColor = badgeColors[index] || "bg-slate-100 text-slate-600";
+
+                return (
+                  <div key={product.product_name || index} className="space-y-2">
+                    {/* Product Name & Info Row */}
+                    <div className="flex justify-between items-center text-sm font-semibold text-slate-700">
+                      <div className="flex items-center gap-2">
+                        <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold ${currentBadgeColor}`}>
+                          {index + 1}
+                        </span>
+                        <span>{product.product_name}</span>
+                      </div>
+                      <div className="text-slate-500 text-sm">
+                        <span className="text-slate-800 font-bold">{product.qty} Units</span> ({percent.toFixed(1)}%)
+                      </div>
+                    </div>
+
+                    {/* Progress Bar Wrapper */}
+                    <div className="w-full bg-slate-100 h-3.5 rounded-full overflow-hidden">
+                      {/* Dynamic Progress Indicator with Unique Color */}
+                      <div className={`h-full rounded-full transition-all duration-500 ease-out ${currentBarColor}`} style={{ width: `${percent}%` }} />
+                    </div>
+                  </div>
+                );
+              });
+            })()}
+          </div>
         </div>
 
         {/* Low Stock Warning Section */}
