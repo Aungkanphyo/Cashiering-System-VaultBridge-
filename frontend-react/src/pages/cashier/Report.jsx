@@ -2,6 +2,7 @@ import { Clock, Info, BarChart3, NotepadText } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
+import toast from "react-hot-toast";
 import { useAuthStore } from "../../stores/authStore";
 
 export default function Report() {
@@ -20,6 +21,7 @@ export default function Report() {
         const fetchSession = async () => {
             try {
                 const response = await api.get("/cash-register/session");
+                console.log(response.data);
                 setSession(response.data);
             } catch (error) {
                 console.error("Session Error:", error.response?.data);
@@ -67,11 +69,11 @@ export default function Report() {
             await api.post("/cash-register/close", { actual_closing_cash: Number(actualCash), report_text: getReportText() });
             await api.post("/logout");
             logout();
-            alert("Session closed successfully");
+            toast.success("Session closed successfully");
             navigate("/login", { replace: true });
         } catch (error) {
             console.error("Logout error:", error.response?.data);
-            alert("Logout failed");
+            toast.error("Logout failed");
         }
     };
 
@@ -161,21 +163,21 @@ export default function Report() {
 
                     <hr className="my-6" />
 
-                    {/* <SummaryCard title="Total" value={`${expectedCash.toLocaleString()} MMK`}/>
-                    <SummaryCard title="Cash" value={actualCash ? `${Number(actualCash).toLocaleString()} MMK` : "0 MMK"}/>
-                    <SummaryCard title="KPay" value={discrepancy !== null ? `${discrepancy.toLocaleString()} MMK` : "0 MMK"}bg={discrepancy < 0 ? "bg-red-100" : "bg-green-100"}/>
-                    <SummaryCard title="Voided Voucher" value={discrepancy !== null ? `${discrepancy.toLocaleString()} MMK` : "0 MMK"}bg={discrepancy < 0 ? "bg-red-100" : "bg-green-100"}/> */}
+                    <SummaryCard title="Total Sales" value={`${Number(session?.summary?.total ?? 0).toLocaleString()} MMK`}/>
+                    <SummaryCard title="Cash" value={`${Number(session?.summary?.cash ?? 0).toLocaleString()} MMK`} bg="bg-yellow-100" text="text-yellow-700" />
+                    <SummaryCard title="Kpay" value={`${Number(session?.summary?.kpay ?? 0).toLocaleString()} MMK`} bg="bg-blue-100" text="text-blue-700"/>
+                    <SummaryCard title="Voided voucher" value={`${Number(session?.summary?.voided ?? 0).toLocaleString()}`} bg="bg-red-100" text="text-red-700"/>
                 </div>
             </div>
         </div>
     );
 }
 
-function SummaryCard({ title, value, bg = "bg-green-100" }) {
+function SummaryCard({ title, value, bg = "bg-green-100",text = "text-green-700",}) {
     return (
         <div className={`flex justify-between rounded-2xl ${bg} px-5 py-5 mb-5`}>
-            <span className="font-semibold">{title}</span>
-            <span className="font-bold">{value}</span>
+            <span className={`font-semibold ${text}`}>{title}</span>
+            <span className={`font-bold ${text}`}>{value}</span>
         </div>
     );
 }

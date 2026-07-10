@@ -16,12 +16,11 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             UserSeeder::class,
-            CashRegisterSessionSeeder::class,
-            CategorySeeder::class,
+            CategorySeeder::class, 
             ProductSeeder::class,
-            PaymentSeeder::class,
-            VoucherSeeder::class,
-            VoucherDetailsSeeder::class,
+            MainVoucherSeeder::class,
         ]);
+
+
     }
 }

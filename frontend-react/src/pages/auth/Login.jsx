@@ -29,24 +29,24 @@ const Login = () => {
                 password: password,
             });
 
-            if (response.status === 200 || response.data?.status === "success"){
-                if(response.data?.token) {
+            if (response.status === 200 || response.data?.status === "success") {
+                if (response.data?.token) {
                     localStorage.setItem('token', response.data.token);
                 }
 
                 const userData = response.data?.user;
                 loginUser(userData);
 
-                if(userData?.role === "admin"){
+                if (userData?.role === "admin") {
                     navigate("/admin/dashboard");
-                } else if(userData?.role === "cashier") {
+                } else if (userData?.role === "cashier") {
                     navigate("/cashier/sale");
                 }
             }
         } catch (error) {
-            if(error.response && error.response.status === 422){
+            if (error.response && error.response.status === 422) {
                 setErrors(error.response.data.errors);
-            } else if (error.response && error.response.data.message){
+            } else if (error.response && error.response.data.message) {
                 setErrors({ email: [error.response.data.message] });
             } else {
                 setErrors({ email: ["Unable to log in, please try again later."] });
@@ -133,7 +133,7 @@ const Login = () => {
                     />
                     <h2 className="text-[34px] md:text-[42px] font-bold mb-3.75 text-white leading-tight">Welcome Back!</h2>
                     <p className="text-[15px] md:text-[16px] leading-relaxed md:leading-7.5 text-emerald-50">
-                        Manage your retail business effortlessly with <strong className="text-[#D1FAE5] font-bold">Mart4U POS</strong>.<br/><br/>
+                        Manage your retail business effortlessly with <strong className="text-[#D1FAE5] font-bold">Mart4U POS</strong>.<br /><br />
                         Fast • Secure • Smart
                     </p>
                 </div>
