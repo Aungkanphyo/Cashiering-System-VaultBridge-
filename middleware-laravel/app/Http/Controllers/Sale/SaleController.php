@@ -16,7 +16,6 @@ class SaleController extends Controller
     public function index(): JsonResponse
     {
         try {
-            // Models folder အောက်ရှိ သက်ဆိုင်ရာ Category relationship ပါတစ်ခါတည်းဆွဲယူခြင်း
             $products = Product::with('category')->get();
 
             return response()->json($products, 200);
