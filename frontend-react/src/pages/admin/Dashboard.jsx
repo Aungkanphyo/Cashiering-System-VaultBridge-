@@ -8,7 +8,6 @@ export default function Dashboard() {
       sales: 0,
       cash: 0,
       kpay: 0,
-      wave: 0
     },
     bestSeller: [],
     lowStock: []
@@ -37,13 +36,6 @@ export default function Dashboard() {
       icon: QrCode,
       bg: "bg-blue-100",
       color: "text-blue-600",
-    },
-    {
-      title: "TOTAL WAVEPAY RECEIVED",
-      amount: Number(dashboard.cards?.wave || 0),
-      icon: QrCode,
-      bg: "bg-purple-100",
-      color: "text-purple-600",
     },
   ];
 
@@ -102,7 +94,7 @@ export default function Dashboard() {
 
       {/* Cards Section*/}
       <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5 mt-6">
-        {stats.filter((item) => item.amount > 0).map((item) => {
+        {stats.map((item) => {
           const Icon = item.icon;
 
           return (

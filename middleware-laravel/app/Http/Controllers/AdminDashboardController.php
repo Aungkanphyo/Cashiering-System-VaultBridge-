@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\Voucher; 
+use App\Models\Product; 
 use Illuminate\Support\Facades\DB;
 
 class AdminDashboardController extends Controller
@@ -20,40 +22,40 @@ class AdminDashboardController extends Controller
         $from = $request->from ?? date('Y-m-d');
         $to   = $request->to ?? date('Y-m-d');
 
-        // total sales
-        $totalSales = DB::table('vouchers')
-            ->where('vouchers.status', 'completed')
-            ->whereBetween('vouchers.sale_date', [$from . ' 00:00:00', $to . ' 23:59:59'])
-            ->sum('vouchers.final_amount');
-
-        // payments
-        $payments = DB::table('vouchers')
-            ->join('sale_payments', 'vouchers.payment_id', '=', 'sale_payments.payment_id')
-            ->where('vouchers.status', 'completed')
-            ->whereBetween('vouchers.sale_date', [$from . ' 00:00:00', $to . ' 23:59:59'])
-            ->select('sale_payments.payment_name', DB::raw('SUM(vouchers.final_amount) as total'))
-            ->groupBy('sale_payments.payment_name')
+        $vouchers = Voucher::with(['details', 'salePayment'])
+            ->where('status', 'completed')
+            ->whereBetween('sale_date', [$from . ' 00:00:00', $to . ' 23:59:59'])
             ->get();
 
+        // 1. Calculate Total Sales
+        $totalSales = $vouchers->sum(function ($voucher) {
+            return $voucher->details->sum('total');
+        });
+
+        // 2. Payments Breakdown using Collection grouping
         $cash = 0;
         $kpay = 0;
-        $wave = 0;
 
-        foreach ($payments as $payment) {
-            switch ($payment->payment_name) {
+        // Group vouchers by payment name and calculate totals
+        $paymentGroups = $vouchers->groupBy('salePayment.payment_name');
+
+        foreach ($paymentGroups as $paymentName => $groupedVouchers) {
+            $paymentTotal = $groupedVouchers->sum(function ($voucher) {
+                return $voucher->details->sum('total');
+            });
+
+            switch ($paymentName) 
+            {
                 case "Cash":
-                    $cash = (float)$payment->total;
+                    $cash = (float)$paymentTotal;
                     break;
-                case "KBZ Pay":
-                    $kpay = (float)$payment->total;
-                    break;
-                case "Wave Pay":
-                    $wave = (float)$payment->total;
+                case "KPay":
+                    $kpay = (float)$paymentTotal;
                     break;
             }
         }
 
-        // best seller items
+        // 3. Best Seller Items (Keep this database-driven for performance and ranking)
         $bestSeller = DB::table('voucher_details')
             ->join('products', 'voucher_details.product_id', '=', 'products.product_id')
             ->join('vouchers', 'voucher_details.voucher_id', '=', 'vouchers.voucher_id')
@@ -65,9 +67,8 @@ class AdminDashboardController extends Controller
             ->limit(5)
             ->get();
 
-        // low stock (Unchanged as it doesn't rely on dates)
-        $lowStock = DB::table('products')
-            ->whereColumn('stock_quantity', '<=', 'min_stock_level')
+        // 4. Low Stock (Cleaned up using Eloquent Product model)
+        $lowStock = Product::whereColumn('stock_quantity', '<=', 'min_stock_level')
             ->select('product_name', 'stock_quantity')
             ->get();
 
@@ -76,7 +77,6 @@ class AdminDashboardController extends Controller
                 'sales' => (float)$totalSales,
                 'cash' => $cash,
                 'kpay' => $kpay,
-                'wave' => $wave,
             ],
             'bestSeller' => $bestSeller,
             'lowStock' => $lowStock,
