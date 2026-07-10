@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\SessionController;
 use Illuminate\Http\Request;
@@ -24,5 +25,7 @@ Route::middleware('auth:sanctum')->group(function () {
     );
 
 });
+
+Route::get('/admin/dashboard',[AdminDashboardController::class,'index']);
 
 require __DIR__.'/auth.php';
