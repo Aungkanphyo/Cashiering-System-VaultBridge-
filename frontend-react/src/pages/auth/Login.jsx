@@ -18,12 +18,7 @@ const Login = () => {
         e.preventDefault();
         setProcessing(true);
         setErrors({});
-        if (email.includes('admin')) {
-            navigate('/admin/dashboard');
-        } else {
-            navigate('/cashier/sale');
-        }
-
+        
         try {
             await axios.get("http://localhost:8000/sanctum/csrf-cookie", {
                 withCredentials: true
