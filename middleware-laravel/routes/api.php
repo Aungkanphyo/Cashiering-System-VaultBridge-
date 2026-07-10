@@ -5,9 +5,11 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\PaymentMethodController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\Admin\AdminVoucherController;
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Sale\SaleController;
+use App\Http\Controllers\SessionController;
 use App\Http\Controllers\VoucherController;
 
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {return $request->user();});
@@ -53,6 +55,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/payment-methods/{id}', [PaymentMethodController::class, 'show']);
     Route::put('/payment-methods/{id}', [PaymentMethodController::class, 'update']);
     Route::delete('/payment-methods/{id}', [PaymentMethodController::class, 'destroy']);
+
+    Route::get('/cash-register/session', [SessionController::class, 'currentSession']);
+    Route::post('/cash-register/close',[SessionController::class, 'closeSession']);
+    Route::get('/vouchers', [VoucherController::class, 'index']);
+    Route::post('/vouchers/{id}/void', [VoucherController::class, 'void']);
 });
 
 require __DIR__.'/auth.php';
