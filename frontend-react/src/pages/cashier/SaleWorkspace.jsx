@@ -71,7 +71,7 @@ const SaleWorkspace = () => {
                     const productId = product.id ? Number(product.id) : (product.product_id ? Number(product.product_id) : (index + 1));
                     return {
                         id: productId,
-                        code: product.barcode || product.code || product.product_code || `P${String(productId).padStart(4, '0')}`,
+                        code: String(product.barcode || product.code || product.product_code || `P${String(productId).padStart(4, '0')}`),
                         name: product.name || product.product_name,
                         price: parseFloat(product.price || product.selling_price || 0),
                         discountPercent: parseFloat(product.discount_percent || product.discount_rate || 0),
@@ -98,7 +98,6 @@ const SaleWorkspace = () => {
         const socket = io('http://localhost:5000');
 
         socket.on('display-barcode', (scannedBarcode) => {
-            console.log("Barcode received from phone:", scannedBarcode);
             const cleanBarcode = scannedBarcode.trim();
 
             const matchedProduct = productRef.current.find(
