@@ -4,18 +4,17 @@ namespace App\Http\Controllers\Sale;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
-use App\Models\Voucher;
-use App\Models\VoucherDetail;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class SaleController extends Controller
 {
     public function index(): JsonResponse
     {
         try {
+            // Models folder အောက်ရှိ သက်ဆိုင်ရာ Category relationship ပါတစ်ခါတည်းဆွဲယူခြင်း
             $products = Product::with('category')->get();
+
             return response()->json($products, 200);
         } catch (\Exception $e) {
             return response()->json([

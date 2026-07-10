@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import CashierSidebar from "../sidebar/CashierSidebar";
+import api from "../../api/axios"
 
 const titleMap = {
     sale: "Sale",
@@ -11,13 +12,10 @@ const titleMap = {
 const CashierLayout = () => {
     const location = useLocation();
 
-    // Current time
     const [time, setTime] = useState("");
+    const [cashierName, setCashierName] = useState("Cashier");
 
-    // Get cashier name from localStorage (change the key if yours is different)
-    const cashierName = localStorage.getItem("userName") || "Cashier";
-
-    // Update time
+    // Update current time
     useEffect(() => {
         const updateTime = () => {
             const now = new Date();
@@ -32,19 +30,27 @@ const CashierLayout = () => {
 
         updateTime();
 
-        // Update every minute
         const interval = setInterval(updateTime, 60000);
 
         return () => clearInterval(interval);
     }, []);
 
+    // Fetch authenticated user
+    useEffect(() => {
+        const fetchCurrentUser = async () => {
+            try {
+                const response = await api.get("/user");
+                setCashierName(response.data.username);
+            } catch (error) {
+                console.error("Failed to fetch user:", error);
+                setCashierName("Cashier");
+            }
+        };
+        fetchCurrentUser();
+    }, []);
+
     const key = location.pathname.split("/").pop();
     const pageTitle = titleMap[key] || "Cashier Panel";
-    // Update page title when route changes
-    // useEffect(() => {
-    //     const key = location.pathname.split("/").pop();
-    //     setPageTitle(titleMap[key] || "Cashier Panel");
-    // }, [location.pathname]);
 
     return (
         <div className="flex w-full h-screen overflow-hidden bg-gray-50">
@@ -66,12 +72,12 @@ const CashierLayout = () => {
                     <div className="flex items-center gap-4">
 
                         {/* Current Time */}
-                        <div className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
+                        <div className="text-sm font-semibold text-gray-700">
                             {time}
                         </div>
 
-                        {/* Cashier Badge */}
-                        <div className="flex items-center gap-2 bg-[#07a876] text-gray-50 px-5 py-3 text-sm font-semibold rounded-xl border border-emerald-200 shadow-sm hover:bg-[#06956a] transition">
+                        {/* Cashier Name */}
+                        <div className="flex items-center gap-2 bg-[#07a876] text-white px-5 py-3 text-sm font-semibold rounded-xl border border-emerald-200 shadow-sm hover:bg-[#06956a] transition">
                             {cashierName}
                         </div>
 

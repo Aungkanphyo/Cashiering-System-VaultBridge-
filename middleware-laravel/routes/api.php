@@ -7,14 +7,13 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\Admin\AdminVoucherController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Sale\SaleController; 
-Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
-    return $request->user();
-});
+use App\Http\Controllers\Sale\SaleController;
+use App\Http\Controllers\VoucherController;
 
+Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {return $request->user();});
+Route::post('/logout',[AuthenticatedSessionController::class, 'destroy']);
 
 // Cashier only access routes
-
 Route::middleware(['auth:sanctum', 'cashier'])->group(function (){
     Route::get('/products', [SaleController::class, 'index']);
     Route::post('/vouchers', [SaleController::class, 'store']);

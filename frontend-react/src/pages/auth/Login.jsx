@@ -1,4 +1,4 @@
-import { ShoppingCart } from "lucide-react";
+import { ShoppingBasket } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
@@ -63,15 +63,15 @@ const Login = () => {
 
                 <div className="w-full max-w-105 z-10">
                     <div className="text-center mb-8.75">
-                        <ShoppingCart className="w-13.75 h-13.75 text-[#059669] mx-auto" />
-                        <h1 className="text-[48px] font-bold text-[#064E3B] mt-2.5 leading-none tracking-tight">Mart4U</h1>
-                        <p className="text-[#6B7280] text-[15px] mt-2 font-medium">Smart POS System</p>
+                        <ShoppingBasket className="w-13.75 h-13.75 text-[#059669] mx-auto" />
+                        <h1 className="text-[48px] font-bold text-[#08634b] mt-2.5 leading-none tracking-tight">Mart4U</h1>
+                        <p className="text-[#08634b] text-[15px] mt-2 font-medium">Smart POS System</p>
                     </div>
 
                     <form onSubmit={handleLogin}>
                         {/* Email Field */}
                         <div className="mb-5.5">
-                            <label className="block mb-2 text-[#374151] font-medium text-[15px]">Email Address</label>
+                            <label className="block mb-2 text-[#0a7a5d] font-medium text-[15px]">Email Address</label>
                             <input
                                 type="email"
                                 value={email}
@@ -85,7 +85,7 @@ const Login = () => {
 
                         {/* Password Field */}
                         <div className="mb-5.5">
-                            <label className="block mb-2 text-[#374151] font-medium text-[15px]">Password</label>
+                            <label className="block mb-2 text-[#0a7a5d] font-medium text-[15px]">Password</label>
                             <input
                                 type="password"
                                 value={password}
@@ -129,7 +129,7 @@ const Login = () => {
                     <img
                         src={LoginBanner}
                         alt="Cashier"
-                        className="relative top-5 md:top-12.5 w-65 md:w-85 max-w-full mx-auto mb-6 md:mb-6.25 drop-shadow-[0_25px_40px_rgba(0,0,0,0.35)]"
+                        className="relative top-5 md:top-12.5 w-65 md:w-85 max-w-full mx-auto mb-6 md:mb-6.25 drop-shadow-[0_25px_40px_rgba(0,0,0,0.35)] hover:drop-shadow-[0_25px_40px_rgba(0,0,0,0.5)] transition duration-300"
                     />
                     <h2 className="text-[34px] md:text-[42px] font-bold mb-3.75 text-white leading-tight">Welcome Back!</h2>
                     <p className="text-[15px] md:text-[16px] leading-relaxed md:leading-7.5 text-emerald-50">
