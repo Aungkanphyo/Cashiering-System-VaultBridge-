@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\PaymentMethodController;
@@ -61,5 +62,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/vouchers', [VoucherController::class, 'index']);
     Route::post('/vouchers/{id}/void', [VoucherController::class, 'void']);
 });
+
+Route::get('/admin/dashboard',[AdminDashboardController::class,'index']);
 
 require __DIR__.'/auth.php';
