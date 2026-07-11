@@ -27,6 +27,8 @@ const ViewStaff = () => {
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [toggleStaffId, setToggleStaffId] = useState(null);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -87,21 +89,27 @@ const ViewStaff = () => {
     }
 
     const handleToggleStatus = async (id) => {
-        if (confirm("Are you sure you want to change this employee's status?")) {
-            try {
-                const response = await api.patch(`/staff/${id}/toggle-status`);
-                if (response.data.status === 'success') {
-                    setStaffs(staffs.map(staff =>
-                        staff.user_id === id ? { ...staff, status: response.data.updated_status } : staff
-                    ));
+        setToggleStaffId(id);
+        setIsConfirmOpen(true);
+    }
 
-                    if (selectedStaff && selectedStaff.user_id === id) {
-                        setSelectedStaff({ ...selectedStaff, status: response.data.updated_status });
-                    }
+    const executeToggleStatus = async () => {
+        try {
+            const response = await api.patch(`/staff/${toggleStaffId}/toggle-status`);
+            if (response.data.status === 'success') {
+                toast.success(response.data.message || "Status updated successfully!");
+                handleTriggerRefresh();
+
+                if (selectedStaff && selectedStaff.user_id === toggleStaffId) {
+                    setSelectedStaff({ ...selectedStaff, status: response.data.updated_status });
                 }
-            } catch (error) {
-                console.error("Error updating status:", error);
             }
+        } catch (error) {
+            console.error("Error updating status:", error);
+            toast.error("There was an error updating the staff status.");
+        } finally {
+            setIsConfirmOpen(false);
+            setToggleStaffId(null);
         }
     }
 
@@ -198,6 +206,47 @@ const ViewStaff = () => {
                     </tbody>
                 </table>
             </div>
+
+            {/* Confirm box */}
+            {isConfirmOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center">
+                    <div
+                        className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
+                        onClick={() => setIsConfirmOpen(false)}
+                    ></div>
+
+                    {/* Modal Box */}
+                    <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 relative z-10 transform transition-all animate-in fade-in zoom-in-95 duration-200 mx-4">
+                        <div className="flex items-center gap-4 mb-4">
+                            <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center shrink-0 text-amber-500 text-2xl font-bold">
+                                !
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900">Change Status?</h3>
+                                <p className="text-sm text-gray-500 mt-1">
+                                    Are you sure you want to change this employee's status?
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex justify-end gap-3 mt-6">
+                            <button
+                                onClick={() => setIsConfirmOpen(false)}
+                                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition text-sm"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={executeToggleStatus}
+                                className="px-4 py-2 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700 shadow-sm transition text-sm"
+                            >
+                                Yes, Change It
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <StaffDetailModal
                 isOpen={isDetailOpen}
