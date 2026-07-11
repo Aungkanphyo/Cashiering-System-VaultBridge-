@@ -1,0 +1,37 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. TOTAL-SALE.
+       AUTHOR. AUNG KAN PHYO.
+      *
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+           SELECT AMOUNT-FILE ASSIGN TO "input_amounts.txt"
+           ORGANIZATION IS LINE SEQUENTIAL.
+      *
+       DATA DIVISION.
+       FILE SECTION.
+       FD AMOUNT-FILE.
+       01 AMOUNT-RECORD.
+           05 RECO-AMOUNT PIC 9(13)V99.
+       WORKING-STORAGE SECTION.
+       01 WS-EOF PIC X VALUE 'N'.
+       01 WS-TOTAL PIC 9(13)V99 VALUE 0.
+       01 WS-DISPLAY-TOTAL PIC Z(13).99.
+      *
+       PROCEDURE DIVISION.
+       MAIN-PROCEDURE.
+           OPEN INPUT AMOUNT-FILE
+           PERFORM UNTIL WS-EOF = 'Y'
+              READ AMOUNT-FILE INTO AMOUNT-RECORD
+               AT END
+                   MOVE 'Y' TO WS-EOF
+               NOT AT END
+                   ADD RECO-AMOUNT TO WS-TOTAL
+              END-READ
+           END-PERFORM
+           CLOSE AMOUNT-FILE
+
+           MOVE WS-TOTAL TO WS-DISPLAY-TOTAL
+           DISPLAY FUNCTION TRIM(WS-DISPLAY-TOTAL)
+           STOP RUN.
+           

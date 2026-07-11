@@ -7,6 +7,8 @@ use App\Models\SalePayment;
 use App\Models\Voucher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class AdminDashboardController extends Controller
 {
@@ -27,10 +29,32 @@ class AdminDashboardController extends Controller
             ->whereBetween('sale_date', [$from . ' 00:00:00', $to . ' 23:59:59'])
             ->get();
 
-        // Calculate Total Sales
-        $totalSales = $vouchers->sum(function ($voucher) {
-            return $voucher->details->sum('total');
-        });
+        // COBOL Core integration Start
+        $detailsData = $vouchers->flatMap(function ($voucher) {
+            return collect($voucher->details)->map(function ($detail) {
+                return [
+                    'total' => (float) $detail->total
+                ];
+            });
+        })->values()->toArray();
+
+        Log::info('Data sent to COBOL:', $detailsData);
+
+        try {
+            // Directly sending raw data (details) to COBOL Micro-services
+            $response = Http::timeout(10)->post('http://cobol-service:4000/calculate-total', [
+                'details' => $detailsData
+            ]);
+
+            if($response->successful()) {
+                $totalSales = $response->json()['totalSales'] ?? 0;
+            } else {
+                $totalSales = 0;
+            }
+        } catch (\Exception $e) {
+            $totalSales = 0;
+        }
+        // COBOL Core integration End
 
         // Group vouchers by payment name and calculate totals
         $paymentGroups = $vouchers->groupBy('salePayment.payment_name');

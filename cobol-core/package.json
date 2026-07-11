@@ -1,0 +1,11 @@
+{
+    "name": "cobol-web-wrapper",
+    "version": "1.0.0",
+    "main": "server.js",
+    "scripts": {
+        "start": "cobc -x -o total_sales total_sales.cbl && node server.js"
+    },
+    "dependencies": {
+        "express": "^4.19.2"
+    }
+}

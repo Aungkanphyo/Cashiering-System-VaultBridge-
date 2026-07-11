@@ -1,0 +1,25 @@
+# Dependency folders
+node_modules/
+jspm_packages/
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# COBOL Temporary and Binary files
+input_amounts.txt
+total_sales
+*.lst
+*.gnt
+*.int
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Version control
+.git
+.gitignore
