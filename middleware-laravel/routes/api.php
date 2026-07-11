@@ -25,6 +25,7 @@ Route::middleware(['auth:sanctum', 'cashier'])->group(function (){
 
 // Admin only access routes
 Route::middleware(['auth:sanctum', 'admin'])->group(function () {
+    Route::get('/admin/dashboard',[AdminDashboardController::class,'index']);
     Route::get('/staff', [StaffController::class, 'index']); // Staff List (+ Search & Filter)
     Route::post('/staff', [StaffController::class, 'store']);
     Route::put('/staff/{id}', [StaffController::class, 'update']);
@@ -62,7 +63,5 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/vouchers', [VoucherController::class, 'index']);
     Route::post('/vouchers/{id}/void', [VoucherController::class, 'void']);
 });
-
-Route::get('/admin/dashboard',[AdminDashboardController::class,'index']);
 
 require __DIR__.'/auth.php';

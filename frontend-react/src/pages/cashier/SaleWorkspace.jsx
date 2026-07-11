@@ -12,8 +12,8 @@ const SaleWorkspace = () => {
 
     // Current Cart Setup
     const [cartItems, setCartItems] = useState([]);
-
     const [searchQuery, setSearchQuery] = useState('');
+
     const [paymentMethod, setPaymentMethod] = useState('Cash');
     const [payAmount, setPayAmount] = useState('');
     const [recentProductId, setRecentProductId] = useState(null);
@@ -45,6 +45,10 @@ const SaleWorkspace = () => {
         try {
             const response = await api.get('/payment-methods');
             setDbPaymentMethods(response.data || []);
+
+            if (response.data && response.data.length > 0) {
+                setPaymentMethod(response.data[0].payment_name);
+            }
         } catch (err) {
             console.error("Error fetching payment methods:", err);
         }
@@ -145,7 +149,8 @@ const SaleWorkspace = () => {
     const totalDiscount = cartItems.reduce((sum, item) => sum + ((item.price * item.discountPercent / 100) * item.quantity), 0);
     const finalTotal = subtotal - totalDiscount;
 
-    const currentPayAmount = paymentMethod === 'KPay' ? finalTotal : (parseFloat(payAmount) || 0);
+    const isCashSelected = paymentMethod.toLowerCase() === 'cash';
+    const currentPayAmount = isCashSelected ? (parseFloat(payAmount) || 0) : finalTotal;
     const changeDue = currentPayAmount > finalTotal ? currentPayAmount - finalTotal : 0;
 
     const handleUpdateQty = (id, delta) => {
@@ -207,7 +212,8 @@ const SaleWorkspace = () => {
             return;
         }
 
-        if (paymentMethod === 'Cash') {
+        // Validation check only if you cash
+        if (isCashSelected) {
             if (!payAmount || parseFloat(payAmount) <= 0) {
                 toast.error('Please enter a valid payment amount.');
                 return;
@@ -231,7 +237,7 @@ const SaleWorkspace = () => {
         const salePayload = {
             payment_id: matchedPaymentObj.payment_id,
             status: 'completed',
-            payment_received: paymentMethod === 'KPay' ? finalTotal : parseFloat(payAmount),
+            payment_received: isCashSelected ? parseFloat(payAmount) : finalTotal,
 
             items: cartItems.map(item => ({
                 product_id: Number(item.id),
@@ -372,6 +378,7 @@ const SaleWorkspace = () => {
                         handleDeleteItem={handleDeleteItem}
                         handleClearCart={handleClearCart}
                         handleProcessSale={handleProcessSale}
+                        dbPaymentMethods={dbPaymentMethods}
                     />
 
                 </div>
