@@ -15,7 +15,7 @@ export default function Dashboard() {
     const stats = [
         {
             title: "TODAY TOTAL SALES",
-            amount: Number(dashboard.cards?.sales || 0),
+            amount: Number(dashboard.totalSales || 0),
             icon: Banknote,
             bg: "bg-emerald-100",
             color: "text-emerald-600",
