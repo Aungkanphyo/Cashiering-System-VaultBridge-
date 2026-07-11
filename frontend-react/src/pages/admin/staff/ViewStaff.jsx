@@ -4,6 +4,7 @@ import StaffDetailModal from "./Popup/StaffDetailModal";
 import AddStaffModal from "./Popup/AddStaffModal";
 import EditStaffModal from "./Popup/EditStaffModal";
 import toast from 'react-hot-toast';
+import { AlertTriangle } from "lucide-react";
 
 const ViewStaff = () => {
     const formatDate = (dateStr) => {
@@ -218,8 +219,8 @@ const ViewStaff = () => {
                     {/* Modal Box */}
                     <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 relative z-10 transform transition-all animate-in fade-in zoom-in-95 duration-200 mx-4">
                         <div className="flex items-center gap-4 mb-4">
-                            <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center shrink-0 text-amber-500 text-2xl font-bold">
-                                !
+                            <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center shrink-0 text-amber-500">
+                                <AlertTriangle className="w-6 h-6" strokeWidth={2.5} />
                             </div>
                             <div>
                                 <h3 className="text-lg font-bold text-gray-900">Change Status?</h3>
