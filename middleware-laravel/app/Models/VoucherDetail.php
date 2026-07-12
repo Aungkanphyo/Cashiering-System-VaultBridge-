@@ -18,8 +18,21 @@ use Illuminate\Database\Eloquent\Model;
 class VoucherDetail extends Model
 {
     use HasFactory;
+
+    protected $table = 'voucher_details';
+
     protected $primaryKey = 'voucher_details_id';
 
+    protected $fillable = [
+        'voucher_id',
+        'product_id',
+        'quantity',
+        'sub_total',
+        'unit_price',
+        'total',
+    ];
+
+    protected $guarded = [];
     protected $casts = [
         'quantity' => 'integer',
         'sub_total' => 'decimal:2',
@@ -28,12 +41,17 @@ class VoucherDetail extends Model
         'total' => 'decimal:2',
     ];
 
-    // Relationship: Which voucher does this detail belong to?
+    /**
+     * Relationship: Which voucher does this detail belong to?
+     */
     public function voucher()
     {
         return $this->belongsTo(Voucher::class, 'voucher_id', 'voucher_id');
     }
 
+    /**
+     * Relationship: Which product does this detail belong to?
+     */
     public function product()
     {
         return $this->belongsTo(Product::class, 'product_id', 'product_id');

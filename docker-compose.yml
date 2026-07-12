@@ -26,6 +26,17 @@ services:
     environment:
       - CHOKIDAR_USEPOLLING=true
 
+  # Barcode Backend Service (Node.js)
+  barcode-backend:
+    build:
+      context: ./barcode-backend
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./barcode-backend:/app
+      - /app/node_modules
+
   # MySQL Database Service
   mysql-db:
     image: mysql:8.0
@@ -46,6 +57,18 @@ services:
       - PMA_PORT=3306
     depends_on:
       - mysql-db
+
+  # COBOL Dynamic Core Service
+  cobol-service:
+    build:
+      context: ./cobol-core
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./cobol-core:/app
+      - /app/node_modules
+    command: sh -c "cobc -x -o total_sales total_sales.cbl && node server.js"
 
 volumes:
   mysql_data:

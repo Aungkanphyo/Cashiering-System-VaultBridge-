@@ -24,6 +24,7 @@ return new class extends Migration
             $table->string('gender');
             $table->string('email')->unique();
             $table->date('join_date');
+            $table->rememberToken();
             $table->timestamps();
         });
 
