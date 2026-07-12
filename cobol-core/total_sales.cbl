@@ -26,7 +26,9 @@
                AT END
                    MOVE 'Y' TO WS-EOF
                NOT AT END
-                   ADD RECO-AMOUNT TO WS-TOTAL
+                   IF AMOUNT-RECORD IS NUMERIC THEN
+                       ADD RECO-AMOUNT TO WS-TOTAL
+                   END-IF
               END-READ
            END-PERFORM
            CLOSE AMOUNT-FILE

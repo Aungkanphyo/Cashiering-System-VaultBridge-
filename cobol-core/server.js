@@ -8,6 +8,10 @@ app.use(express.json({ limit: '50mb' }));
 app.post('/calculate-total', (req, res) => {
     const voucherDetails = req.body.details || [];
 
+    if (voucherDetails.length === 0) {
+        return res.json({ totalSales: 0 });
+    }
+
     /**
      * Changing the default 15-character format to include leading zeros so that 
      * COBOL can read integer/decimal separators
