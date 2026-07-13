@@ -10,6 +10,8 @@ frontend-react/dist/
 frontend-react/.env
 frontend-react/.env.local
 
+node_modules/
+
 # --- Barcode backend ---
 barcode-backend/node_modules/
 

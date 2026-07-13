@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import { useRef } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import VoucherPrinter from './VoucherPrinter';
 import toast from 'react-hot-toast';
