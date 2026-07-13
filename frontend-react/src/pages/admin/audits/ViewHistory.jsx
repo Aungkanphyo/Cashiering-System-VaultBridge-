@@ -5,7 +5,6 @@ import {
     Search,
     RotateCcw,
     Calendar,
-    ArrowRight,
     Eye,
     ChevronsLeft,
     ChevronLeft,
@@ -42,6 +41,7 @@ const ViewHistory = () => {
         const fetchPaymentMethods = async () => {
             try {
                 const response = await api.get("/payment-methods"); // Payment List API End-point 
+                console.log(response);
                 // active methods filter 
                 const activeMethods = response.data.filter(m => m.status === "active");
                 setDbPaymentMethods(activeMethods);
@@ -192,7 +192,7 @@ const ViewHistory = () => {
                                 
                                 title="Reset Filters"
                             >
-                               Reset <RotateCcw className="w-3.5 h-3.5" />
+                                Reset <RotateCcw className="w-3.5 h-3.5" />
                             </button>
 
                         </div>

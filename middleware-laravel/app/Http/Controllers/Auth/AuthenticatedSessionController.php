@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
@@ -7,11 +6,10 @@ use App\Http\Requests\Auth\LoginRequest;
 use App\Models\CashRegisterSession;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 // Session Controller for handling user authentication and session management
-use App\Models\CashRegisterSession;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class AuthenticatedSessionController extends Controller
@@ -32,15 +30,15 @@ class AuthenticatedSessionController extends Controller
             try {
                 // Check if there is an unclosed session left for this user
                 $activeSession = CashRegisterSession::where('user_id', $user->user_id)
-                                                    ->whereNull('closing_time')
-                                                    ->first();
+                    ->whereNull('closing_time')
+                    ->first();
 
                 // If no active session exists, automatically create a new one using current time
-                if (!$activeSession) {
+                if (! $activeSession) {
                     CashRegisterSession::create([
                         'user_id'               => $user->user_id,
                         'opening_time'          => Carbon::now()->toDateTimeString(),
-                        'expected_closing_cash' => 0.00,          // Default opening cash amount to 0
+                        'expected_closing_cash' => 0.00, // Default opening cash amount to 0
                     ]);
                 }
             } catch (\Exception $e) {
@@ -49,13 +47,13 @@ class AuthenticatedSessionController extends Controller
         }
 
         return response()->json([
-            'status' => 'success',
+            'status'  => 'success',
             'message' => 'Login successful',
-            'user' => [
+            'user'    => [
                 'username' => $user->username,
-                'email' => $user->email,
-                'role' => $user->role,
-            ]
+                'email'    => $user->email,
+                'role'     => $user->role,
+            ],
         ]);
     }
 
@@ -71,14 +69,14 @@ class AuthenticatedSessionController extends Controller
             try {
                 // Find the currently running session for this cashier
                 $activeSession = CashRegisterSession::where('user_id', $user->user_id)
-                                                    ->whereNull('closing_time')
-                                                    ->first();
+                    ->whereNull('closing_time')
+                    ->first();
 
                 // If an active session is found, close it automatically using the current system time
                 if ($activeSession) {
                     $activeSession->update([
                         'closing_time'        => Carbon::now()->toDateTimeString(), // Close with auto current time
-                        'actual_closing_cash' => 0.00,          // Default to 0 for later calculation in Admin Panel
+                        'actual_closing_cash' => 0.00,                              // Default to 0 for later calculation in Admin Panel
                         'discrepancy'         => 0.00,
                     ]);
                 }
@@ -94,8 +92,8 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerateToken();
 
         return response()->json([
-            "status" => "success",
-            "message" => "Logged out successfully"
+            "status"  => "success",
+            "message" => "Logged out successfully",
         ]);
     }
 }
