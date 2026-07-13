@@ -257,6 +257,7 @@ const SaleWorkspace = () => {
             console.error("Sale Process Backend Error:", error);
             const serverError = error.response?.data?.message || error.response?.data?.error || "Failed to process sale. Please try again.";
             toast.error(serverError);
+            throw error; // Re-throwing for potential further handling
         }
     };
 

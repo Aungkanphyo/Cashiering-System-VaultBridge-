@@ -11,21 +11,37 @@ class AdminVoucherController extends Controller
 {
     public function index(Request $request)
     {
+        // query builder 
         $query = Voucher::with(['salePayment', 'details.product']);
 
-        // Advanced Search Filter (Sale ID, Status or Payment Method)
-        if ($request->filled('search')) {
-            $search = $request->input('search');
-            $query->where(function ($q) use ($search) {
-                $q->where('voucher_id', 'like', "%{$search}%")
-                ->orWhere('status', 'like', "%{$search}%")
-                ->orWhereHas('salePayment', function ($paymentQuery) use ($search) {
-                    $paymentQuery->where('payment_name', 'like', "%{$search}%");
-                });
+        // id filter
+        if ($request->filled('search_id')) {
+            $searchId = $request->input('search_id');
+            $query->where('voucher_id', 'like', "%{$searchId}%");
+        }
+
+        // Payment method filter
+        if ($request->filled('payment_method') && $request->input('payment_method') !== 'ALL') {
+            $paymentMethod = $request->input('payment_method');
+            
+            // checking payment name in salePayment Relation 
+            $query->whereHas('salePayment', function ($paymentQuery) use ($paymentMethod) {
+                $paymentQuery->where('payment_name', 'like', "%{$paymentMethod}%");
             });
         }
 
-        // Date Range Filter
+        // Status Select Box Filter (COMPLETED / VOIDED)
+        if ($request->filled('status') && $request->input('status') !== 'ALL') {
+    $status = strtolower($request->input('status'));
+    
+    if ($status === 'voided') {
+        $query->where('status', 'VOIDED');
+    } else if ($status === 'completed') {
+        $query->where('status', 'COMPLETED')->whereNull('void_reason');
+    }
+}
+
+        //  Date Range Filter 
         if ($request->filled('from_date')) {
             $query->whereDate('sale_date', '>=', $request->input('from_date'));
         }
@@ -33,9 +49,10 @@ class AdminVoucherController extends Controller
             $query->whereDate('sale_date', '<=', $request->input('to_date'));
         }
 
+        // latest Voucher 
         $query->latest('sale_date');
 
-        // Using Server-side Pagination (8 per page)
+        // Server-side Pagination 
         $perPage = $request->input('per_page', 8);
         $vouchers = $query->paginate($perPage);
 
