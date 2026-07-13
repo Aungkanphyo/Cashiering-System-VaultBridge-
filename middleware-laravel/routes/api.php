@@ -31,6 +31,9 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::put('/staff/{id}', [StaffController::class, 'update']);
     Route::get('/staff/{id}', [StaffController::class, 'show']); // View Staff Detail (Popup)
     Route::patch('/staff/{id}/toggle-status', [StaffController::class, 'toggleStatus']);
+    
+    //Session API Endpoint
+    Route::get('/admin/cash-sessions', [SessionController::class, 'getCashSessions']);
 
     // Voucher History API Endpoint
     Route::get('/admin/vouchers', [AdminVoucherController::class, 'index']);
