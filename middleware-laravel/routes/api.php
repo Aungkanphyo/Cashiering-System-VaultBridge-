@@ -34,6 +34,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
     // Voucher History API Endpoint
     Route::get('/admin/vouchers', [AdminVoucherController::class, 'index']);
+    Route::get('/admin/vouchers/export', [AdminVoucherController::class, 'export']);
 });
 
 Route::middleware(['auth:sanctum'])->group(function () {
