@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import ViewDetails from "./ViewDetails";
 import api from "../../../api/axios";
+import toast from 'react-hot-toast';
 import {
 	Search,
 	RotateCcw,
 	Calendar,
-	ArrowRight,
 	Eye,
 	ChevronsLeft,
 	ChevronLeft,
@@ -18,6 +18,7 @@ const ViewHistory = () => {
     // Server-side State Management
     const [transactions, setTransactions] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isExporting, setIsExporting] = useState(false);
     const [error, setError] = useState(null);
 
     //  Database Payment Methods State
@@ -94,6 +95,37 @@ const ViewHistory = () => {
 
         return () => clearTimeout(delayDebounceFn);
     }, [currentPage, searchId, paymentMethod, status, fromDate, toDate]);
+
+    const handleExportExcel = async () => {
+        try {
+            setIsExporting(true);
+            const response = await api.get("/admin/vouchers/export", {
+                params: {
+                    search_id: searchId.trim(),
+                    payment_method: paymentMethod === "ALL" ? "" : paymentMethod,
+                    status: status === "ALL" ? "" : status,
+                    from_date: fromDate,
+                    to_date: toDate
+                },
+                responseType: "blob"
+            });
+
+            const blob = new Blob([response.data], {
+                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            });
+            const link = document.createElement("a");
+            link.href = window.URL.createObjectURL(blob);
+            link.download = `Voucher_History_${new Date().toISOString().slice(0,10)}.xlsx`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (error) {
+            console.error("Excel Export Error:", error);
+            toast.error("Excel export failed.");
+        } finally {
+            setIsExporting(false);
+        }
+    };
 
     const handleReset = () => {
         setSearchId("");
@@ -190,11 +222,22 @@ const ViewHistory = () => {
                             {/* Icon Only Reset Button */}
                             <button
                                 onClick={handleReset}
-                                className="flex items-center gap-1.5 px-4 py-2 bg-[#00aa5b] hover:bg-[#00944f] text-white font-bold text-sm rounded-xl shadow-sm transition-all h-[38px]"
+                                className="flex items-center gap-1.5 px-4 py-2 bg-[#00aa5b] hover:bg-[#00944f] text-white font-bold text-sm rounded-xl shadow-sm transition-all h-9.5"
                                 
                                 title="Reset Filters"
                             >
                                 Reset <RotateCcw className="w-3.5 h-3.5" />
+                            </button>
+
+                            {/* Excel Export Button */}
+                            <button
+                                onClick={handleExportExcel}
+                                disabled={isExporting || isLoading || transactions.length === 0}
+                                className="flex items-center gap-1.5 px-3 py-2 bg-[#107c41] hover:bg-[#0a5c30] text-white font-bold text-xs rounded-xl shadow-sm transition-all h-8.5 shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                                title="Export to Excel"
+                            >
+                                {isExporting ? "Exporting..." : "Export As Excel"} 
+                                <FileSpreadsheet className="w-3.5 h-3.5" />
                             </button>
 
                         </div>
@@ -205,7 +248,7 @@ const ViewHistory = () => {
                 {/* Main Table Wrapper */}
                 <div className="bg-white rounded-2xl shadow-[0_2px_12px_-3px_rgba(0,0,0,0.02)] border border-gray-100 overflow-hidden flex flex-col">
                     <div className="overflow-x-auto scrollbar-none">
-                        <table className="w-full text-left border-collapse min-w-[1100px] table-auto">
+                        <table className="w-full text-left border-collapse min-w-275 table-auto">
                             <thead>
                                 <tr className="bg-[#08694b] text-white text-xs uppercase font-bold tracking-wider select-none">
                                     <th className="py-4 px-6 w-20 text-center">No.</th>
