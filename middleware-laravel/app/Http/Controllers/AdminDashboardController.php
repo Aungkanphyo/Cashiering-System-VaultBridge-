@@ -73,7 +73,9 @@ class AdminDashboardController extends Controller
                 'name'   => $paymentName,
                 'amount' => (float) $paymentTotal,
             ];
-        });
+        })->filter(function ($payment) {
+            return $payment['amount'] > 0;
+        })->values();
 
         // Best Seller Items (Keep this database-driven for performance and ranking)
         $bestSeller = DB::table('voucher_details')
