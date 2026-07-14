@@ -2,7 +2,30 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import api from '../../api/axios';
 import Voucher from './Voucher'; // voucher import for right column
 import { io } from 'socket.io-client';
-import toast from 'react-hot-toast';
+import { CheckCircle, XCircle } from "lucide-react";
+
+// --- Inline Custom Toast Component ---
+const Toast = ({ message, type = "success" }) => {
+    if (!message) return null;
+    const isError = type === "error";
+
+    return (
+        <div
+            className={`fixed top-6 left-1/2 -translate-x-1/2 z-[60] flex items-center p-4 text-sm rounded-lg border shadow-lg transition-all duration-300 ${
+                isError
+                    ? "text-rose-800 bg-rose-100 border-rose-300"
+                    : "text-emerald-800 bg-emerald-100 border-emerald-300"
+            }`}
+        >
+            {isError ? (
+                <XCircle className="w-5 h-5 mr-2 text-rose-600" />
+            ) : (
+                <CheckCircle className="w-5 h-5 mr-2 text-emerald-600" />
+            )}
+            <span className="font-medium">{message}</span>
+        </div>
+    );
+};
 
 const SaleWorkspace = () => {
     // --- States for Backend API Integration ---
@@ -22,6 +45,26 @@ const SaleWorkspace = () => {
 
     // To save Payment Methods from the Database
     const [dbPaymentMethods, setDbPaymentMethods] = useState([]);
+
+    // Custom Toast Notification States
+    const [toastMessage, setToastMessage] = useState("");
+    const [toastType, setToastType] = useState("success");
+
+    // Helper function to trigger our custom toast with an auto-hide timeout
+    const showNotification = (message, type = "success") => {
+        setToastMessage(message);
+        setToastType(type);
+    };
+
+    // Auto-clear notification after 4 seconds
+    useEffect(() => {
+        if (toastMessage) {
+            const timer = setTimeout(() => {
+                setToastMessage("");
+            }, 4000);
+            return () => clearTimeout(timer);
+        }
+    }, [toastMessage]);
 
     // For real-time barcode
     const productRef = useRef(availableProducts);
@@ -110,7 +153,7 @@ const SaleWorkspace = () => {
 
             if (matchedProduct) {
                 if (matchedProduct.status === 'inactive') {
-                    toast.error(`"${matchedProduct.name}" cannot be added.`);
+                    showNotification(`"${matchedProduct.name}" cannot be added.`, "error");
                     return;
                 }
 
@@ -123,9 +166,9 @@ const SaleWorkspace = () => {
                     return [...prev, { ...matchedProduct, quantity: 1 }];
                 });
 
-                toast.success(`Scanned: ${matchedProduct.name} added to cart.`);
+                showNotification(`Scanned: ${matchedProduct.name} added to cart.`, "success");
             } else {
-                toast.error(`Product Code [${cleanBarcode}] Not Found in Database!`);
+                showNotification(`Product Code [${cleanBarcode}] Not Found in Database!`, "error");
             }
         });
 
@@ -184,7 +227,7 @@ const SaleWorkspace = () => {
 
     const handleAddProduct = (product) => {
         if (product.status === 'inactive') {
-            toast.error(`"${product.name}" is inactive`);
+            showNotification(`"${product.name}" is inactive`, "error");
             return;
         }
 
@@ -208,19 +251,19 @@ const SaleWorkspace = () => {
     // Process Sale with Laravel API Integration ---
     const handleProcessSale = async () => {
         if (cartItems.length === 0) {
-            toast.error('No products in the cart to process sale.');
+            showNotification('No products in the cart to process sale.', "error");
             return;
         }
 
         // Validation check only if you cash
         if (isCashSelected) {
             if (!payAmount || parseFloat(payAmount) <= 0) {
-                toast.error('Please enter a valid payment amount.');
+                showNotification('Please enter a valid payment amount.', "error");
                 return;
             }
 
             if (parseFloat(payAmount) < finalTotal) {
-                toast.error('Payment amount is less than the total amount due.');
+                showNotification('Payment amount is less than the total amount due.', "error");
                 return;
             }
         }
@@ -230,7 +273,7 @@ const SaleWorkspace = () => {
         );
 
         if (!matchedPaymentObj) {
-            toast.error(`The selected payment method [${paymentMethod}] was not found in the database.`);
+            showNotification(`The selected payment method [${paymentMethod}] was not found in the database.`, "error");
             return;
         }
 
@@ -249,20 +292,23 @@ const SaleWorkspace = () => {
             const response = await api.post('/vouchers', salePayload);
 
             if (response.status === 200 || response.status === 201 || response.data.success) {
-                toast.success(`Transaction is successfully completed!`);
+                showNotification(`Transaction is successfully completed!`, "success");
                 fetchNextVoucherId();
                 handleClearCart();
             }
         } catch (error) {
             console.error("Sale Process Backend Error:", error);
             const serverError = error.response?.data?.message || error.response?.data?.error || "Failed to process sale. Please try again.";
-            toast.error(serverError);
-            throw error; // Re-throwing for potential further handling
+            showNotification(serverError, "error");
+            throw error; 
         }
     };
 
     return (
         <div className="w-full min-h-screen bg-[#F8FAFC] font-sans flex text-slate-800 antialiased px-4 pt-0 pb-4 relative">
+            {/* Custom App Toast Notification Panel */}
+            <Toast message={toastMessage} type={toastType} />
+
             <div className="flex-1 flex flex-col overflow-y-auto">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start flex-1 mt-2">
 

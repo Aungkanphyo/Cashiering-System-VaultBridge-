@@ -108,12 +108,18 @@ const AddCategory = ({ onClose, onSuccess, existingCategoryNames = [] }) => {
 
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2">
-            <label className="block text-sm font-semibold text-slate-600 mb-1">
-              Category Name
-            </label>
+            <div className="flex justify-between items-center mb-1">
+              <label className="block text-sm font-semibold text-slate-600">
+                Category Name
+              </label>
+              <span className="text-xs text-slate-400">
+                {name.length}/40
+              </span>
+            </div>
             <input
               type="text"
               autoFocus
+              maxLength={40}
               value={name}
               onChange={(e) => {
                 setName(e.target.value);
@@ -139,10 +145,14 @@ const AddCategory = ({ onClose, onSuccess, existingCategoryNames = [] }) => {
               type="number"
               step="0.1"
               min="0"
+              max="100"
               value={tax}
               onChange={(e) => {
-                setTax(e.target.value);
-                clearFieldError("tax");
+                // Restrict input length to max 4 characters (e.g. "100.0")
+                if (e.target.value.length <= 4) {
+                  setTax(e.target.value);
+                  clearFieldError("tax");
+                }
               }}
               placeholder="e.g. 5.0"
               className={`w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:outline-none ${fieldErrors.tax
@@ -163,10 +173,14 @@ const AddCategory = ({ onClose, onSuccess, existingCategoryNames = [] }) => {
               type="number"
               step="0.1"
               min="0"
+              max="100"
               value={discount}
               onChange={(e) => {
-                setDiscount(e.target.value);
-                clearFieldError("discount");
+                // Restrict input length to max 4 characters (e.g. "100.0")
+                if (e.target.value.length <= 4) {
+                  setDiscount(e.target.value);
+                  clearFieldError("discount");
+                }
               }}
               onBlur={() => {
                 if (discount === "") setDiscount("0.0");

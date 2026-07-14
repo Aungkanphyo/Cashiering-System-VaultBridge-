@@ -11,6 +11,10 @@ export default function History() {
     const [page, setPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(5);
 
+    // Added new state variables for filtering
+    const [statusFilter, setStatusFilter] = useState("");
+    const [paymentFilter, setPaymentFilter] = useState("");
+
     const [lastPage, setLastPage] = useState(1);
     const [totalRecords, setTotalRecords] = useState(0);
 
@@ -31,7 +35,13 @@ export default function History() {
         try {
             setLoading(true);
             const response = await api.get("/vouchers", {
-                params: { page, per_page: rowsPerPage },
+                // Included status and payment parameters in the API request
+                params: { 
+                    page, 
+                    per_page: rowsPerPage,
+                    status: statusFilter || undefined,
+                    payment: paymentFilter || undefined
+                },
             });
 
             setSalesData(response.data.data);
@@ -46,9 +56,10 @@ export default function History() {
         }
     };
 
+    // Re-fetch data when filters change, resetting to page 1
     useEffect(() => {
         fetchHistory();
-    }, [page, rowsPerPage]);
+    }, [page, rowsPerPage, statusFilter, paymentFilter]);
 
     const handleCancelVoid = () => {
         if (voiding) return;
@@ -78,23 +89,62 @@ export default function History() {
         <div className="min-h-screen">
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                 {/* Header */}
-                <div className="flex flex-col gap-4 p-6 pb-4 md:flex-row md:items-center md:justify-between">
+                <div className="flex flex-col gap-4 p-6 pb-4 lg:flex-row lg:items-center lg:justify-between">
                     <h2 className="text-xl font-bold text-slate-800">Sales History</h2>
-                    <div className="flex items-center gap-2 text-xs text-slate-500 whitespace-nowrap">
-                        <span>Show</span>
-                        <select
-                            value={rowsPerPage}
-                            onChange={(e) => {
-                                setRowsPerPage(Number(e.target.value));
-                                setPage(1);
-                            }}
-                            className="border rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15 cursor-pointer"
-                        >
-                            {[5, 10, 15, 20, 25].map((n) => (
-                                <option key={n} value={n}>{n}</option>
-                            ))}
-                        </select>
-                        <span>records</span>
+                    
+                    {/* Controls & Dropdowns Wrapper */}
+                    <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500">
+                        {/* Status Filter */}
+                        <div className="flex items-center gap-1.5">
+                            <span>Status:</span>
+                            <select
+                                value={statusFilter}
+                                onChange={(e) => {
+                                    setStatusFilter(e.target.value);
+                                    setPage(1);
+                                }}
+                                className="border rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15 cursor-pointer"
+                            >
+                                <option value="">All Statuses</option>
+                                <option value="completed">Completed</option>
+                                <option value="voided">Voided</option>
+                            </select>
+                        </div>
+
+                        {/* Payment Filter */}
+                        <div className="flex items-center gap-1.5">
+                            <span>Payment:</span>
+                            <select
+                                value={paymentFilter}
+                                onChange={(e) => {
+                                    setPaymentFilter(e.target.value);
+                                    setPage(1);
+                                }}
+                                className="border rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15 cursor-pointer"
+                            >
+                                <option value="">All Payments</option>
+                                <option value="cash">Cash</option>
+                                <option value="card">Card</option>
+                            </select>
+                        </div>
+
+                        {/* Rows Per Page */}
+                        <div className="flex items-center gap-1.5 whitespace-nowrap">
+                            <span>Show</span>
+                            <select
+                                value={rowsPerPage}
+                                onChange={(e) => {
+                                    setRowsPerPage(Number(e.target.value));
+                                    setPage(1);
+                                }}
+                                className="border rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15 cursor-pointer"
+                            >
+                                {[5, 10, 15, 20, 25].map((n) => (
+                                    <option key={n} value={n}>{n}</option>
+                                ))}
+                            </select>
+                            <span>records</span>
+                        </div>
                     </div>
                 </div>
 
@@ -160,24 +210,25 @@ export default function History() {
                                                 {sale.status}
                                             </span>
                                         </td>
-                                        <td className="p-4 text-right">
-                                            {isVoided ? (
-                                                <span
-                                                    className="block max-w-[220px] ml-auto truncate text-xs text-slate-400"
-                                                    title={sale.void_reason}
-                                                >
-                                                    {sale.void_reason}
-                                                </span>
-                                            ) : (
-                                                <div className="flex justify-end">
+                                        {/* Centered Action Column */}
+                                        <td className="p-4 text-center">
+                                            <div className="flex justify-center items-center h-full">
+                                                {isVoided ? (
+                                                    <span
+                                                        className="block max-w-[220px] truncate text-xs text-slate-400 mx-auto"
+                                                        title={sale.void_reason}
+                                                    >
+                                                        {sale.void_reason}
+                                                    </span>
+                                                ) : (
                                                     <button
                                                         onClick={() => setSaleToDelete(sale)}
                                                         className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-red-500 hover:bg-red-600 transition cursor-pointer"
                                                     >
                                                         Void
                                                     </button>
-                                                </div>
-                                            )}
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 );

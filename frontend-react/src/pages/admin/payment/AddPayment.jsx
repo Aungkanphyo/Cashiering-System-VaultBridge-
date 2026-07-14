@@ -22,13 +22,14 @@ const AddPayment = ({ onClose, onSuccess, existingPaymentNames = [] }) => {
     const errs = {};
     if (!name.trim()) {
       errs.name = "Payment method name is required.";
+    } else if (name.trim().length > 40) {
+      errs.name = "Payment method name cannot exceed 40 characters.";
     } else if (isDuplicateName(name)) {
       errs.name = "A payment method with this name already exists.";
     }
     return errs;
   };
 
-  // POST /api/payment-methods
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -95,15 +96,21 @@ const AddPayment = ({ onClose, onSuccess, existingPaymentNames = [] }) => {
 
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2">
-            <label className="block text-sm font-semibold text-slate-600 mb-1">
-              Payment Method Name
-            </label>
+            <div className="flex justify-between items-center mb-1">
+              <label className="block text-sm font-semibold text-slate-600">
+                Payment Method Name
+              </label>
+              <span className="text-[11px] text-slate-400">
+                {name.length}/40
+              </span>
+            </div>
             <input
               type="text"
               autoFocus
+              maxLength={40}
               value={name}
               onChange={(e) => {
-                setName(e.target.value);
+                setName(e.target.value.slice(0, 40));
                 clearFieldError("name");
                 if (error) setError("");
               }}
@@ -118,10 +125,7 @@ const AddPayment = ({ onClose, onSuccess, existingPaymentNames = [] }) => {
               <p className="text-xs text-rose-600 mt-1">{fieldErrors.name}</p>
             )}
           </div>
-
-         
         </div>
-       
 
         <div className="flex justify-end space-x-3 pt-1">
           <button

@@ -16,8 +16,8 @@ const EditPayment = ({ paymentId, onClose, onSuccess, existingPaymentNames = [] 
       setLoading(true);
       try {
         const res = await api.get(`/payment-methods/${paymentId}`);
-        setName(res.data.payment_name);
-        setStatus(res.data.status);
+        setName(res.data.payment_name || "");
+        setStatus(res.data.status || "active");
       } catch (err) {
         setError(
           err.response?.data?.message || "Failed to load payment method."
@@ -42,6 +42,8 @@ const EditPayment = ({ paymentId, onClose, onSuccess, existingPaymentNames = [] 
     const errs = {};
     if (!name.trim()) {
       errs.name = "Payment method name is required.";
+    } else if (name.trim().length > 40) {
+      errs.name = "Payment method name cannot exceed 40 characters.";
     } else if (isDuplicateName(name)) {
       errs.name = "A payment method with this name already exists.";
     }
@@ -49,8 +51,6 @@ const EditPayment = ({ paymentId, onClose, onSuccess, existingPaymentNames = [] 
   };
 
   // PUT /api/payment-methods/:id
-  // Note: status is not editable here — it is controlled only from the
-  // Delete / Restore actions on the Payment Methods view page.
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -122,15 +122,21 @@ const EditPayment = ({ paymentId, onClose, onSuccess, existingPaymentNames = [] 
 
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
-              <label className="block text-sm font-semibold text-slate-600 mb-1">
-                Payment Method Name
-              </label>
+              <div className="flex justify-between items-center mb-1">
+                <label className="block text-sm font-semibold text-slate-600">
+                  Payment Method Name
+                </label>
+                <span className="text-[11px] text-slate-400">
+                  {name.length}/40
+                </span>
+              </div>
               <input
                 type="text"
                 autoFocus
+                maxLength={40}
                 value={name}
                 onChange={(e) => {
-                  setName(e.target.value);
+                  setName(e.target.value.slice(0, 40));
                   clearFieldError("name");
                   if (error) setError("");
                 }}
