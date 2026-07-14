@@ -12,7 +12,7 @@ const api = axios.create({
 });
 
 // Request Interceptor: to put Bearer token
-api.interceptors.request.use(
+api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response && error.response.status === 401) {
