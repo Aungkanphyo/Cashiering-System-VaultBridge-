@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { TriangleAlert } from "lucide-react";
+import { TriangleAlert, Loader2, X } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../../api/axios";
+import Pagination from "../../components/common/Pagination";
 
 export default function History() {
     const [salesData, setSalesData] = useState([]);
@@ -15,6 +16,7 @@ export default function History() {
 
     const [saleToDelete, setSaleToDelete] = useState(null);
     const [selectedReason, setSelectedReason] = useState("");
+    const [voiding, setVoiding] = useState(false);
 
     const voidReasons = [
         "Customer Wants Less Qty",
@@ -29,7 +31,7 @@ export default function History() {
         try {
             setLoading(true);
             const response = await api.get("/vouchers", {
-                params: {page,per_page: rowsPerPage,},
+                params: { page, per_page: rowsPerPage },
             });
 
             setSalesData(response.data.data);
@@ -38,7 +40,7 @@ export default function History() {
 
         } catch (error) {
             console.error(error);
-            toast.error(error.response?.data?.message ??"Unable to load voucher history");
+            toast.error(error.response?.data?.message ?? "Unable to load voucher history");
         } finally {
             setLoading(false);
         }
@@ -48,181 +50,218 @@ export default function History() {
         fetchHistory();
     }, [page, rowsPerPage]);
 
+    const handleCancelVoid = () => {
+        if (voiding) return;
+        setSaleToDelete(null);
+        setSelectedReason("");
+    };
+
     const voidVoucher = async () => {
         if (!saleToDelete) return;
 
+        setVoiding(true);
         try {
-            await api.post(`/vouchers/${saleToDelete.voucher_id}/void`,{void_reason: selectedReason,});
+            await api.post(`/vouchers/${saleToDelete.voucher_id}/void`, { void_reason: selectedReason });
             toast.success("Voucher voided successfully");
             setSaleToDelete(null);
             setSelectedReason("");
             fetchHistory();
         } catch (error) {
             console.error(error);
-            toast.error(error.response?.data?.message ??"Unable to void voucher");
+            toast.error(error.response?.data?.message ?? "Unable to void voucher");
+        } finally {
+            setVoiding(false);
         }
-
     };
-
-    if (loading) {
-        return (
-            <div className="flex h-screen items-center justify-center">
-                Loading...
-            </div>
-        );
-    }
 
     return (
         <div className="min-h-screen">
-            <div className="overflow-hidden rounded-2xl border border-green-100 bg-white shadow">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                 {/* Header */}
-                <div className="flex flex-col gap-4 border-b bg-slate-50 px-6 py-4 md:flex-row md:items-center md:justify-between">
-                    <h2 className="text-xl font-bold text-slate-700">Sales History List</h2>
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm">Show</span>
-
-                        <select value={rowsPerPage} className="rounded-lg border px-3 py-2"
+                <div className="flex flex-col gap-4 p-6 pb-4 md:flex-row md:items-center md:justify-between">
+                    <h2 className="text-xl font-bold text-slate-800">Sales History</h2>
+                    <div className="flex items-center gap-2 text-xs text-slate-500 whitespace-nowrap">
+                        <span>Show</span>
+                        <select
+                            value={rowsPerPage}
                             onChange={(e) => {
                                 setRowsPerPage(Number(e.target.value));
                                 setPage(1);
-                            }}>
-                            <option value={5}>5</option>
-                            <option value={10}>10</option>
-                            <option value={15}>15</option>
-                            <option value={20}>20</option>
-                            <option value={25}>25</option>
+                            }}
+                            className="border rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15 cursor-pointer"
+                        >
+                            {[5, 10, 15, 20, 25].map((n) => (
+                                <option key={n} value={n}>{n}</option>
+                            ))}
                         </select>
-
-                        <span className="text-sm">records</span>
+                        <span>records</span>
                     </div>
                 </div>
 
                 {/* Table */}
                 <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead className="bg-slate-50">
-                            <tr>
-                                <th className="px-6 py-4 text-left">ID</th>
-                                <th className="px-6 py-4 text-left">Date</th>
-                                <th className="px-6 py-4 text-left">Total</th>
-                                <th className="px-6 py-4 text-left">Discount </th>
-                                <th className="px-6 py-4 text-left">Grand Total</th>
-                                <th className="px-6 py-4 text-left">Payment</th>
-                                <th className="px-6 py-4 text-left">Status</th>
-                                <th className="px-6 py-4 text-left">Action</th>
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-emerald-700 border-b border-emerald-800 text-white text-xs font-semibold uppercase">
+                                <th className="p-4">ID</th>
+                                <th className="p-4">Date</th>
+                                <th className="p-4">Total</th>
+                                <th className="p-4">Discount</th>
+                                <th className="p-4">Grand Total</th>
+                                <th className="p-4">Payment</th>
+                                <th className="p-4 w-28">Status</th>
+                                <th className="p-4 text-center">Action</th>
                             </tr>
                         </thead>
-                       
-                        <tbody className="text-sm font-semibold text-black">
-                            {salesData.map((sale) => (
-                                <tr key={sale.voucher_id} className={`border-t hover:bg-slate-50`}>
 
-                                    <td className="px-6 py-5 font-bold">#{sale.voucher_id}</td>
-                                    <td className="px-6 py-5 whitespace-nowrap">{new Date(sale.sale_date).toLocaleString("sv-SE", {timeZone: "Asia/Yangon",})}</td>
-                                    <td className="px-6 py-5">{Number(sale.total).toLocaleString()}</td>
-                                    <td className="px-6 py-5 text-red-500">{sale.discount > 0 ? "-" : "" }{Number(sale.discount).toLocaleString()}</td>
-                                    <td className="px-6 py-5">{Number(sale.grand_total).toLocaleString()}</td>
-                                    <td className="px-6 py-5">
-                                        <span className={sale.payment === "cash" ? "text-yellow-500" : "text-blue-500"}>{sale.payment}</span>
-                                    </td>
-
-                                    <td className="px-6 py-5">
-                                        <span className={sale.status === "voided" ? "text-red-600" : "text-green-600"}>{sale.status}</span>
-                                    </td>
-
-                                    <td className="px-6 py-5">
-                                        {sale.status === "voided" ? 
-                                            (<span className="block max-w-[220px] truncate text-slate-400" title={sale.void_reason}>{sale.void_reason}</span>) : 
-                                            (<button onClick={() => setSaleToDelete(sale)} className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700"> Void</button>
-                                        )}
+                        <tbody className="divide-y divide-slate-100 text-sm">
+                            {loading && (
+                                <tr>
+                                    <td colSpan={8} className="p-8 text-center text-slate-400">
+                                        <Loader2 className="w-5 h-5 animate-spin inline mr-2" />
+                                        Loading sales history...
                                     </td>
                                 </tr>
-                            ))}
+                            )}
+                            {!loading && salesData.length === 0 && (
+                                <tr>
+                                    <td colSpan={8} className="p-8 text-center text-slate-400">
+                                        No sales records found.
+                                    </td>
+                                </tr>
+                            )}
+                            {!loading && salesData.map((sale) => {
+                                const isVoided = sale.status === "voided";
+                                return (
+                                    <tr
+                                        key={sale.voucher_id}
+                                        className={`hover:bg-slate-50 transition ${isVoided ? "bg-slate-100/50 opacity-75" : ""}`}
+                                    >
+                                        <td className="p-4 font-mono text-xs text-slate-500">#{sale.voucher_id}</td>
+                                        <td className="p-4 whitespace-nowrap text-slate-600">
+                                            {new Date(sale.sale_date).toLocaleString("sv-SE", { timeZone: "Asia/Yangon" })}
+                                        </td>
+                                        <td className="p-4 font-semibold text-slate-800">
+                                            {Number(sale.total).toLocaleString()}K
+                                        </td>
+                                        <td className="p-4 text-rose-600 font-semibold">
+                                            {sale.discount > 0 ? "-" : ""}{Number(sale.discount).toLocaleString()}K
+                                        </td>
+                                        <td className="p-4 font-semibold text-emerald-700">
+                                            {Number(sale.grand_total).toLocaleString()}K
+                                        </td>
+                                        <td className="p-4">
+                                            <span className={`font-semibold ${sale.payment === "cash" ? "text-amber-600" : "text-sky-600"}`}>
+                                                {sale.payment}
+                                            </span>
+                                        </td>
+                                        <td className="p-4">
+                                            <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${isVoided ? "text-red-500" : "text-emerald-600"}`}>
+                                                {sale.status}
+                                            </span>
+                                        </td>
+                                        <td className="p-4 text-right">
+                                            {isVoided ? (
+                                                <span
+                                                    className="block max-w-[220px] ml-auto truncate text-xs text-slate-400"
+                                                    title={sale.void_reason}
+                                                >
+                                                    {sale.void_reason}
+                                                </span>
+                                            ) : (
+                                                <div className="flex justify-end">
+                                                    <button
+                                                        onClick={() => setSaleToDelete(sale)}
+                                                        className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-red-500 hover:bg-red-600 transition cursor-pointer"
+                                                    >
+                                                        Void
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
+                </div>
 
-                    {saleToDelete && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-                            <div className="w-full max-w-xl rounded-3xl bg-white shadow-2xl">
-                                <div className="flex items-center justify-between border-b px-6 py-5">
-                                    <div className="flex items-center gap-3">
-                                        <div className="rounded-full bg-red-100 p-3">
-                                            <TriangleAlert className="text-red-600" />
-                                        </div>
+                <Pagination
+                    currentPage={page}
+                    totalPages={lastPage}
+                    totalItems={totalRecords}
+                    pageSize={rowsPerPage}
+                    onPageChange={setPage}
+                />
+            </div>
 
-                                        <div>
-                                            <h2 className="text-xl font-bold text-red-600">Void Voucher</h2>
-                                            <p className="text-sm text-gray-500">Voucher #{saleToDelete.voucher_id}</p>
-                                        </div>
-                                    </div>
-
-                                    <button onClick={() => {setSaleToDelete(null);setSelectedReason("");}} className="text-2xl text-gray-400 hover:text-black">×</button>
+            {/* Void Confirmation Modal */}
+            {saleToDelete && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 backdrop-blur-md p-4">
+                    <div className="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-xl w-full">
+                        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="rounded-full bg-red-100 p-3">
+                                    <TriangleAlert className="text-red-600 w-5 h-5" />
                                 </div>
-
-                                <div className="space-y-6 p-8">
-                                    <div className="rounded-xl border border-red-200 bg-red-50 p-4">
-                                        Voiding this voucher will restore product stock.
-                                    </div>
-
-                                    <div>
-                                        <label className="mb-2 block font-semibold">Void Reason</label>
-                                        <select value={selectedReason} className="w-full rounded-xl border px-4 py-3" onChange={(e) =>setSelectedReason(e.target.value)}>
-                                            <option value="">Select reason...</option>
-
-                                            {voidReasons.map((reason) => (
-                                                <option key={reason} value={reason}>{reason}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-
-                                    <div className="flex justify-end gap-3">
-                                        <button onClick={() => { setSaleToDelete(null); setSelectedReason("");}} className="rounded-xl bg-gray-200 px-6 py-3">
-                                            Cancel
-                                        </button>
-
-                                        <button disabled={!selectedReason} onClick={voidVoucher} className="rounded-xl bg-red-600 px-6 py-3 text-white disabled:opacity-40">
-                                            Void Voucher
-                                        </button>
-                                    </div>
+                                <div>
+                                    <h3 className="font-bold text-slate-800 text-lg">Void Voucher</h3>
+                                    <p className="text-sm text-slate-500">Voucher #{saleToDelete.voucher_id}</p>
                                 </div>
                             </div>
+                            <button
+                                type="button"
+                                onClick={handleCancelVoid}
+                                className="text-slate-400 hover:text-slate-600 transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
                         </div>
-                    )}
-                </div>
 
-                {/* Footer */}
-                <div className="flex flex-col gap-4 border-t px-6 py-4 md:flex-row md:items-center md:justify-between">
-                    <div className="text-sm text-gray-600">
-                        Showing{" "}
-                        <span className="font-semibold">{totalRecords === 0 ? 0 : (page - 1) * rowsPerPage + 1}</span>{" "}
-                        -{" "}
-                        <span className="font-semibold">{Math.min(page * rowsPerPage, totalRecords)}</span>{" "}
-                        of{" "}
-                        <span className="font-semibold">{totalRecords}</span>{" "}
-                        records
-                    </div>
+                        <div className="p-5 space-y-4">
+                            <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-sm font-medium">
+                                Voiding this voucher will restore product stock.
+                            </div>
 
-                    <div className="flex items-center gap-2">
-                        <button disabled={page === 1} onClick={() => setPage(page - 1)} className="rounded-lg border px-4 py-2 disabled:cursor-not-allowed disabled:opacity-40">
-                            Previous
-                        </button>
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-600 mb-1">
+                                    Void Reason
+                                </label>
+                                <select
+                                    value={selectedReason}
+                                    onChange={(e) => setSelectedReason(e.target.value)}
+                                    className="w-full p-2.5 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                                >
+                                    <option value="">Select reason...</option>
+                                    {voidReasons.map((reason) => (
+                                        <option key={reason} value={reason}>{reason}</option>
+                                    ))}
+                                </select>
+                            </div>
 
-                        {Array.from(
-                            { length: lastPage },
-                            (_, index) => (
-                                <button key={index} onClick={() => setPage(index + 1)}
-                                    className={`h-10 w-10 rounded-lg transition ${page === index + 1 ? "bg-green-600 text-white" : "border hover:bg-slate-100"}`}>
-                                    {index + 1}
+                            <div className="flex justify-end space-x-3 pt-1">
+                                <button
+                                    type="button"
+                                    onClick={handleCancelVoid}
+                                    disabled={voiding}
+                                    className="px-4 py-2 text-sm font-semibold text-slate-500 hover:text-slate-700 bg-slate-100 rounded-lg disabled:opacity-50"
+                                >
+                                    Cancel
                                 </button>
-                            )
-                        )}
-
-                        <button disabled={page === lastPage} onClick={() => setPage(page + 1)} className="rounded-lg border px-4 py-2 disabled:cursor-not-allowed disabled:opacity-40">
-                            Next
-                        </button>
+                                <button
+                                    type="button"
+                                    disabled={!selectedReason || voiding}
+                                    onClick={voidVoucher}
+                                    className="px-4 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-sm flex items-center gap-1.5 disabled:opacity-40"
+                                >
+                                    {voiding && <Loader2 className="w-4 h-4 animate-spin" />}
+                                    {voiding ? "Voiding..." : "Void Voucher"}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 }

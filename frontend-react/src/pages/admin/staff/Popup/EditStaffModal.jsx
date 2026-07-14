@@ -38,6 +38,7 @@ const EditStaffModal = ({ onClose, staff, onSuccess }) => {
     const [nrcTownship, setNrcTownship] = useState(initialNrc.township);
     const [nrcType, setNrcType] = useState(initialNrc.type);
     const [nrcNumber, setNrcNumber] = useState(initialNrc.number);
+    const [submitting, setSubmitting] = useState(false);
 
     const uniqueNrcCodes = useMemo(() => {
         if (!nrcData || !nrcData.data) return [];
@@ -56,6 +57,11 @@ const EditStaffModal = ({ onClose, staff, onSuccess }) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     }
 
+    const handleCancel = () => {
+        if (submitting) return;
+        onClose?.();
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -63,12 +69,10 @@ const EditStaffModal = ({ onClose, staff, onSuccess }) => {
             toast("Please complete the NRC profile field.", {
                 icon: '⚠️',
             });
-            // alert("Please complete the NRC profile field.");
             return;
         }
         if (nrcNumber.length !== 6) {
             toast.error("NRC Number must be exactly 6 digits.");
-            // alert("NRC Number must be exactly 6 digits.");
             return;
         }
 
@@ -79,58 +83,63 @@ const EditStaffModal = ({ onClose, staff, onSuccess }) => {
             nrc: combinedNrc
         };
 
+        setSubmitting(true);
         try {
             const response = await api.put(`/staff/${staff.user_id}`, finalPayload);
             if (response.data.status === 'success') {
                 toast.success('Employee information has been edited.');
-                // alert('Employee information has been edited.');
                 onSuccess();
                 onClose();
             }
         } catch (error) {
             console.error(error);
             toast.error('There was an error while editing.');
-            // alert('There was an error while editing.');
+        } finally {
+            setSubmitting(false);
         }
     };
 
     return (
         <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-md flex justify-center items-center z-50 p-4">
-            <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden border border-gray-100 flex flex-col max-h-[90vh]">
+            <div className="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-lg w-full flex flex-col max-h-[90vh]">
                 {/* Header */}
-                <div className="bg-white border-b border-gray-100 px-6 py-4 flex justify-between items-center">
-                    <div className="flex items-center gap-2 text-gray-800">
-                        <UserRoundPen className="w-5 h-5 text-emerald-600" strokeWidth={2} />
-                        <h3 className="text-lg font-bold text-gray-800">Edit Staff Profile</h3>
+                <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-emerald-700 rounded-t-2xl">
+                    <div className="flex items-center gap-3">
+                        <UserRoundPen className="text-white" size={28} />
+                        <h3 className="font-bold text-white text-lg">Edit Staff Profile</h3>
                     </div>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition">
-                        <X className="w-5 h-5" strokeWidth={2.5} />
+                    <button
+                        type="button"
+                        onClick={handleCancel}
+                        className="text-white/80 hover:text-white transition-colors"
+                    >
+                        <X className="w-5 h-5" />
                     </button>
                 </div>
 
                 {/* Form Body */}
-                <form onSubmit={handleSubmit} className="p-6 space-y-4 text-sm overflow-y-auto flex-1">
+                <form onSubmit={handleSubmit} className="p-5 space-y-4 text-sm overflow-y-auto flex-1">
                     {/* Row 1: Name & Email */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Full Name</label>
-                            <input type="text" name="username" value={formData.username} required onChange={handleChange} className="w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition text-gray-800" />
+                            <label className="block text-sm font-semibold text-slate-600 mb-1">Full Name</label>
+                            <input type="text" name="username" value={formData.username} required onChange={handleChange} className="w-full p-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Email Address</label>
-                            <input type="email" name="email" value={formData.email} required onChange={handleChange} className="w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition text-gray-800" />
+                            <label className="block text-sm font-semibold text-slate-600 mb-1">Email Address</label>
+                            <input type="email" name="email" value={formData.email} required onChange={handleChange} className="w-full p-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
                         </div>
                     </div>
 
                     {/* Row 2: Phone & Gender */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Phone Number</label>
-                            <input type="text" name="phone_number" value={formData.phone_number} required onChange={handleChange} className="w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition text-gray-800" />
+                            <label className="block text-sm font-semibold text-slate-600 mb-1">Phone Number</label>
+                            <input type="text" name="phone_number" value={formData.phone_number} required onChange={handleChange} className="w-full p-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Gender</label>
-                            <select name="gender" value={formData.gender} onChange={handleChange} className="w-full border border-gray-300 px-3 py-2 bg-white rounded-lg focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition text-gray-800">
+                            <label className="block text-sm font-semibold text-slate-600 mb-1">Gender</label>
+                            <select name="gender" value={formData.gender} onChange={handleChange} className="w-full p-2.5 border border-slate-300 bg-white rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
                                 <option value="Male">Male</option>
                                 <option value="Female">Female</option>
                             </select>
@@ -140,12 +149,12 @@ const EditStaffModal = ({ onClose, staff, onSuccess }) => {
                     {/* Row 3: Date of Birth & System Role */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Date of Birth</label>
-                            <input type="date" name="date_of_birth" value={formData.date_of_birth} required onChange={handleChange} className="w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition text-gray-800" />
+                            <label className="block text-sm font-semibold text-slate-600 mb-1">Date of Birth</label>
+                            <input type="date" name="date_of_birth" value={formData.date_of_birth} required onChange={handleChange} className="w-full p-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">System Role</label>
-                            <select name="role" value={formData.role} onChange={handleChange} className="w-full border border-gray-300 px-3 py-2 bg-white rounded-lg focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition text-gray-800">
+                            <label className="block text-sm font-semibold text-slate-600 mb-1">System Role</label>
+                            <select name="role" value={formData.role} onChange={handleChange} className="w-full p-2.5 border border-slate-300 bg-white rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
                                 <option value="staff">Cashier</option>
                                 <option value="admin">Admin</option>
                             </select>
@@ -154,7 +163,7 @@ const EditStaffModal = ({ onClose, staff, onSuccess }) => {
 
                     {/* Row 4: Passport Style NRC Input Block (Full Width) */}
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">NRC Number</label>
+                        <label className="block text-sm font-semibold text-slate-600 mb-1.5">NRC Number</label>
                         <div className="flex items-center gap-1.5">
                             {/* NRC State Number Dropdown */}
                             <select
@@ -164,7 +173,7 @@ const EditStaffModal = ({ onClose, staff, onSuccess }) => {
                                     setNrcTownship("");
                                 }}
                                 required
-                                className="w-20 border border-gray-300 px-2 py-2 bg-white rounded-lg focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition text-gray-800 text-center"
+                                className="w-20 p-2.5 border border-slate-300 bg-white rounded-lg text-sm text-center focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                             >
                                 <option value=""></option>
                                 {uniqueNrcCodes.map((code) => (
@@ -172,7 +181,7 @@ const EditStaffModal = ({ onClose, staff, onSuccess }) => {
                                 ))}
                             </select>
 
-                            <span className="font-bold text-gray-400 text-base">/</span>
+                            <span className="font-bold text-slate-400 text-base">/</span>
 
                             {/* NRC Township Dropdown */}
                             <select
@@ -180,7 +189,7 @@ const EditStaffModal = ({ onClose, staff, onSuccess }) => {
                                 onChange={(e) => setNrcTownship(e.target.value)}
                                 required
                                 disabled={!nrcState}
-                                className="flex-1 min-w-22.5 border border-gray-300 px-2 py-2 bg-white rounded-lg focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition text-gray-800 disabled:bg-gray-50 disabled:text-gray-400"
+                                className="flex-1 min-w-22.5 p-2.5 border border-slate-300 bg-white rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none disabled:bg-slate-50 disabled:text-slate-400"
                             >
                                 <option value=""></option>
                                 {availableTownships.map((township, idx) => (
@@ -195,7 +204,7 @@ const EditStaffModal = ({ onClose, staff, onSuccess }) => {
                                 value={nrcType}
                                 onChange={(e) => setNrcType(e.target.value)}
                                 required
-                                className="w-24 border border-gray-300 px-1 py-2 bg-white rounded-lg focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition text-gray-800 text-center"
+                                className="w-24 p-2.5 border border-slate-300 bg-white rounded-lg text-sm text-center focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                             >
                                 <option value="(N)">(N) နိုင်</option>
                                 <option value="(A)">(A) ပြု</option>
@@ -210,21 +219,34 @@ const EditStaffModal = ({ onClose, staff, onSuccess }) => {
                                 maxLength="6"
                                 placeholder="123456"
                                 required
-                                className="w-28 border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition text-gray-800 tracking-wider text-center"
+                                className="w-28 p-2.5 border border-slate-300 rounded-lg text-sm text-center tracking-wider focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                             />
                         </div>
                     </div>
 
                     {/* Row 5: Home Address */}
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Home Address</label>
-                        <textarea name="address" value={formData.address} required onChange={handleChange} rows="3" className="w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition text-gray-800 resize-none"></textarea>
+                        <label className="block text-sm font-semibold text-slate-600 mb-1">Home Address</label>
+                        <textarea name="address" value={formData.address} required onChange={handleChange} rows="3" className="w-full p-2.5 border border-slate-300 rounded-lg text-sm resize-none focus:ring-2 focus:ring-emerald-500 focus:outline-none"></textarea>
                     </div>
 
                     {/* Footer Actions */}
-                    <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-4">
-                        <button type="button" onClick={onClose} className="px-5 py-2 bg-gray-100 text-gray-600 rounded-lg font-semibold hover:bg-gray-200 transition">Cancel</button>
-                        <button type="submit" className="px-5 py-2 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition">Save Staff Profile</button>
+                    <div className="flex justify-end space-x-3 pt-1">
+                        <button
+                            type="button"
+                            onClick={handleCancel}
+                            disabled={submitting}
+                            className="px-4 py-2 text-sm font-semibold text-slate-500 hover:text-slate-700 bg-slate-100 rounded-lg disabled:opacity-50"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={submitting}
+                            className="px-4 py-2 text-sm font-semibold text-white bg-emerald-700 hover:bg-emerald-600 rounded-lg shadow-sm disabled:opacity-60"
+                        >
+                            {submitting ? "Saving..." : "Save Staff Profile"}
+                        </button>
                     </div>
                 </form>
             </div>

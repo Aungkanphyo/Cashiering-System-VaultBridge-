@@ -62,6 +62,10 @@ class SaleController extends Controller
                     throw new \Exception("Product ID {$item['product_id']} not found.");
                 }
 
+                if ($product->stock_quantity < $item['quantity']) {
+                    throw new \Exception("Insufficient stock for \"{$product->product_name}\". Available: {$product->stock_quantity}.");
+                }
+
                 $unitPrice   = $product->price;
                 $discountPercent = $product->discount_percent ?? $product->discount_rate ?? 0;
                 $discountAmount = ($unitPrice * $discountPercent) / 100;
@@ -80,6 +84,8 @@ class SaleController extends Controller
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];
+
+                $product->decrement('stock_quantity', $item['quantity']);
             }
 
             $paymentReceived = $validated['payment_received'];

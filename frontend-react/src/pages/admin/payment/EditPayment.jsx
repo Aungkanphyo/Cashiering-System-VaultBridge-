@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Loader2 } from "lucide-react";
+import { X, Loader2, CreditCard } from "lucide-react";
 import api from "../../../api/axios";
 
 const EditPayment = ({ paymentId, onClose, onSuccess, existingPaymentNames = [] }) => {
@@ -91,14 +91,17 @@ const EditPayment = ({ paymentId, onClose, onSuccess, existingPaymentNames = [] 
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-lg w-full overflow-hidden">
+    <div className="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-lg w-full">
       {/* Header */}
-      <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-emerald-600 to-emerald-500">
-        <h3 className="font-bold text-white text-lg">Edit Payment Method</h3>
+      <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-emerald-700 rounded-t-2xl">
+        <div className="flex items-center gap-3">
+          <CreditCard className="text-white" size={28} />
+          <h3 className="font-bold text-white text-lg">Edit Payment Method</h3>
+        </div>
         <button
           type="button"
           onClick={handleCancel}
-          className="text-white/80 hover:text-white"
+          className="text-white/80 hover:text-white transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
@@ -110,7 +113,7 @@ const EditPayment = ({ paymentId, onClose, onSuccess, existingPaymentNames = [] 
           Loading payment method...
         </div>
       ) : (
-        <form onSubmit={handleSubmit} noValidate className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+        <form onSubmit={handleSubmit} noValidate className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
           {error && (
             <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-sm font-medium">
               {error}
@@ -142,11 +145,9 @@ const EditPayment = ({ paymentId, onClose, onSuccess, existingPaymentNames = [] 
                 <p className="text-xs text-rose-600 mt-1">{fieldErrors.name}</p>
               )}
             </div>
-
-        
           </div>
 
-          <div className="flex justify-end space-x-3 pt-4">
+          <div className="flex justify-end space-x-3 pt-1">
             <button
               type="button"
               onClick={handleCancel}
@@ -158,7 +159,7 @@ const EditPayment = ({ paymentId, onClose, onSuccess, existingPaymentNames = [] 
             <button
               type="submit"
               disabled={submitting}
-              className="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm flex items-center gap-1.5 disabled:opacity-60"
+              className="px-4 py-2 text-sm font-semibold text-white bg-emerald-700 hover:bg-emerald-600 rounded-lg shadow-sm flex items-center gap-1.5 disabled:opacity-60"
             >
               {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
               {submitting ? "Saving..." : "Save Changes"}

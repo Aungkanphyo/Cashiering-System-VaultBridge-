@@ -1,5 +1,14 @@
 import { useState, useEffect, useMemo } from "react";
-import { Plus, Loader2, RotateCcw, Search } from "lucide-react";
+import {
+  Plus,
+  Loader2,
+  RotateCcw,
+  Search,
+  Package,
+  CheckCircle2,
+  XCircle,
+  TriangleAlert,
+} from "lucide-react";
 import api from "../../../api/axios";
 import Toast from "../../../components/common/Toast";
 import Modal from "../../../components/common/Modal";
@@ -17,7 +26,7 @@ const ProductsView = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editProductId, setEditProductId] = useState(null);
   const [discountError, setDiscountError] = useState({});
-  const [statusFilter, setStatusFilter] = useState("all"); // all | active | inactive
+  const [statusFilter, setStatusFilter] = useState("all"); // all | active | inactive | low_stock
   const [search, setSearch] = useState("");
   const [confirmState, setConfirmState] = useState(null); // { type: 'delete'|'restore', id, name }
   const [pageSize, setPageSize] = useState(5);
@@ -29,7 +38,6 @@ const ProductsView = () => {
     setTimeout(() => setToast(""), 2500);
   };
 
-  // GET /api/products + GET /api/categories (to resolve category names)
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -61,7 +69,6 @@ const ProductsView = () => {
     return cat ? cat.category_name : "General";
   };
 
-  // sale price = price + category tax (tax applied on top of the base price)
   const getSalePrice = (product) => {
     const cat = getCategory(product.category_id);
     const tax = cat ? Number(cat.tax || 0) : 0;
@@ -69,8 +76,6 @@ const ProductsView = () => {
     return price + (price * tax) / 100;
   };
 
-  // The discount rate for a product can never go below its category's own
-  // discount (discount_category), but can be raised up to 100%.
   const getDiscountFloor = (product) => {
     const cat = getCategory(product.category_id);
     return cat ? Number(cat.discount_category || 0) : 0;
@@ -78,9 +83,14 @@ const ProductsView = () => {
 
   const filteredProducts = useMemo(() => {
     let list = products;
-    if (statusFilter !== "all") {
+    
+    // Support the regular status states + the custom low_stock rule
+    if (statusFilter === "active" || statusFilter === "inactive") {
       list = list.filter((p) => p.status === statusFilter);
+    } else if (statusFilter === "low_stock") {
+      list = list.filter((p) => p.stock_quantity <= p.min_stock_level);
     }
+
     const term = search.trim().toLowerCase();
     if (term) {
       list = list.filter((p) => {
@@ -92,10 +102,8 @@ const ProductsView = () => {
       });
     }
     return list;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [products, categories, statusFilter, search]);
 
-  // Reset back to page 1 whenever the filter, search term, or page size changes
   useEffect(() => {
     setCurrentPage(1);
   }, [statusFilter, search, pageSize]);
@@ -103,7 +111,6 @@ const ProductsView = () => {
   const totalItems = filteredProducts.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
 
-  // Keep currentPage valid if the list shrinks (e.g. after a delete)
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(totalPages);
   }, [totalPages, currentPage]);
@@ -113,7 +120,6 @@ const ProductsView = () => {
     return filteredProducts.slice(start, start + pageSize);
   }, [filteredProducts, currentPage, pageSize]);
 
-  // PUT /api/products/:id (quick-edit discount rate from the table)
   const handleDiscountChange = async (productId, value) => {
     const discount_rate = parseFloat(value);
     const product = products.find((p) => p.product_id === productId);
@@ -151,7 +157,6 @@ const ProductsView = () => {
     }
   };
 
-  // Opens the custom confirmation box (used for both Delete and Restore)
   const askConfirm = (type, id, name) => setConfirmState({ type, id, name });
 
   const handleConfirm = async () => {
@@ -174,50 +179,110 @@ const ProductsView = () => {
     }
   };
 
-  const filterTabs = [
-    { key: "all", label: "All" },
-    { key: "active", label: "Active" },
-    { key: "inactive", label: "Inactive" },
-  ];
+  const summaryStats = useMemo(() => {
+    const activeCount = products.filter((p) => p.status === "active").length;
+    const inactiveCount = products.filter((p) => p.status === "inactive").length;
+    const lowStockCount = products.filter(
+      (p) => p.stock_quantity <= p.min_stock_level
+    ).length;
+
+    return [
+      {
+        title: "TOTAL PRODUCTS",
+        value: products.length,
+        filterKey: "all",
+        icon: Package,
+        colorClass: "text-slate-500 bg-slate-50 border-slate-200",
+        activeClass: "ring-2 ring-emerald-500 border-emerald-400 bg-slate-50/50",
+      },
+      {
+        title: "ACTIVE PRODUCTS",
+        value: activeCount,
+        filterKey: "active",
+        icon: CheckCircle2,
+        colorClass: "text-emerald-600 bg-emerald-50 border-emerald-100",
+        activeClass: "ring-2 ring-emerald-500 border-emerald-400 bg-emerald-50/50",
+      },
+      {
+        title: "INACTIVE PRODUCTS",
+        value: inactiveCount,
+        filterKey: "inactive",
+        icon: XCircle,
+        colorClass: "text-rose-600 bg-rose-50 border-rose-100",
+        activeClass: "ring-2 ring-emerald-500 border-emerald-400 bg-rose-50/50",
+      },
+      {
+        title: "LOW STOCK ITEMS",
+        value: lowStockCount,
+        filterKey: "low_stock",
+        icon: TriangleAlert,
+        colorClass: "text-amber-600 bg-amber-50 border-amber-100",
+        activeClass: "ring-2 ring-emerald-500 border-emerald-400 bg-amber-50/50",
+      },
+    ];
+  }, [products]);
 
   return (
-    <section className="space-y-6">
+    <div className="min-h-screen">
       <Toast message={toast} type={toastType} />
 
-      {/* Unified header + filters card: search + status dropdown on left, page-size + Add button rightmost */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 p-4">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-            <div className="relative w-full sm:w-72">
+      {/* Interactive Stat Cards Section */}
+      <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-5">
+        {summaryStats.map((item) => {
+          const IconComponent = item.icon;
+          const isActive = statusFilter === item.filterKey;
+
+          return (
+            <button
+              key={item.title}
+              onClick={() => setStatusFilter(item.filterKey)}
+              className={`w-full text-left bg-white rounded-2xl border p-5 flex items-center justify-between gap-3 transition-all duration-200 shadow-sm group hover:shadow-md cursor-pointer ${
+                isActive ? item.activeClass : "hover:border-slate-300"
+              }`}
+            >
+              <div className="space-y-1">
+                <p className="text-xs uppercase tracking-wider font-bold text-slate-500 group-hover:text-slate-700 transition-colors">
+                  {item.title}
+                </p>
+                <h2 className="text-2xl text-slate-800 font-bold">
+                  {item.value}
+                </h2>
+              </div>
+              <div className={`p-3 rounded-xl border ${item.colorClass} transition-transform group-hover:scale-105`}>
+                <IconComponent className="w-5 h-5" />
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Table Section */}
+      <div className="bg-white rounded-2xl border shadow-sm overflow-hidden mt-8">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 p-6 pb-4 w-full">
+
+          {/* Left Side: Search Bar */}
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="relative w-full sm:w-84">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by category or product name ..."
-                className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent focus:outline-none transition"
+                className="w-full pl-9 pr-3 py-2 border rounded-lg text-sm bg-transparent cursor-text focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15 transition"
               />
             </div>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 rounded-lg text-sm font-semibold border border-slate-200 text-slate-600 bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-            >
-              {filterTabs.map((tab) => (
-                <option key={tab.key} value={tab.key}>
-                  {tab.label}
-                </option>
-              ))}
-            </select>
+            
           </div>
 
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="flex items-center gap-2 text-xs text-slate-500">
+          {/* Right Side: Entries Dropdown and Add New Product Button */}
+          <div className="flex items-center gap-4 w-full sm:w-auto sm:ml-auto justify-between sm:justify-end">
+            <div className="flex items-center gap-2 text-xs text-slate-500 whitespace-nowrap">
               <span>Show</span>
               <select
                 value={pageSize}
                 onChange={(e) => setPageSize(Number(e.target.value))}
-                className="border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-700 bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                className="border rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15 cursor-pointer"
               >
                 {[5, 10, 15, 20, 25].map((n) => (
                   <option key={n} value={n}>
@@ -230,40 +295,27 @@ const ProductsView = () => {
 
             <button
               onClick={() => setShowAddModal(true)}
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold flex items-center space-x-1.5 shadow-sm shrink-0"
+              className="flex items-center gap-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 px-4 py-2 text-sm font-semibold shadow-sm whitespace-nowrap cursor-pointer"
             >
-              <Plus className="w-4 h-4" />
-              <span>Add New Product</span>
+              <Plus size={18} /> Add New Product
             </button>
           </div>
         </div>
-      </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-emerald-700 border-b border-emerald-800 text-white text-xs font-semibold uppercase">
                 <th className="p-4">Barcode</th>
                 <th className="p-4">Name</th>
-                <th className="p-4">Price (MMK)</th>
-                <th className="p-4">
-                  Sale Price (MMK){" "}
-                  <span className="text-[10px] text-emerald-200">
-                    (Price + Tax)
-                  </span>
-                </th>
+                <th className="p-4">Price</th>
+                <th className="p-4">Sale Price</th>
                 <th className="p-4">Stock Qty</th>
                 <th className="p-4">Min Stock Level</th>
-                <th className="p-4 w-32">
-                  Discount (%){" "}
-                  <span className="text-[10px] text-emerald-200">
-                    (Quick Edit)
-                  </span>
-                </th>
-                <th className="p-4 w-32">Discount Amount (MMK)</th>
+                <th className="p-4 w-32">Discount (%)</th>
+                <th className="p-4 w-32">Discount Amount</th>
                 <th className="p-4 w-28">Status</th>
-                <th className="p-4 text-right">Actions</th>
+                <th className="p-4 text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm">
@@ -278,7 +330,7 @@ const ProductsView = () => {
               {!loading && filteredProducts.length === 0 && (
                 <tr>
                   <td colSpan={10} className="p-8 text-center text-slate-400">
-                    No products found.
+                    No products found under this view.
                   </td>
                 </tr>
               )}
@@ -299,7 +351,7 @@ const ProductsView = () => {
                         #{prod.barcode}
                       </td>
                       <td className="p-4">
-                        <div className="font-semibold text-slate-800">
+                        <div className="font-semibold text-slate-880">
                           {prod.product_name}
                         </div>
                         <div className="text-xs text-slate-400">
@@ -307,12 +359,12 @@ const ProductsView = () => {
                         </div>
                       </td>
                       <td className="p-4 font-semibold text-slate-800">
-                        {Number(prod.price).toLocaleString()}
+                        {Number(prod.price).toLocaleString()}K
                       </td>
                       <td className="p-4 font-semibold text-emerald-700">
                         {salePrice.toLocaleString(undefined, {
                           maximumFractionDigits: 2,
-                        })}
+                        })}K
                       </td>
                       <td className="p-4">
                         <span
@@ -324,7 +376,7 @@ const ProductsView = () => {
                         </span>
                       </td>
                       <td className="p-4 text-slate-500 font-semibold">
-                        {prod.min_stock_level} (Units)
+                        {prod.min_stock_level}
                       </td>
                       <td className="p-4">
                         <div className="flex items-center space-x-1">
@@ -354,14 +406,12 @@ const ProductsView = () => {
                         )}
                       </td>
                       <td className="p-4 font-semibold text-slate-700">
-                        {Number(prod.discount_price || 0).toLocaleString()}
+                        {Number(prod.discount_price || 0).toLocaleString()}K
                       </td>
                       <td className="p-4">
                         <span
                           className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                            isInactive
-                              ? "bg-slate-200 text-slate-600"
-                              : "bg-emerald-100 text-emerald-700"
+                            isInactive ? " text-red-500" : " text-green-600"
                           }`}
                         >
                           {isInactive ? "Inactive" : "Active"}
@@ -372,7 +422,7 @@ const ProductsView = () => {
                           {!isInactive && (
                             <button
                               onClick={() => setEditProductId(prod.product_id)}
-                              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 transition"
+                              className="px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-sky-500 hover:bg-sky-600 transition cursor-pointer"
                             >
                               Edit
                             </button>
@@ -382,7 +432,7 @@ const ProductsView = () => {
                               onClick={() =>
                                 askConfirm("restore", prod.product_id, prod.product_name)
                               }
-                              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 transition flex items-center gap-1"
+                              className="px-8 py-1.5 rounded-lg text-xs font-semibold text-white bg-emerald-700 border border-emerald-200 hover:bg-emerald-900 transition flex items-center gap-1 cursor-pointer"
                             >
                               <RotateCcw className="w-3.5 h-3.5" />
                               Restore
@@ -392,7 +442,7 @@ const ProductsView = () => {
                               onClick={() =>
                                 askConfirm("delete", prod.product_id, prod.product_name)
                               }
-                              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 hover:bg-rose-200 transition"
+                              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-red-500 hover:bg-red-600 transition cursor-pointer"
                             >
                               Delete
                             </button>
@@ -415,6 +465,7 @@ const ProductsView = () => {
         />
       </div>
 
+      {/* Modals & Dialogs */}
       <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} maxWidth="max-w-lg">
         <AddProduct
           existingProductNames={products.map((p) => p.product_name)}
@@ -459,7 +510,7 @@ const ProductsView = () => {
         onConfirm={handleConfirm}
         onCancel={() => setConfirmState(null)}
       />
-    </section>
+    </div>
   );
 };
 
