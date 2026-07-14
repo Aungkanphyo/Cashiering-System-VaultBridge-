@@ -38,8 +38,6 @@ class AdminDashboardController extends Controller
             });
         })->values()->toArray();
 
-        Log::info('Data sent to COBOL:', $detailsData);
-
         try {
             // Directly sending raw data (details) to COBOL Micro-services
             $response = Http::timeout(10)->post('http://cobol-service:4000/calculate-total', [
