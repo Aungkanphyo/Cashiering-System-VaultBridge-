@@ -14,6 +14,7 @@ import StaffDetailModal from "./Popup/StaffDetailModal";
 import AddStaffModal from "./Popup/AddStaffModal";
 import EditStaffModal from "./Popup/EditStaffModal";
 import toast from 'react-hot-toast';
+import { AlertTriangle } from "lucide-react";
 
 const ViewStaff = () => {
     const formatDate = (dateStr) => {

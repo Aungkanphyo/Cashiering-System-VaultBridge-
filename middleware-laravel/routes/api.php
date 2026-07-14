@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\PaymentMethodController;
@@ -24,11 +25,15 @@ Route::middleware(['auth:sanctum', 'cashier'])->group(function (){
 
 // Admin only access routes
 Route::middleware(['auth:sanctum', 'admin'])->group(function () {
+    Route::get('/admin/dashboard',[AdminDashboardController::class,'index']);
     Route::get('/staff', [StaffController::class, 'index']); // Staff List (+ Search & Filter)
     Route::post('/staff', [StaffController::class, 'store']);
     Route::put('/staff/{id}', [StaffController::class, 'update']);
     Route::get('/staff/{id}', [StaffController::class, 'show']); // View Staff Detail (Popup)
     Route::patch('/staff/{id}/toggle-status', [StaffController::class, 'toggleStatus']);
+    
+    //Session API Endpoint
+    Route::get('/admin/cash-sessions', [SessionController::class, 'getCashSessions']);
 
     // Voucher History API Endpoint
     Route::get('/admin/vouchers', [AdminVoucherController::class, 'index']);

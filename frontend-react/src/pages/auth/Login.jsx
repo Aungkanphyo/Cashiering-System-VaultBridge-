@@ -1,4 +1,4 @@
-import { ShoppingBasket } from "lucide-react";
+import { ShoppingBasket, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
@@ -13,12 +13,13 @@ const Login = () => {
     const [password, setPassword] = useState('');
     const [errors, setErrors] = useState({});
     const [processing, setProcessing] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleLogin = async (e) => {
         e.preventDefault();
         setProcessing(true);
         setErrors({});
-        
+
         try {
             await axios.get("http://localhost:8000/sanctum/csrf-cookie", {
                 withCredentials: true
@@ -86,14 +87,27 @@ const Login = () => {
                         {/* Password Field */}
                         <div className="mb-5.5">
                             <label className="block mb-2 text-[#0a7a5d] font-medium text-[15px]">Password</label>
-                            <input
-                                type="password"
-                                value={password}
-                                placeholder="Enter your password"
-                                className="w-full h-13 px-4.5 border-2 border-[#D1D5DB] rounded-[14px] text-[15px] outline-none transition duration-300 focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15"
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                            />
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    value={password}
+                                    placeholder="Enter your password"
+                                    className="w-full h-13 pl-4.5 pr-12 border-2 border-[#D1D5DB] rounded-[14px] text-[15px] outline-none transition duration-300 focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15"
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#10B981] transition duration-200 cursor-pointer"
+                                >
+                                    {showPassword ? (
+                                        <Eye className="w-5 h-5" />
+                                    ) : (
+                                        <EyeOff className="w-5 h-5" />
+                                    )}
+                                </button>
+                            </div>
                             {errors.password && <p className="text-red-500 text-sm mt-1.5 font-medium">{errors.password[0]}</p>}
                         </div>
 

@@ -10,6 +10,8 @@ frontend-react/dist/
 frontend-react/.env
 frontend-react/.env.local
 
+node_modules/
+
 # --- Barcode backend ---
 barcode-backend/node_modules/
 
@@ -24,9 +26,5 @@ middleware-laravel/storage/framework/views/*
 middleware-laravel/storage/logs/*.log
 
 # --- COBOL Core Logic ---
-# To ignore the binary and temporary files that will be generated when compiling COBOL
-cobol-core/*.exe
-cobol-core/*.out
-cobol-core/*.int
-cobol-core/*.gnt
-cobol-core/*.lst
+# COBOL Compiled Binary Files
+cobol-core/total_sales

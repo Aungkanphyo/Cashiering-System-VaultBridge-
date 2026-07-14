@@ -278,11 +278,11 @@ const ViewCategory = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-emerald-700 border-b border-emerald-800 text-white text-xs font-semibold uppercase">
-                <th className="p-4">Category Name</th>
-                <th className="p-4 w-32">Tax</th>
-                <th className="p-4 w-32">Discount</th>
-                <th className="p-4 w-28">Status</th>
-                <th className="p-4 text-center">Actions</th>
+                <th className="p-4 w-100">Category Name</th>
+                <th className="p-4 w-100">Tax</th>
+                <th className="p-4 w-100">Discount</th>
+                <th className="p-4 w-30">Status</th>
+                <th className="p-4 w-50 text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm">

@@ -58,5 +58,17 @@ services:
     depends_on:
       - mysql-db
 
+  # COBOL Dynamic Core Service
+  cobol-service:
+    build:
+      context: ./cobol-core
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./cobol-core:/app
+      - /app/node_modules
+    command: sh -c "cobc -x -o total_sales total_sales.cbl && node server.js"
+
 volumes:
   mysql_data:

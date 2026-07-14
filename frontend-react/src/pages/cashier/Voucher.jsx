@@ -1,3 +1,7 @@
+import { useRef } from 'react';
+import { useReactToPrint } from 'react-to-print';
+import VoucherPrinter from './VoucherPrinter';
+import toast from 'react-hot-toast';
 
 const Voucher = ({
 	voucherId,
@@ -15,10 +19,72 @@ const Voucher = ({
 	handleDirectQtyChange,
 	handleDeleteItem,
 	handleClearCart,
-	handleProcessSale
+	handleProcessSale,
+	dbPaymentMethods
 }) => {
-	return (
-		<div className="lg:col-span-5 bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between h-[calc(100vh-16px)] sticky top-0">
+	const isCashSelected = paymentMethod.toLowerCase() === 'cash';
+
+  
+  const printComponentRef = useRef();
+
+  // Print trigger integration that resets cart on safe execution without window reloads
+  const handlePrintFn = useReactToPrint({
+    contentRef: printComponentRef,
+    onAfterPrint: () => {
+      handleClearCart();
+      toast.success('Sale processed successfully!');
+    }
+  });
+
+  // Action flow control with interactive UI form validation
+  const handlePayAndPrint = async () => {
+    if (cartItems.length === 0) {
+      toast.error('No products in the cart to process sale.');
+      return;
+    }
+
+    if (paymentMethod === 'Cash') {
+      const parsedPayAmount = parseFloat(payAmount);
+      
+      if (!payAmount || isNaN(parsedPayAmount) || parsedPayAmount <= 0) {
+        toast.error('Please enter a received payment amount!');
+        return; 
+      }
+
+      if (parsedPayAmount < finalTotal) {
+        toast.error(`Insufficient amount! Received amount is less than ${finalTotal.toLocaleString()} Ks.`);
+        return; 
+      }
+    }
+
+    try {
+      // 1. Persist data record update to API Database pipeline
+      await handleProcessSale();
+      
+      // 2. Safely trigger print preview overlay context on success
+      handlePrintFn();
+
+    } catch (error) {
+      console.error("Sale processing failed:", error);
+      toast.error("Failed to save transaction to database.");
+    }
+  };
+
+  return (
+    <div className="lg:col-span-5 bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between max-h-[calc(90vh-40px)] h-auto sticky top-4">
+      
+      {/* Hidden Voucher Element Target Node Container */}
+      <VoucherPrinter 
+        ref={printComponentRef}
+        voucherId={voucherId}
+        cartItems={cartItems}
+        subtotal={subtotal}
+        totalDiscount={totalDiscount}
+        finalTotal={finalTotal}
+        paymentMethod={paymentMethod}
+        payAmount={payAmount}
+        changeDue={changeDue}
+      />
 
 			<div className="flex flex-col flex-1 min-h-0">
 				<div className="flex justify-between items-center pb-2 border-b border-slate-100 mb-3">
@@ -31,7 +97,7 @@ const Voucher = ({
 					</button>
 				</div>
 
-				<div className="space-y-1.5 flex-1 overflow-y-auto pr-0.5 min-h-0">
+				<div className="space-y-1.5 flex-1 overflow-y-auto pr-0.5 min-h-0 chunk-scrollbar">
 					{cartItems.map((item) => {
 						const itemDiscountPrice = item.price - (item.price * item.discountPercent / 100);
 						const itemFinalRowTotal = itemDiscountPrice * item.quantity;
@@ -100,24 +166,27 @@ const Voucher = ({
 				</div>
 			</div>
 
-			{/* PAYMENT TYPE METHOD SELECTOR */}
+			{/* DYNAMIC SELECT BOX METHOD SELECTOR */}
 			<div className="mt-3 pt-2 border-t border-slate-100 grid grid-cols-12 gap-2.5 items-center bg-white">
 				<div className="col-span-4">
 					<label className="block text-[9px] font-black text-slate-400 uppercase mb-1">Method</label>
-					<div className="flex gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
-						<button
-							onClick={() => { setPaymentMethod('Cash'); setPayAmount(''); }}
-							className={`flex-1 py-1 text-[9px] font-bold rounded-md transition-all ${paymentMethod === 'Cash' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'}`}
-						>
-							💵 Cash
-						</button>
-						<button
-							onClick={() => { setPaymentMethod('KPay'); setPayAmount(''); }}
-							className={`flex-1 py-1 text-[9px] font-bold rounded-md transition-all ${paymentMethod === 'KPay' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'}`}
-						>
-							📱 KPay
-						</button>
-					</div>
+					<select
+						value={paymentMethod}
+						onChange={(e) => {
+							setPaymentMethod(e.target.value);
+							setPayAmount('');
+						}}
+						className="w-full px-2 py-1 h-7 text-xs font-bold border rounded-md bg-white border-slate-200 focus:outline-none focus:border-emerald-500 text-slate-700 cursor-pointer shadow-xs"
+					>
+						{(dbPaymentMethods || []).map((method) => {
+							const isCash = method.payment_name.toLowerCase() === 'cash';
+							return (
+								<option key={method.payment_id} value={method.payment_name}>
+									{isCash ? 'Cash' : `${method.payment_name}`}
+								</option>
+							);
+						})}
+					</select>
 				</div>
 
 				<div className="col-span-8 grid grid-cols-2 gap-2">
@@ -125,12 +194,12 @@ const Voucher = ({
 						<label className="block text-[9px] font-black text-slate-400 uppercase mb-1">Pay Amount</label>
 						<input
 							type="number"
-							placeholder={paymentMethod === 'Cash' ? "Enter Cash" : "0"}
-							className={`w-full px-2 py-0.5 h-7 text-xs font-sans font-bold border rounded-md focus:outline-none bg-white text-slate-800 border-slate-200 focus:border-emerald-500 ${paymentMethod === 'KPay' ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' : ''
+							placeholder={isCashSelected ? "Enter Cash" : "0"}
+							className={`w-full px-2 py-0.5 h-7 text-xs font-sans font-bold border rounded-md focus:outline-none bg-white text-slate-800 border-slate-200 focus:border-emerald-500 ${!isCashSelected ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' : ''
 								}`}
-							value={paymentMethod === 'KPay' ? finalTotal : payAmount}
+							value={isCashSelected ? payAmount : finalTotal}
 							onChange={(e) => setPayAmount(e.target.value)}
-							disabled={paymentMethod === 'KPay'}
+							disabled={!isCashSelected}
 						/>
 					</div>
 					<div>
@@ -142,19 +211,19 @@ const Voucher = ({
 				</div>
 			</div>
 
-			{/* Pay Action Submit Button */}
-			<div className="pt-3 bg-white">
-				<button
-					disabled={cartItems.length === 0}
-					onClick={handleProcessSale}
-					className={`w-full py-2 px-4 rounded-lg font-bold text-xs border shadow-xs transition-all flex items-center justify-center gap-1.5 ${cartItems.length === 0
-						? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-60'
-						: 'bg-emerald-600 hover:bg-emerald-700 border-emerald-700 text-white active:scale-[0.99]'
-						}`}
-				>
-					<span>🧾</span> Pay
-				</button>
-			</div>
+      <div className="pt-3 bg-white">
+        <button
+          disabled={cartItems.length === 0} 
+          onClick={handlePayAndPrint} 
+          className={`w-full py-2 px-4 rounded-lg font-bold text-xs border shadow-xs transition-all flex items-center justify-center gap-1.5 ${
+            cartItems.length === 0 
+              ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-60' 
+              : 'bg-emerald-600 hover:bg-emerald-700 border-emerald-700 text-white active:scale-[0.99]'
+            }`}
+        >
+          <span>🧾</span> Pay & Print
+        </button>
+      </div>
 
 		</div>
 	);
