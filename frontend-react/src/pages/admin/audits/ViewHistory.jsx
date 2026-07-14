@@ -1,16 +1,17 @@
+import "../../../api/echo";
 import { useEffect, useState } from "react";
 import ViewDetails from "./ViewDetails";
 import api from "../../../api/axios";
 import toast from 'react-hot-toast';
 import {
-	Search,
-	RotateCcw,
-	Calendar,
-	Eye,
-	ChevronsLeft,
-	ChevronLeft,
-	ChevronRight,
-	ChevronsRight,
+    Search,
+    RotateCcw,
+    Calendar,
+    Eye,
+    ChevronsLeft,
+    ChevronLeft,
+    ChevronRight,
+    ChevronsRight,
     FileSpreadsheet
 } from "lucide-react";
 
@@ -34,17 +35,41 @@ const ViewHistory = () => {
     // Server-side Pagination States
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
-    const [totalRecords, setTotalRecords] = useState(0); 
+    const [totalRecords, setTotalRecords] = useState(0);
 
     // Modal & Voucher State
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedVoucher, setSelectedVoucher] = useState(null);
 
+    // Real-time Listening feature added
+    useEffect(() => {
+        if (window.Echo) {
+            window.Echo.private('admin.dashboard')
+                .listen('.SaleProcessed', (data) => {
+                    setTransactions((prev) => {
+                        const isDuplicate = prev.some(tx => String(tx.id) === String(data.voucher.id));
+                        if (isDuplicate) return prev;
+                        setTotalRecords((prevTotal) => prevTotal + 1);
+                        
+                        const updated = [data.voucher, ...prev];
+                        if (updated.length > 8) updated.pop();
+                        return updated;
+                    });
+                    setTotalRecords((prev) => prev + 1);
+                })
+        }
+
+        return () => {
+            if (window.Echo) {
+                window.Echo.leaveChannel('admin.dashboard');
+            }
+        };
+    }, []);
+
     useEffect(() => {
         const fetchPaymentMethods = async () => {
             try {
-                const response = await api.get("/payment-methods"); // Payment List API End-point 
-                console.log(response);
+                const response = await api.get("/payment-methods"); // Payment List API End-point
                 // active methods filter 
                 const activeMethods = response.data.filter(m => m.status === "active");
                 setDbPaymentMethods(activeMethods);
@@ -66,7 +91,7 @@ const ViewHistory = () => {
                     params: {
                         page: currentPage,
                         search_id: searchId.trim(),
-                        
+
                         payment_method: paymentMethod === "ALL" ? "" : paymentMethod,
                         status: status === "ALL" ? "" : status,
                         from_date: fromDate,
@@ -115,7 +140,7 @@ const ViewHistory = () => {
             });
             const link = document.createElement("a");
             link.href = window.URL.createObjectURL(blob);
-            link.download = `Voucher_History_${new Date().toISOString().slice(0,10)}.xlsx`;
+            link.download = `Voucher_History_${new Date().toISOString().slice(0, 10)}.xlsx`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -146,11 +171,11 @@ const ViewHistory = () => {
             <div className={`px-8 pt-6 pb-8 space-y-6 transition-all duration-300 ${isModalOpen ? "blur-sm pointer-events-none select-none" : ""}`}>
 
                 {/* Minimalist White Filter Panel */}
-                
+
                 <div className="bg-white rounded-xl border border-slate-100 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.02)] px-4 py-3 max-w-5xl"> {/* max-w-5xl နဲ့ အလျားကို ကန့်သတ်ထားပါတယ် */}
-                    
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-10 gap-2 items-center">
-                        
+
                         {/* 1. Voucher ID Search */}
                         <div className="lg:col-span-2 relative w-full">
                             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -194,7 +219,7 @@ const ViewHistory = () => {
 
                         {/* 4. Date Range & Reset Button */}
                         <div className="lg:col-span-4 flex items-center gap-1.5 w-full">
-                            
+
                             {/* From Date */}
                             <div className="flex items-center gap-1 bg-slate-50/80 border border-slate-200/60 rounded-lg px-2 py-1.5 h-[32px] flex-1">
                                 <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
@@ -223,7 +248,7 @@ const ViewHistory = () => {
                             <button
                                 onClick={handleReset}
                                 className="flex items-center gap-1.5 px-4 py-2 bg-[#00aa5b] hover:bg-[#00944f] text-white font-bold text-sm rounded-xl shadow-sm transition-all h-9.5"
-                                
+
                                 title="Reset Filters"
                             >
                                 Reset <RotateCcw className="w-3.5 h-3.5" />
@@ -236,7 +261,7 @@ const ViewHistory = () => {
                                 className="flex items-center gap-1.5 px-3 py-2 bg-[#107c41] hover:bg-[#0a5c30] text-white font-bold text-xs rounded-xl shadow-sm transition-all h-8.5 shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
                                 title="Export to Excel"
                             >
-                                {isExporting ? "Exporting..." : "Export As Excel"} 
+                                {isExporting ? "Exporting..." : "Export As Excel"}
                                 <FileSpreadsheet className="w-3.5 h-3.5" />
                             </button>
 
@@ -303,7 +328,7 @@ const ViewHistory = () => {
                                                     <span className="text-gray-400 line-through">{(tx.changeAmount || 0).toLocaleString()} Ks</span>
                                                 ) : (
                                                     <span>{(tx.changeAmount || 0).toLocaleString()} Ks</span>
-                                                ) }
+                                                )}
                                             </td>
 
                                             <td className="py-4 px-6 text-center whitespace-nowrap">

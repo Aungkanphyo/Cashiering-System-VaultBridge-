@@ -37,7 +37,6 @@ export default function Dashboard() {
         try {
             const res = await api.get("/admin/dashboard", { params: { from, to } });
             setDashboard(res.data);
-            console.log(res.data);
         } catch (error) {
             console.log(error);
         }

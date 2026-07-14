@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Sale\SaleController;
 use App\Http\Controllers\SessionController;
 use App\Http\Controllers\VoucherController;
+use Illuminate\Support\Facades\Broadcast;
 
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {return $request->user();});
 Route::post('/logout',[AuthenticatedSessionController::class, 'destroy']);
@@ -66,6 +67,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/cash-register/close',[SessionController::class, 'closeSession']);
     Route::get('/vouchers', [VoucherController::class, 'index']);
     Route::post('/vouchers/{id}/void', [VoucherController::class, 'void']);
+});
+
+Route::middleware(['auth:sanctum'])->post('/broadcasting/auth', function (Request $request) {
+    return Broadcast::auth($request);
 });
 
 require __DIR__.'/auth.php';
