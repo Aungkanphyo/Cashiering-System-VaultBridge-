@@ -170,11 +170,11 @@ const ViewCategory = () => {
           <thead>
             <tr className="bg-emerald-700 border-b border-emerald-800 text-white text-xs font-semibold uppercase">
               
-              <th className="p-4">Category Name</th>
-              <th className="p-4">Default Tax (%)</th>
-              <th className="p-4">Default Discount (%)</th>
-              <th className="p-4 w-28">Status</th>
-              <th className="p-4 text-right">Actions</th>
+              <th className="p-4 w-100">Category Name</th>
+              <th className="p-4 w-100">Default Tax (%)</th>
+              <th className="p-4 w-100">Default Discount (%)</th>
+              <th className="p-4 w-30">Status</th>
+              <th className="p-4 w-50 text-center">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-sm">
@@ -208,10 +208,10 @@ const ViewCategory = () => {
                       {cat.category_name}
                     </td>
                     <td className="p-4 font-bold text-slate-700">
-                      {Number(cat.tax) || 0}% Default Tax
+                      {Number(cat.tax) || 0}% 
                     </td>
                     <td className="p-4 font-bold text-slate-700">
-                      {Number(cat.discount_category) || 0}% Default discount_category
+                      {Number(cat.discount_category) || 0}% 
                     </td>
                     <td className="p-4">
                       <span

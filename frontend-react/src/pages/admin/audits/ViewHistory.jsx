@@ -41,9 +41,9 @@ const ViewHistory = () => {
         const fetchPaymentMethods = async () => {
             try {
                 const response = await api.get("/payment-methods"); // Payment List API End-point 
-                console.log(response);
+                console.log(response.data);
                 // active methods filter 
-                const activeMethods = response.data.filter(m => m.status === "active");
+                const activeMethods = response.data.filter(m => m.status.toLowerCase() === "active");
                 setDbPaymentMethods(activeMethods);
             } catch (err) {
                 console.error("Failed to fetch payment methods for filter:", err);
@@ -274,7 +274,7 @@ const ViewHistory = () => {
                                             </td>
 
                                             <td className="py-4 px-6 text-center whitespace-nowrap">
-                                                {tx.status === "completed" ? (
+                                                {tx.status.toLowerCase() === "completed" ? (
                                                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-sans font-bold text-[10px] uppercase tracking-wide">
                                                         COMPLETED
                                                     </span>

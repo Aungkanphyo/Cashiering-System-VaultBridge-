@@ -4,8 +4,8 @@ import api from "../../../api/axios";
 
 const AddCategory = ({ onClose, onSuccess, existingCategoryNames = [] }) => {
   const [name, setName] = useState("");
-  const [tax, setTax] = useState("5.0");
-  const [discount, setDiscount] = useState("5.0");
+  const [tax, setTax] = useState("");
+  const [discount, setDiscount] = useState("");
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);

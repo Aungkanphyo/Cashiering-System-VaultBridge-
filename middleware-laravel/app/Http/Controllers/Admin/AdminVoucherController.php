@@ -23,7 +23,7 @@ class AdminVoucherController extends Controller
         // Payment method filter
         if ($request->filled('payment_method') && $request->input('payment_method') !== 'ALL') {
             $paymentMethod = $request->input('payment_method');
-            
+
             // checking payment name in salePayment Relation 
             $query->whereHas('salePayment', function ($paymentQuery) use ($paymentMethod) {
                 $paymentQuery->where('payment_name', 'like', "%{$paymentMethod}%");
@@ -32,14 +32,14 @@ class AdminVoucherController extends Controller
 
         // Status Select Box Filter (COMPLETED / VOIDED)
         if ($request->filled('status') && $request->input('status') !== 'ALL') {
-    $status = strtolower($request->input('status'));
-    
-    if ($status === 'voided') {
-        $query->where('status', 'VOIDED');
-    } else if ($status === 'completed') {
-        $query->where('status', 'COMPLETED')->whereNull('void_reason');
-    }
-}
+            $status = strtolower($request->input('status'));
+
+            if ($status === 'voided') {
+                $query->where('status', 'VOIDED');
+            } else if ($status === 'completed') {
+                $query->where('status', 'COMPLETED')->whereNull('void_reason');
+            }
+        }
 
         //  Date Range Filter 
         if ($request->filled('from_date')) {

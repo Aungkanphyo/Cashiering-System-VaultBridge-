@@ -263,7 +263,7 @@ const ProductsView = () => {
                 </th>
                 <th className="p-4 w-32">Discount Amount (MMK)</th>
                 <th className="p-4 w-28">Status</th>
-                <th className="p-4 text-right">Actions</th>
+                <th className="p-4 text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm">
