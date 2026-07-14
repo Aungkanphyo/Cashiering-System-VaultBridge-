@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import toast from "react-hot-toast"
 import api from "../../../api/axios";
 import {
   Search,
@@ -13,30 +14,31 @@ import {
   ChevronsRight,
   Trash2
 } from "lucide-react";
- 
+
 const ViewSession = () => {
   //  Server-side State Management
   const [sessions, setSessions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
- 
+
   // Input controller states
   const [searchTerm, setSearchTerm] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
- 
+  const today = new Date().toISOString().split("T")[0];
+
   // Server-side Pagination States
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
- 
+
   //  Fetch session data via API inside useEffect
   useEffect(() => {
     const fetchSessions = async () => {
       try {
         setIsLoading(true);
         setError(null);
- 
+
         const response = await api.get("/admin/cash-sessions", {
           params: {
             page: currentPage,
@@ -46,11 +48,11 @@ const ViewSession = () => {
             per_page: 8
           }
         });
- 
+
         // Parse pagination data according to Laravel API response structures
         const responseData = response.data.data ? response.data.data : response.data;
         const metaData = response.data.meta ? response.data.meta : response.data;
- 
+
         setSessions(responseData || []);
         setTotalPages(metaData.last_page || metaData.meta?.last_page || 1);
         setTotalRecords(metaData.total || metaData.meta?.total || 0);
@@ -60,39 +62,39 @@ const ViewSession = () => {
         setIsLoading(false);
       }
     };
- 
+
     // Apply debounce mechanism to prevent excessive API calls while typing
     const delayDebounceFn = setTimeout(() => {
       fetchSessions();
     }, 800);
- 
+
     return () => clearTimeout(delayDebounceFn);
   }, [currentPage, searchTerm, fromDate, toDate]);
- 
+
   const handleReset = () => {
     setSearchTerm("");
     setFromDate("");
     setToDate("");
     setCurrentPage(1);
   };
- 
+
   // Time formatting function to display date and time in Myanmar Standard Time (MMT) format
   const formatRawDatabaseTime = (dateString) => {
     if (!dateString) return "-";
-   
-   
+
+
     if (dateString.includes('T')) {
       const [datePart, timePart] = dateString.split('T');
       const cleanTime = timePart.split('.')[0];
       return `${datePart} ${cleanTime}`;        // YYYY-MM-DD HH:mm:ss
     }
-   
+
     return dateString;
   };
- 
+
   return (
     <div className="px-6 pt-2 pb-6 bg-gray-50 min-h-screen space-y-4">
-   
+
       {/* Control Panel */}
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="relative flex-1 max-w-md">
@@ -105,32 +107,52 @@ const ViewSession = () => {
             className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#07a876] focus:bg-white transition-all"
           />
         </div>
- 
+
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-1.5">
-            <Calendar className="w-4 h-4 text-gray-400" />
-            <span className="text-xs font-medium text-gray-500">From</span>
-            <input
-              type="date"
-              value={fromDate}
-              onChange={(e) => { setFromDate(e.target.value); setCurrentPage(1); }}
-              className="bg-transparent text-sm outline-none font-medium text-gray-700 cursor-pointer"
-            />
+          {/* From Date */}
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-semibold">FROM</label>
+            <input type="date" value={fromDate} max={today}
+              onChange={(e) => {
+                const value = e.target.value;
+
+                if (new Date(value) > new Date(today)) {
+                  toast.error("From date cannot be greater than today.");
+                  return;
+                }
+
+                if (toDate && new Date(toDate) < new Date(value)) {
+                  toast.error("From date cannot be greater than To date. Please select again!");
+                  return;
+                }
+
+                setFromDate(value);
+              }}
+              className="border rounded-lg px-3 py-2 cursor-text focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15" />
           </div>
- 
-          <ArrowRight className="w-3.5 h-3.5 text-gray-400 hidden sm:block" />
- 
-          <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-1.5">
-            <Calendar className="w-4 h-4 text-gray-400" />
-            <span className="text-xs font-medium text-gray-500">To</span>
-            <input
-              type="date"
-              value={toDate}
-              onChange={(e) => { setToDate(e.target.value); setCurrentPage(1); }}
-              className="bg-transparent text-sm outline-none font-medium text-gray-700 cursor-pointer"
-            />
+
+          {/* To Date */}
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-semibold">TO</label>
+            <input type="date" value={toDate} min={fromDate || undefined} max={today}
+              onChange={(e) => {
+                const value = e.target.value;
+
+                if (fromDate && new Date(value) < new Date(fromDate)) {
+                  toast.error("To date cannot be earlier than From date.");
+                  return;
+                }
+
+                if (new Date(value) > new Date(today)) {
+                  toast.error("To date cannot be greater than today.");
+                  return;
+                }
+
+                setToDate(value);
+              }}
+              className="border rounded-lg px-3 py-2 cursor-text focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15" />
           </div>
- 
+
           <button
             onClick={handleReset}
             className="flex items-center gap-1.5 px-4 py-2 bg-[#00aa5b] hover:bg-[#00944f] text-white font-bold text-sm rounded-xl shadow-sm transition-all h-[38px]"
@@ -140,7 +162,7 @@ const ViewSession = () => {
           </button>
         </div>
       </div>
- 
+
       {/* Main Table Wrapper */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
         <div className="overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
@@ -174,7 +196,7 @@ const ViewSession = () => {
                 sessions.map((session, idx) => {
                   // If closing_time is null or empty, track the session status as Running
                   const isRunning = !session.closing_time;
- 
+
                   return (
                     <tr
                       key={`${session.session_id}-${idx}`}
@@ -184,7 +206,7 @@ const ViewSession = () => {
                       <td className="py-4 px-5 font-bold text-center text-gray-400">
                         {((currentPage - 1) * 8) + (idx + 1)}.
                       </td>
-                     
+
                       {/* Staff Member (Display username retrieved from User Relation) */}
                       <td className="py-4 px-5">
                         <div className="flex items-center gap-2.5">
@@ -196,26 +218,26 @@ const ViewSession = () => {
                           </span>
                         </div>
                       </td>
- 
-               {/* Opening Time */}
-              <td className="py-4 px-5 text-gray-500 font-mono text-xs whitespace-nowrap">
-                {formatRawDatabaseTime(session.opening_time)}
-              </td>
- 
-              {/* Closing Time */}
-              <td className="py-4 px-5 font-mono text-xs whitespace-nowrap">
-                {isRunning ? (
-                  <span className="inline-flex ...">Running</span>
-                ) : (
-                  <span className="text-gray-500">{formatRawDatabaseTime(session.closing_time)}</span>
-                )}
-              </td>
- 
+
+                      {/* Opening Time */}
+                      <td className="py-4 px-5 text-gray-500 font-mono text-xs whitespace-nowrap">
+                        {formatRawDatabaseTime(session.opening_time)}
+                      </td>
+
+                      {/* Closing Time */}
+                      <td className="py-4 px-5 font-mono text-xs whitespace-nowrap">
+                        {isRunning ? (
+                          <span className="inline-flex ...">Running</span>
+                        ) : (
+                          <span className="text-gray-500">{formatRawDatabaseTime(session.closing_time)}</span>
+                        )}
+                      </td>
+
                       {/* Expected Cash */}
                       <td className="py-4 px-5 text-right text-gray-900 font-mono whitespace-nowrap">
                         {Number(session.expected_closing_cash || 0).toLocaleString()} Ks
                       </td>
- 
+
                       {/* Actual Cash */}
                       <td className="py-4 px-5 text-right text-gray-900 font-mono whitespace-nowrap">
                         {!isRunning && session.actual_closing_cash !== null ? (
@@ -224,7 +246,7 @@ const ViewSession = () => {
                           <span className="text-gray-300">-</span>
                         )}
                       </td>
- 
+
                       {/* Discrepancy */}
                       <td className="py-4 px-5 text-center font-bold font-mono whitespace-nowrap">
                         {isRunning || session.discrepancy === null ? (
@@ -237,7 +259,7 @@ const ViewSession = () => {
                           </span>
                         )}
                       </td>
- 
+
                       {/* Report / Notes */}
                       <td className="py-4 px-5 max-w-xs text-xs text-gray-500 pr-6">
                         <div className="flex items-center gap-1.5">
@@ -260,13 +282,13 @@ const ViewSession = () => {
             </tbody>
           </table>
         </div>
-       
-        {/* Pagination Design */}        
+
+        {/* Pagination Design */}
         <div className="px-5 py-4 border-t border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-400 font-bold select-none">
           <span className="text-gray-500">
             Total <span className="text-[#08694b] font-black text-sm">{totalRecords.toLocaleString()}</span> Records Found
           </span>
-         
+
           <div className="flex items-center gap-1 max-w-full">
             <button
               onClick={() => setCurrentPage(1)}
@@ -283,23 +305,22 @@ const ViewSession = () => {
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
- 
+
             <div className="flex items-center gap-1 overflow-x-auto max-w-[150px] sm:max-w-[240px] py-1 px-0.5 scrollbar-none">
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                 <button
                   key={page}
                   onClick={() => setCurrentPage(page)}
-                  className={`w-7 h-7 rounded-md font-bold text-xs flex items-center justify-center border transition-all flex-shrink-0 ${
-                    currentPage === page
-                      ? "bg-[#08694b] border-[#08694b] text-white shadow-sm"
-                      : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
-                  }`}
+                  className={`w-7 h-7 rounded-md font-bold text-xs flex items-center justify-center border transition-all flex-shrink-0 ${currentPage === page
+                    ? "bg-[#08694b] border-[#08694b] text-white shadow-sm"
+                    : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
+                    }`}
                 >
                   {page}
                 </button>
               ))}
             </div>
- 
+
             <button
               onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
               disabled={currentPage === totalPages}
@@ -317,9 +338,9 @@ const ViewSession = () => {
           </div>
         </div>
       </div>
- 
+
     </div>
   );
 };
- 
+
 export default ViewSession;

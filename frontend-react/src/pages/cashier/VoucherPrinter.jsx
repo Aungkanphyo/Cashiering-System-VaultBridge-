@@ -1,4 +1,5 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useState, useEffect } from 'react';
+import api from '../../api/axios'; // 
 
 const VoucherPrinter = forwardRef(({
   voucherId,
@@ -6,10 +7,12 @@ const VoucherPrinter = forwardRef(({
   subtotal,
   totalDiscount,
   finalTotal,
-  paymentMethod,
+  paymentMethod = 'Cash',
   payAmount,
   changeDue
 }, ref) => {
+  
+  const [cashierName, setCashierName] = useState('System Admin');
 
   const currentDate = new Date().toLocaleString('en-GB', {
     day: '2-digit',
@@ -20,6 +23,24 @@ const VoucherPrinter = forwardRef(({
     second: '2-digit',
     hour12: false
   }).replace(',', '');
+
+  // Fetch authenticated user
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await api.get("/user");
+        if (response.data && response.data.username) {
+          setCashierName(response.data.username);
+        }
+      } catch (error) {
+        console.error("Failed to fetch user:", error);
+        setCashierName("Cashier");
+      }
+    };
+    fetchCurrentUser();
+  }, []);
+
+  const isCashSelected = paymentMethod.toLowerCase() === 'cash';
 
   return (
     <div className="hidden">
@@ -36,7 +57,7 @@ const VoucherPrinter = forwardRef(({
         <div className="border-t border-b border-dashed border-slate-300 py-2.5 my-4 space-y-1.5 text-[10px] text-slate-600">
           <div className="flex justify-between items-center">
             <span className="uppercase font-medium">Voucher No</span>
-            <span className="font-bold text-slate-950">#{voucherId}</span>
+            <span className="font-bold text-slate-950">#{voucherId || 'N/A'}</span>
           </div>
           <div className="flex justify-between items-center">
             <span className="uppercase font-medium">Date & Time</span>
@@ -44,7 +65,7 @@ const VoucherPrinter = forwardRef(({
           </div>
           <div className="flex justify-between items-center">
             <span className="uppercase font-medium">Cashier</span>
-            <span className="font-medium text-slate-950">System Admin</span>
+            <span className="font-medium text-slate-950">{cashierName}</span>
           </div>
         </div>
 
@@ -68,7 +89,7 @@ const VoucherPrinter = forwardRef(({
                   <span className="col-span-5 break-words pr-1 text-[11px] font-sans font-semibold leading-tight text-slate-950">{item.name}</span>
                   <span className="col-span-3 text-right font-medium text-slate-600 font-sans">{item.price.toLocaleString()}</span>
                   <span className="col-span-2 text-center font-medium text-slate-700 font-sans">{item.quantity}</span>
-                  <span className="col-span-2 text-right font-bold text-slate-900 font-sans">{totalRowPrice.toLocaleString()}</span>
+                  <span className="col-span-2 text-right font-bold text-slate-900 font-sans">{totalRowPrice.toLocaleString()}Ks</span>
                 </div>
                 {item.discountPercent > 0 && (
                   <div className="text-[9px] text-red-500 font-bold font-sans tracking-wide pl-0.5">
@@ -84,12 +105,12 @@ const VoucherPrinter = forwardRef(({
         <div className="space-y-2 border-b border-slate-300 pb-3.5 text-[11px]">
           <div className="flex justify-between text-slate-600 font-medium">
             <span>Subtotal:</span>
-            <span className="font-sans font-semibold">{subtotal.toLocaleString()}</span>
+            <span className="font-sans font-semibold">{subtotal.toLocaleString()}Ks</span>
           </div>
           {totalDiscount > 0 && (
             <div className="flex justify-between text-red-500 font-bold tracking-wide">
               <span>Total Discount:</span>
-              <span className="font-sans">-{totalDiscount.toLocaleString()}</span>
+              <span className="font-sans">-{totalDiscount.toLocaleString()}Ks</span>
             </div>
           )}
         </div>
@@ -97,7 +118,7 @@ const VoucherPrinter = forwardRef(({
         {/* Grand Total */}
         <div className="flex justify-between items-center py-3.5 border-b border-slate-300 text-slate-950">
           <span className="text-[11px] font-black tracking-wider uppercase">TOTAL(Inclusive Tax):</span>
-          <span className="text-base font-sans font-black tracking-tight text-slate-950">{finalTotal.toLocaleString()}</span>
+          <span className="text-base font-sans font-black tracking-tight text-slate-950">{finalTotal.toLocaleString()}Ks</span>
         </div>
 
         {/* Payment Summary */}
@@ -105,13 +126,16 @@ const VoucherPrinter = forwardRef(({
           <div className="flex justify-between items-center">
             <span className="font-medium uppercase tracking-tight">Paid By ({paymentMethod}):</span>
             <span className="font-sans font-bold text-slate-950 text-[11px]">
-              {paymentMethod === 'KPay' ? finalTotal.toLocaleString() : parseFloat(payAmount || 0).toLocaleString()}
+              {isCashSelected 
+                ? `${(parseFloat(payAmount) || 0).toLocaleString()}Ks` 
+                : `${finalTotal.toLocaleString()}Ks`
+              }
             </span>
           </div>
-          {paymentMethod === 'Cash' && (
+          {isCashSelected && (
             <div className="flex justify-between items-center text-slate-600">
-              <span className="uppercase tracking-tight">Change Due:</span>
-              <span className="font-sans font-bold text-emerald-600 text-[11px]">{changeDue.toLocaleString()}</span>
+              <span className="uppercase tracking-tight">Change :</span>
+              <span className="font-sans font-bold text-emerald-600 text-[11px]">{changeDue.toLocaleString()}Ks</span>
             </div>
           )}
         </div>

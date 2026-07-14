@@ -41,6 +41,11 @@ class AdminVoucherController extends Controller
             }
         }
 
+        $request->validate([
+            'from_date' => 'nullable|date|before_or_equal:today',
+            'to_date'   => 'nullable|date|after_or_equal:from_date|before_or_equal:today',
+        ]);
+
         //  Date Range Filter 
         if ($request->filled('from_date')) {
             $query->whereDate('sale_date', '>=', $request->input('from_date'));

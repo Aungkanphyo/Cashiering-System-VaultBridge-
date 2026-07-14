@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import ViewDetails from "./ViewDetails";
+import toast from "react-hot-toast"
 import api from "../../../api/axios";
 import {
     Search,
@@ -27,11 +28,12 @@ const ViewHistory = () => {
     const [status, setStatus] = useState("ALL");
     const [fromDate, setFromDate] = useState("");
     const [toDate, setToDate] = useState("");
+    const today = new Date().toISOString().split("T")[0];
 
     // Server-side Pagination States
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
-    const [totalRecords, setTotalRecords] = useState(0); 
+    const [totalRecords, setTotalRecords] = useState(0);
 
     // Modal & Voucher State
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -41,7 +43,6 @@ const ViewHistory = () => {
         const fetchPaymentMethods = async () => {
             try {
                 const response = await api.get("/payment-methods"); // Payment List API End-point 
-                console.log(response.data);
                 // active methods filter 
                 const activeMethods = response.data.filter(m => m.status.toLowerCase() === "active");
                 setDbPaymentMethods(activeMethods);
@@ -63,7 +64,7 @@ const ViewHistory = () => {
                     params: {
                         page: currentPage,
                         search_id: searchId.trim(),
-                        
+
                         payment_method: paymentMethod === "ALL" ? "" : paymentMethod,
                         status: status === "ALL" ? "" : status,
                         from_date: fromDate,
@@ -112,11 +113,11 @@ const ViewHistory = () => {
             <div className={`px-8 pt-6 pb-8 space-y-6 transition-all duration-300 ${isModalOpen ? "blur-sm pointer-events-none select-none" : ""}`}>
 
                 {/* Minimalist White Filter Panel */}
-                
+
                 <div className="bg-white rounded-xl border border-slate-100 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.02)] px-4 py-3 max-w-5xl"> {/* max-w-5xl နဲ့ အလျားကို ကန့်သတ်ထားပါတယ် */}
-                    
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-10 gap-2 items-center">
-                        
+
                         {/* 1. Voucher ID Search */}
                         <div className="lg:col-span-2 relative w-full">
                             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -159,37 +160,57 @@ const ViewHistory = () => {
                         </div>
 
                         {/* 4. Date Range & Reset Button */}
-                        <div className="lg:col-span-4 flex items-center gap-1.5 w-full">
-                            
+                        <div className="lg:col-span-4 flex items-center gap-3">
+
                             {/* From Date */}
-                            <div className="flex items-center gap-1 bg-slate-50/80 border border-slate-200/60 rounded-lg px-2 py-1.5 h-[32px] flex-1">
-                                <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                                <input
-                                    type="date"
-                                    value={fromDate}
-                                    onChange={(e) => { setFromDate(e.target.value); setCurrentPage(1); }}
-                                    className="bg-transparent text-[11px] font-semibold text-slate-600 outline-none cursor-pointer w-full focus:text-slate-800"
-                                />
+                            <div className="flex items-center gap-2">
+                                <label className="text-sm font-semibold">FROM</label>
+                                <input type="date" value={fromDate} max={today}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+
+                                        if (new Date(value) > new Date(today)) {
+                                            toast.error("From date cannot be greater than today.");
+                                            return;
+                                        }
+
+                                        if (toDate && new Date(toDate) < new Date(value)) {
+                                            toast.error("From date cannot be greater than To date. Please select again!");
+                                            return;
+                                        }
+
+                                        setFromDate(value);
+                                    }}
+                                    className="border rounded-lg px-3 py-2 cursor-text focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15"/>
                             </div>
 
-                            <span className="text-slate-300 text-xs shrink-0">-</span>
-
                             {/* To Date */}
-                            <div className="flex items-center gap-1 bg-slate-50/80 border border-slate-200/60 rounded-lg px-2 py-1.5 h-[32px] flex-1">
-                                <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                                <input
-                                    type="date"
-                                    value={toDate}
-                                    onChange={(e) => { setToDate(e.target.value); setCurrentPage(1); }}
-                                    className="bg-transparent text-[11px] font-semibold text-slate-600 outline-none cursor-pointer w-full focus:text-slate-800"
-                                />
+                            <div className="flex items-center gap-2">
+                                <label className="text-sm font-semibold">TO</label>
+                                <input type="date" value={toDate} min={fromDate || undefined} max={today}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+
+                                        if (fromDate && new Date(value) < new Date(fromDate)) {
+                                            toast.error("To date cannot be earlier than From date.");
+                                            return;
+                                        }
+
+                                        if (new Date(value) > new Date(today)) {
+                                            toast.error("To date cannot be greater than today.");
+                                            return;
+                                        }
+
+                                        setToDate(value);
+                                    }}
+                                    className="border rounded-lg px-3 py-2 cursor-text focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15"/>
                             </div>
 
                             {/* Icon Only Reset Button */}
                             <button
                                 onClick={handleReset}
                                 className="flex items-center gap-1.5 px-4 py-2 bg-[#00aa5b] hover:bg-[#00944f] text-white font-bold text-sm rounded-xl shadow-sm transition-all h-[38px]"
-                                
+
                                 title="Reset Filters"
                             >
                                 Reset <RotateCcw className="w-3.5 h-3.5" />
@@ -258,7 +279,7 @@ const ViewHistory = () => {
                                                     <span className="text-gray-400 line-through">{(tx.changeAmount || 0).toLocaleString()} Ks</span>
                                                 ) : (
                                                     <span>{(tx.changeAmount || 0).toLocaleString()} Ks</span>
-                                                ) }
+                                                )}
                                             </td>
 
                                             <td className="py-4 px-6 text-center whitespace-nowrap">
