@@ -24,7 +24,7 @@ class StoreStaffRequest extends FormRequest
     {
         return [
             'username' => 'required|string|max:255',
-            'password' => 'required|string|min:4',
+            'password' => 'required|string|min:8',
             'email' => 'required|email|unique:users,email',
             'phone_number' => 'required|string',
             'gender' => 'required|string',

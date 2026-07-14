@@ -31,10 +31,6 @@ const Login = () => {
             });
 
             if (response.status === 200 || response.data?.status === "success") {
-                if (response.data?.token) {
-                    localStorage.setItem('token', response.data.token);
-                }
-
                 const userData = response.data?.user;
                 loginUser(userData);
 
