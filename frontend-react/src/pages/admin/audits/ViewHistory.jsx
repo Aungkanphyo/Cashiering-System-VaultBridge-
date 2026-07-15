@@ -293,11 +293,7 @@ const ViewHistory = () => {
                               : "bg-blue-50 text-blue-600 border-blue-100"
                           }`}
                         >
-                          {isCash ? (
-                            <Wallet className="w-3.5 h-3.5" />
-                          ) : (
-                            <QrCode className="w-3.5 h-3.5" />
-                          )}
+                          
                           {tx.paymentMethod}: {(tx.paidAmount || tx.finalAmount || 0).toLocaleString()} Ks
                         </span>
                       </td>
@@ -309,7 +305,7 @@ const ViewHistory = () => {
                         ) : (
                           <div className="flex flex-col items-center gap-0.5">
                             <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-rose-100 text-rose-700 font-bold text-[10px] uppercase tracking-wide">
-                              Voided
+                              Voideddddddddddddddddddddddddddddddddddddd
                             </span>
                             {tx.voidReason && (
                               <span
