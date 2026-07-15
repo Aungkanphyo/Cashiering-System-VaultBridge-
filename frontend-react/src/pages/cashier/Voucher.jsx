@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import { useReactToPrint } from 'react-to-print';
-import { BanknoteArrowDown } from "lucide-react";
 import VoucherPrinter from './VoucherPrinter';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
@@ -20,6 +19,8 @@ const Voucher = ({
     // --- Local States for Payments ---
     const [paymentMethod, setPaymentMethod] = useState('Cash');
     const [payAmount, setPayAmount] = useState('');
+    // Temporary Page Title  State
+    const [originalTitle, setOriginalTitle] = useState('');
 
     // Default payment method setup when dbPaymentMethods are loaded
     useEffect(() => {
@@ -44,8 +45,12 @@ const Voucher = ({
     const handlePrintFn = useReactToPrint({
         contentRef: printComponentRef,
         onAfterPrint: () => {
+            // if printer box is closed, restore the original title and clear cart
+            if (originalTitle) {
+                document.title = originalTitle;
+            }
             onClearAll();
-            toast.success('Sale processed and receipt printed successfully!');
+            toast.success('Sale processed successfully!');
         }
     });
 
@@ -121,9 +126,15 @@ const Voucher = ({
                 }));
                 
                 setAvailableProducts(updatedProducts);
+                
+                // 3. change the document title to include the voucher ID for PDF naming
+                const currentTitle = document.title;
+                setOriginalTitle(currentTitle); // original title 
+                document.title = `Mark4U_Voucher_${voucherId}`; // change pdf title for download
+                
                 fetchNextVoucherId();
 
-                // 3. Trigger receipt print layout rendering
+                // 4. Trigger receipt print layout rendering
                 handlePrintFn();
             }
         } catch (error) {
@@ -185,7 +196,7 @@ const Voucher = ({
                 <div className="flex justify-between items-center pb-2 border-b border-slate-100 mb-3">
                     <h3 className="text-xs font-black text-slate-900 tracking-wide uppercase flex items-center gap-1.5">
                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-600"></span>
-                        VOUCHER NO: {voucherId || 'N/A'}
+                        VOUCHER NO: #{voucherId || 'N/A'}
                     </h3>
                     <button onClick={onClearAll} className="text-[10px] font-bold text-red-500 hover:underline">
                         Clear All
@@ -203,44 +214,43 @@ const Voucher = ({
                                 key={item.id}
                                 className={`flex items-center justify-between p-2 rounded-lg border transition-all duration-300 ${(recentProductId && item.id && recentProductId === item.id)
                                     ? 'bg-emerald-50/70 border-emerald-400 ring-2 ring-emerald-100'
-                                    : 'bg-white border-2 border-green-100'
+                                    : 'bg-slate-50 border-slate-100'
                                 }`}
                             >
                                 <div className="w-[45%]">
-                                    <p className={`text-sm font-bold line-clamp-1 ${(recentProductId && item.id && recentProductId === item.id) ? 'text-emerald-800 font-extrabold' : 'text-slate-800'}`}>
+                                    <p className={`text-xs font-bold line-clamp-1 ${(recentProductId && item.id && recentProductId === item.id) ? 'text-emerald-800 font-extrabold' : 'text-slate-800'}`}>
                                         {item.name}
                                     </p>
                                     <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                                        <p className="text-xs font-medium">
+                                        <p className="text-[10px] text-slate-400 font-sans font-medium">
                                             {item.price.toLocaleString()} ks
                                         </p>
                                         {item.discountPercent > 0 && (
-                                            <span className="text-red-500 text-xs font-medium bg-red-100 p-1 rounded-lg">
+                                            <span className="text-red-500 font-sans text-[10px] font-black bg-red-50 px-1 rounded">
                                                 -{item.discountPercent}%
                                             </span>
                                         )}
-                                        {/* Orange text alert for low stock quantities */}
-                                        <span className={`text-xs p-1 rounded-lg font-medium ${itemStock <= 10 ? 'bg-red-100 text-red-500' : 'bg-blue-100 text-blue-500'}`}>
+                                        <span className={`text-[9px] px-1 rounded font-bold ${itemStock <= 10 ? 'bg-orange-50 text-orange-500' : 'bg-slate-100 text-slate-500'}`}>
                                             Stock: {itemStock}
                                         </span>
                                     </div>
                                 </div>
 
-                                <div className="flex items-center">
-                                    <button onClick={() => checkAndUpdateQty(item, -1)} className="px-2.5 py-1 text-sm text-black font-bold">-</button>
+                                <div className="flex items-center border border-slate-200 bg-white rounded-md overflow-hidden">
+                                    <button onClick={() => checkAndUpdateQty(item, -1)} className="px-1.5 py-0.5 text-[10px] bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold">-</button>
                                     <input
                                         type="number"
                                         min="1"
                                         value={item.quantity === 0 ? '' : item.quantity}
                                         onChange={(e) => checkAndDirectQtyChange(item, e.target.value)}
                                         onBlur={() => { if (item.quantity === 0) handleDirectQtyChange(item.id, 1); }}
-                                        className="w-8 text-xs font-sans font-bold text-slate-800 text-center focus:outline-none bg-transparent appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                        className="w-8 text-[11px] font-sans font-bold text-slate-800 text-center focus:outline-none bg-transparent appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                     />
-                                    <button onClick={() => checkAndUpdateQty(item, 1)} className="px-2 py-1 text-sm text-black font-bold">+</button>
+                                    <button onClick={() => checkAndUpdateQty(item, 1)} className="px-1.5 py-0.5 text-[10px] bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold">+</button>
                                 </div>
 
                                 <div className="text-right font-sans text-xs font-bold text-slate-900 min-w-[65px]">
-                                    {itemFinalRowTotal.toLocaleString()} Ks
+                                    {itemFinalRowTotal.toLocaleString()} <span className="text-[9px] font-sans font-normal text-slate-400">Ks</span>
                                 </div>
 
                                 <button onClick={() => handleDeleteItem(item.id)} className="p-1 text-slate-400 hover:text-red-500 text-base font-medium leading-none">&times;</button>
@@ -250,25 +260,24 @@ const Voucher = ({
                 </div>
             </div>
 
-            <div className="border-t border-slate-200 pt-3 mt-3 space-y-1.5 text-xs font-medium bg-white">
-                <div className="flex justify-between text-xs">
-                    <span>Subtotal</span>
-                    <span>{subtotal.toLocaleString()} Ks</span>
+            <div className="border-t border-slate-100 pt-3 mt-3 space-y-1.5 text-xs font-medium bg-white">
+                <div className="flex justify-between text-slate-500">
+                    <span>Subtotal:</span>
+                    <span className="font-sans text-slate-800">{subtotal.toLocaleString()} Ks</span>
                 </div>
-                <div className="flex justify-between text-xs text-red-500 font-bold">
-                    <span>Discount</span>
-                    <span>-{totalDiscount.toLocaleString()} Ks</span>
+                <div className="flex justify-between text-red-500 font-bold">
+                    <span>Discount:</span>
+                    <span className="font-sans">-{totalDiscount.toLocaleString()} Ks</span>
                 </div>
                 <div className="flex justify-between items-center pt-2 border-t border-dashed border-slate-200 text-sm font-black text-slate-900">
-                    <span className="text-emerald-600">Total (Inclusive Tax)</span>
-                    <span className="text-md text-emerald-600">{finalTotal.toLocaleString()} Ks</span>
+                    <span>Total (Inclusive Tax):</span>
+                    <span className="font-sans text-base text-emerald-600">{finalTotal.toLocaleString()} Ks</span>
                 </div>
             </div>
 
-            {/* DYNAMIC SELECT BOX METHOD SELECTOR */}
             <div className="mt-3 pt-2 border-t border-slate-100 grid grid-cols-12 gap-2.5 items-center bg-white">
                 <div className="col-span-4">
-                    <label className="block text-xs font-black text-slate-900 mb-1">Method</label>
+                    <label className="block text-[9px] font-black text-slate-900 uppercase mb-1">Method</label>
                     <select
                         value={paymentMethod}
                         onChange={(e) => {
@@ -287,7 +296,7 @@ const Voucher = ({
 
                 <div className="col-span-8 grid grid-cols-2 gap-2">
                     <div>
-                        <label className="block text-xs font-black text-slate-900 mb-1">Pay Amount</label>
+                        <label className="block text-[9px] font-black text-slate-900 uppercase mb-1">Pay Amount</label>
                         <input
                             type="number"
                             placeholder={isCashSelected ? "Enter Cash" : "0"}
@@ -298,8 +307,8 @@ const Voucher = ({
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-black text-slate-900 mb-1">Change</label>
-                        <div className="w-full px-2 py-0.5 h-7 flex items-center text-xs font-sans font-black text-emerald-600 bg-green-100 rounded-md border border-emerald-100">
+                        <label className="block text-[9px] font-black text-slate-900 uppercase mb-1">Change Due</label>
+                        <div className="w-full px-2 py-0.5 h-7 flex items-center text-xs font-sans font-black text-emerald-600 bg-emerald-50 rounded-md border border-emerald-100">
                             {changeDue.toLocaleString()}
                         </div>
                     </div>
@@ -316,7 +325,7 @@ const Voucher = ({
                             : 'bg-emerald-600 hover:bg-emerald-700 border-emerald-700 text-white active:scale-[0.99]'
                     }`}
                 >
-                    <BanknoteArrowDown className="w-5 h-5 me-1" />Pay & Print
+                    <span>🧾</span> Pay & Print
                 </button>
             </div>
 

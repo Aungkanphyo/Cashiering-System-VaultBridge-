@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import ViewDetails from "./ViewDetails";
 import toast from "react-hot-toast"
 import api from "../../../api/axios";
-import toast from 'react-hot-toast';
 import {
     Search,
     RotateCcw,
