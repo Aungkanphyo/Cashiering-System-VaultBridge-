@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useReactToPrint } from 'react-to-print';
+import { BanknoteArrowDown } from "lucide-react";
 import VoucherPrinter from './VoucherPrinter';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
@@ -214,7 +215,7 @@ const Voucher = ({
                                 key={item.id}
                                 className={`flex items-center justify-between p-2 rounded-lg border transition-all duration-300 ${(recentProductId && item.id && recentProductId === item.id)
                                     ? 'bg-emerald-50/70 border-emerald-400 ring-2 ring-emerald-100'
-                                    : 'bg-slate-50 border-slate-100'
+                                    : 'bg-white border-2 border-green-100'
                                 }`}
                             >
                                 <div className="w-[45%]">
@@ -222,31 +223,31 @@ const Voucher = ({
                                         {item.name}
                                     </p>
                                     <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                                        <p className="text-[10px] text-slate-400 font-sans font-medium">
+                                        <p className="text-xs font-medium">
                                             {item.price.toLocaleString()} ks
                                         </p>
                                         {item.discountPercent > 0 && (
-                                            <span className="text-red-500 font-sans text-[10px] font-black bg-red-50 px-1 rounded">
+                                            <span className="text-red-500 text-xs font-medium bg-red-100 px-1 rounded-lg">
                                                 -{item.discountPercent}%
                                             </span>
                                         )}
-                                        <span className={`text-[9px] px-1 rounded font-bold ${itemStock <= 10 ? 'bg-orange-50 text-orange-500' : 'bg-slate-100 text-slate-500'}`}>
+                                        <span className={`text-xs p-1 rounded-lg font-medium ${itemStock <= 10 ? 'bg-red-50 text-red-500' : 'bg-blue-100 text-blue-500'}`}>
                                             Stock: {itemStock}
                                         </span>
                                     </div>
                                 </div>
 
-                                <div className="flex items-center border border-slate-200 bg-white rounded-md overflow-hidden">
-                                    <button onClick={() => checkAndUpdateQty(item, -1)} className="px-1.5 py-0.5 text-[10px] bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold">-</button>
+                                <div className="flex items-center">
+                                    <button onClick={() => checkAndUpdateQty(item, -1)} className="px-2.5 py-1 text-sm text-black font-bold">-</button>
                                     <input
                                         type="number"
                                         min="1"
                                         value={item.quantity === 0 ? '' : item.quantity}
                                         onChange={(e) => checkAndDirectQtyChange(item, e.target.value)}
                                         onBlur={() => { if (item.quantity === 0) handleDirectQtyChange(item.id, 1); }}
-                                        className="w-8 text-[11px] font-sans font-bold text-slate-800 text-center focus:outline-none bg-transparent appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                        className="w-8 text-xs font-sans font-bold text-slate-800 text-center focus:outline-none bg-transparent appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                     />
-                                    <button onClick={() => checkAndUpdateQty(item, 1)} className="px-1.5 py-0.5 text-[10px] bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold">+</button>
+                                    <button onClick={() => checkAndUpdateQty(item, 1)} className="px-2 py-1 text-sm text-black font-bold">+</button>
                                 </div>
 
                                 <div className="text-right font-sans text-xs font-bold text-slate-900 min-w-[65px]">
@@ -261,13 +262,13 @@ const Voucher = ({
             </div>
 
             <div className="border-t border-slate-100 pt-3 mt-3 space-y-1.5 text-xs font-medium bg-white">
-                <div className="flex justify-between text-slate-500">
-                    <span>Subtotal:</span>
-                    <span className="font-sans text-slate-800">{subtotal.toLocaleString()} Ks</span>
+                <div className="flex justify-between text-xs">
+                    <span>Subtotal</span>
+                    <span>{subtotal.toLocaleString()} Ks</span>
                 </div>
-                <div className="flex justify-between text-red-500 font-bold">
-                    <span>Discount:</span>
-                    <span className="font-sans">-{totalDiscount.toLocaleString()} Ks</span>
+                <div className="flex justify-between text-xs text-red-500 font-bold">
+                    <span>Discount</span>
+                    <span>-{totalDiscount.toLocaleString()} Ks</span>
                 </div>
                 <div className="flex justify-between items-center pt-2 border-t border-dashed border-slate-200 text-sm font-black text-slate-900">
                     <span>Total (Inclusive Tax):</span>
@@ -277,7 +278,7 @@ const Voucher = ({
 
             <div className="mt-3 pt-2 border-t border-slate-100 grid grid-cols-12 gap-2.5 items-center bg-white">
                 <div className="col-span-4">
-                    <label className="block text-[9px] font-black text-slate-900 uppercase mb-1">Method</label>
+                    <label className="block text-xs font-black text-slate-900 mb-1">Method</label>
                     <select
                         value={paymentMethod}
                         onChange={(e) => {
@@ -296,7 +297,7 @@ const Voucher = ({
 
                 <div className="col-span-8 grid grid-cols-2 gap-2">
                     <div>
-                        <label className="block text-[9px] font-black text-slate-900 uppercase mb-1">Pay Amount</label>
+                        <label className="block text-xs font-black text-slate-900 mb-1">Pay Amount</label>
                         <input
                             type="number"
                             placeholder={isCashSelected ? "Enter Cash" : "0"}
@@ -307,7 +308,7 @@ const Voucher = ({
                         />
                     </div>
                     <div>
-                        <label className="block text-[9px] font-black text-slate-900 uppercase mb-1">Change Due</label>
+                        <label className="block text-[9px] font-black text-slate-900 mb-1">Change Due</label>
                         <div className="w-full px-2 py-0.5 h-7 flex items-center text-xs font-sans font-black text-emerald-600 bg-emerald-50 rounded-md border border-emerald-100">
                             {changeDue.toLocaleString()}
                         </div>
@@ -325,7 +326,7 @@ const Voucher = ({
                             : 'bg-emerald-600 hover:bg-emerald-700 border-emerald-700 text-white active:scale-[0.99]'
                     }`}
                 >
-                    <span>🧾</span> Pay & Print
+                    <BanknoteArrowDown className="w-5 h-5 me-1" />Pay & Print
                 </button>
             </div>
 
