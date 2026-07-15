@@ -272,7 +272,6 @@ const ProductsView = () => {
                 className="w-full pl-9 pr-3 py-2 border rounded-lg text-sm bg-transparent cursor-text focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15 transition"
               />
             </div>
-            
           </div>
 
           {/* Right Side: Entries Dropdown and Add New Product Button */}
@@ -348,7 +347,7 @@ const ProductsView = () => {
                       }`}
                     >
                       <td className="p-4 font-mono text-xs text-slate-500">
-                        #{prod.barcode}
+                        {prod.barcode}
                       </td>
                       <td className="p-4">
                         <div className="font-semibold text-slate-880">
@@ -359,12 +358,12 @@ const ProductsView = () => {
                         </div>
                       </td>
                       <td className="p-4 font-semibold text-slate-800">
-                        {Number(prod.price).toLocaleString()}K
+                        {Number(prod.price).toLocaleString()}Ks
                       </td>
                       <td className="p-4 font-semibold text-emerald-700">
                         {salePrice.toLocaleString(undefined, {
                           maximumFractionDigits: 2,
-                        })}K
+                        })}Ks
                       </td>
                       <td className="p-4">
                         <span
@@ -406,7 +405,7 @@ const ProductsView = () => {
                         )}
                       </td>
                       <td className="p-4 font-semibold text-slate-700">
-                        {Number(prod.discount_price || 0).toLocaleString()}K
+                        {Number(prod.discount_price || 0).toLocaleString()} Ks
                       </td>
                       <td className="p-4">
                         <span
@@ -419,22 +418,20 @@ const ProductsView = () => {
                       </td>
                       <td className="p-4 text-right">
                         <div className="flex justify-end items-center gap-2">
-                          {!isInactive && (
-                            <button
-                              onClick={() => setEditProductId(prod.product_id)}
-                              className="px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-sky-500 hover:bg-sky-600 transition cursor-pointer"
-                            >
-                              Edit
-                            </button>
-                          )}
+                          <button
+                            onClick={() => setEditProductId(prod.product_id)}
+                            className="px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-sky-500 hover:bg-sky-600 transition cursor-pointer"
+                          >
+                            Edit
+                          </button>
                           {isInactive ? (
                             <button
                               onClick={() =>
                                 askConfirm("restore", prod.product_id, prod.product_name)
                               }
-                              className="px-8 py-1.5 rounded-lg text-xs font-semibold text-white bg-emerald-700 border border-emerald-200 hover:bg-emerald-900 transition flex items-center gap-1 cursor-pointer"
+                              className="px-2 py-1.5 rounded-lg text-xs font-semibold text-white bg-emerald-700 border border-emerald-200 hover:bg-emerald-900 transition flex items-center gap-1 cursor-pointer"
                             >
-                              <RotateCcw className="w-3.5 h-3.5" />
+                              
                               Restore
                             </button>
                           ) : (

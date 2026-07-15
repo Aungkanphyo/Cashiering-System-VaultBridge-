@@ -274,14 +274,12 @@ const ViewPayment = () => {
                       </td>
                       <td className="p-4 text-right">
                         <div className="flex justify-end items-center gap-2">
-                          {!isInactive && (
-                            <button
-                              onClick={() => setEditPaymentId(method.payment_id)}
-                              className="px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-sky-500 hover:bg-sky-600 transition cursor-pointer"
-                            >
-                              Edit
-                            </button>
-                          )}
+                          <button
+                            onClick={() => setEditPaymentId(method.payment_id)}
+                            className="px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-sky-500 hover:bg-sky-600 transition cursor-pointer"
+                          >
+                            Edit
+                          </button>
                           {isInactive ? (
                             <button
                               onClick={() =>
@@ -293,11 +291,11 @@ const ViewPayment = () => {
                                   ? "Default payment methods can't be changed"
                                   : "Restore"
                               }
-                              className={`px-8 py-1.5 rounded-lg text-xs font-semibold text-white bg-emerald-700 border border-emerald-200 hover:bg-emerald-900 transition flex items-center gap-1 cursor-pointer ${
+                              className={`px-2 py-1.5 rounded-lg text-xs font-semibold text-white bg-emerald-700 border border-emerald-200 hover:bg-emerald-900 transition flex items-center gap-1 cursor-pointer ${
                                 isProtected ? "opacity-30 cursor-not-allowed" : ""
                               }`}
                             >
-                              <RotateCcw className="w-3.5 h-3.5" />
+                              
                               Restore
                             </button>
                           ) : (

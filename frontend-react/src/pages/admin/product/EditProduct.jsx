@@ -143,8 +143,8 @@ const EditProduct = ({ productId, onClose, onSuccess, existingProductNames = [] 
       errs.discount = "Discount rate is required.";
     } else if (parsedDiscount < 0 || parsedDiscount > 100) {
       errs.discount = "Discount rate must be between 0 and 100.";
-    } else if (String(discount).length > 4) {
-      errs.discount = "Discount cannot exceed 4 characters.";
+    } else if (String(discount).length > 5) {
+      errs.discount = "Discount cannot exceed 5 characters.";
     } else if (parsedDiscount < categoryDiscountFloor) {
       errs.discount = `Discount rate cannot be lower than ${categoryDiscountFloor}% for this category.`;
     }
@@ -188,7 +188,7 @@ const EditProduct = ({ productId, onClose, onSuccess, existingProductNames = [] 
   };
 
   const handleDiscountChange = (e) => {
-    const value = e.target.value.slice(0, 3);
+    const value = e.target.value.slice(0, 5);
     setDiscount(value);
     clearFieldError("discount");
     if (error) setError("");
@@ -484,7 +484,7 @@ const EditProduct = ({ productId, onClose, onSuccess, existingProductNames = [] 
                   step="0.1"
                   min={categoryDiscountFloor}
                   max="100"
-                  maxLength={4}
+                  maxLength={5}
                   value={discount}
                   onChange={handleDiscountChange}
                   className={`w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:outline-none ${

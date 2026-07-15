@@ -278,6 +278,7 @@ const ViewCategory = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-emerald-700 border-b border-emerald-800 text-white text-xs font-semibold uppercase">
+               
                 <th className="p-4 w-100">Category Name</th>
                 <th className="p-4 w-100">Tax</th>
                 <th className="p-4 w-100">Discount</th>
@@ -311,6 +312,7 @@ const ViewCategory = () => {
                         isInactive ? "bg-slate-100/50 opacity-75" : ""
                       }`}
                     >
+                      
                       <td className="p-4 font-semibold text-slate-800">
                         {cat.category_name}
                       </td>
@@ -369,22 +371,20 @@ const ViewCategory = () => {
                       </td>
                       <td className="p-4 text-right">
                         <div className="flex justify-end items-center gap-2">
-                          {!isInactive && (
-                            <button
-                              onClick={() => setEditCategoryId(cat.category_id)}
-                              className="px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-sky-500 hover:bg-sky-600 transition cursor-pointer"
-                            >
-                              Edit
-                            </button>
-                          )}
+                          <button
+                            onClick={() => setEditCategoryId(cat.category_id)}
+                            className="px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-sky-500 hover:bg-sky-600 transition cursor-pointer"
+                          >
+                            Edit
+                          </button>
                           {isInactive ? (
                             <button
                               onClick={() =>
                                 askConfirm("restore", cat.category_id, cat.category_name)
                               }
-                              className="px-8 py-1.5 rounded-lg text-xs font-semibold text-white bg-emerald-700 border border-emerald-200 hover:bg-emerald-900 transition flex items-center gap-1 cursor-pointer"
+                              className="px-2 py-1.5 rounded-lg text-xs font-semibold text-white bg-emerald-700 border border-emerald-200 hover:bg-emerald-900 transition flex items-center gap-1 cursor-pointer"
                             >
-                              <RotateCcw className="w-3.5 h-3.5" />
+                            
                               Restore
                             </button>
                           ) : (
@@ -406,13 +406,15 @@ const ViewCategory = () => {
           </table>
         </div>
 
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={totalItems}
-          pageSize={pageSize}
-          onPageChange={setCurrentPage}
-        />
+        <div className="overflow-x-auto">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+          />
+        </div>
       </div>
 
       {/* Modals & Dialogs */}

@@ -23,14 +23,10 @@ const AddProduct = ({ onClose, onSuccess, existingProductNames = [] }) => {
     const [fieldErrors, setFieldErrors] = useState({});
     const [submitting, setSubmitting] = useState(false);
 
-    // The selected category carries the tax rate and the minimum (floor) discount
     const selectedCategory = categories.find(
         (c) => String(c.category_id) === String(categoryId)
     );
     const categoryTax = selectedCategory ? Number(selectedCategory.tax || 0) : 0;
-    const categoryDiscountFloor = selectedCategory
-        ? Number(selectedCategory.discount_category || 0)
-        : 0;
     const previewPrice = Number(price) || 0;
     const previewSalePrice = previewPrice + (previewPrice * categoryTax) / 100;
 
@@ -67,7 +63,6 @@ const AddProduct = ({ onClose, onSuccess, existingProductNames = [] }) => {
         setFieldErrors((prev) => (prev[field] ? { ...prev, [field]: "" } : prev));
     };
 
-    // Barcode Real-time Scanner Integration
     useEffect(() => {
         const socket = io("http://localhost:5000");
 
@@ -122,17 +117,17 @@ const AddProduct = ({ onClose, onSuccess, existingProductNames = [] }) => {
             errs.minStock = "Min stock cannot be equal or greater than stock quantity.";
         }
 
-        if (discount === "" || Number.isNaN(Number(discount))) {
+        if (discount === "" || isNaN(discount)) {
             errs.discount = "Discount rate is required.";
-        } else if (Number(discount) > 100) {
+        } else if (String(discount).length > 5) {
+            errs.discount = "Discount cannot exceed 5 digits.";
+        } else if (Number(discount) < 0 || Number(discount) > 100) {
             errs.discount = "Discount rate must be between 0 and 100.";
-        } else if (Number(discount) < categoryDiscountFloor) {
-            errs.discount = `Discount rate cannot be lower than ${categoryDiscountFloor}% for this category.`;
         }
+
         return errs;
     };
 
-    // Strict Digit-Only Sanitization (\D targets all non-digits)
     const handleBarcodeChange = (e) => {
         const digitsOnly = e.target.value.replace(/\D/g, "").slice(0, 15);
         setBarcode(digitsOnly);
@@ -154,7 +149,6 @@ const AddProduct = ({ onClose, onSuccess, existingProductNames = [] }) => {
         if (error) setError("");
     };
 
-    // STRICT: Only digits allowed for Stock Quantity
     const handleStockChange = (e) => {
         const digitsOnly = e.target.value.replace(/\D/g, "").slice(0, 4);
         setStock(digitsOnly);
@@ -162,7 +156,6 @@ const AddProduct = ({ onClose, onSuccess, existingProductNames = [] }) => {
         if (error) setError("");
     };
 
-    // STRICT: Only digits allowed for Min Stock Level
     const handleMinStockChange = (e) => {
         const digitsOnly = e.target.value.replace(/\D/g, "").slice(0, 4);
         setMinStock(digitsOnly);
@@ -170,9 +163,10 @@ const AddProduct = ({ onClose, onSuccess, existingProductNames = [] }) => {
         if (error) setError("");
     };
 
-    // STANDARD: Back to standard value handling for discount rate
+    // FIXED: Strict 3-digit limitation handling for dynamic typing block
     const handleDiscountChange = (e) => {
-        setDiscount(e.target.value);
+        const digitsOnly = e.target.value.slice(0, 5);
+        setDiscount(digitsOnly);
         setDiscountTouched(true);
         clearFieldError("discount");
         if (error) setError("");
@@ -389,7 +383,6 @@ const AddProduct = ({ onClose, onSuccess, existingProductNames = [] }) => {
                             )}
                         </div>
 
-                        {/* STRICT DIGITAL ENFORCEMENT */}
                         <div>
                             <div className="flex justify-between items-center mb-1">
                                 <label className="block text-sm font-semibold text-slate-600">
@@ -415,7 +408,6 @@ const AddProduct = ({ onClose, onSuccess, existingProductNames = [] }) => {
                             )}
                         </div>
 
-                        {/* STRICT DIGITAL ENFORCEMENT */}
                         <div>
                             <div className="flex justify-between items-center mb-1">
                                 <label className="block text-sm font-semibold text-slate-600">
@@ -441,17 +433,18 @@ const AddProduct = ({ onClose, onSuccess, existingProductNames = [] }) => {
                             )}
                         </div>
 
-                        {/* STANDARD NUMBER FIELD FOR DISCOUNT */}
+                        {/* CHAR-LENGTH LIMITED INPUT FOR DISCOUNT */}
                         <div className="col-span-2">
                             <div className="flex justify-between items-center mb-1">
                                 <label className="block text-sm font-semibold text-slate-600">
                                     Default Discount (%)
                                 </label>
+                              
                             </div>
                             <input
                                 type="number"
-                                min={categoryDiscountFloor}
-                                max="100"
+                               
+                                maxLength={5}
                                 value={discount}
                                 onChange={handleDiscountChange}
                                 className={`w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:outline-none ${fieldErrors.discount
@@ -463,7 +456,7 @@ const AddProduct = ({ onClose, onSuccess, existingProductNames = [] }) => {
                                 <p className="text-xs text-rose-600 mt-1">{fieldErrors.discount}</p>
                             ) : (
                                 <p className="text-xs text-slate-400 mt-1">
-                                    Must be between {categoryDiscountFloor}% (category minimum) and 100%. 
+                                    Must be between 0% and 100% (max 3 digits).
                                 </p>
                             )}
                         </div>
@@ -504,7 +497,6 @@ const AddProduct = ({ onClose, onSuccess, existingProductNames = [] }) => {
                 </form>
             </div>
 
-            {/* Nested "Add Category" modal */}
             <Modal isOpen={showAddCategory} onClose={() => setShowAddCategory(false)} maxWidth="max-w-lg">
                 <AddCategory
                     existingCategoryNames={categories.map((c) => c.category_name)}

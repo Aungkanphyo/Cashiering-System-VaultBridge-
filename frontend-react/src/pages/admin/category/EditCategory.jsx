@@ -177,7 +177,7 @@ const EditCategory = ({ categoryId, onClose, onSuccess, existingCategoryNames = 
                 value={tax}
                 onChange={(e) => {
                   // Restrict input length to max 4 characters (e.g. "100.0")
-                  if (e.target.value.length <= 4) {
+                  if (e.target.value.length <= 5) {
                     setTax(e.target.value);
                     clearFieldError("tax");
                   }
@@ -206,7 +206,7 @@ const EditCategory = ({ categoryId, onClose, onSuccess, existingCategoryNames = 
                 value={discount}
                 onChange={(e) => {
                   // Restrict input length to max 4 characters (e.g. "100.0")
-                  if (e.target.value.length <= 4) {
+                  if (e.target.value.length <= 5) {
                     setDiscount(e.target.value);
                     clearFieldError("discount");
                   }

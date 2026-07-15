@@ -1,5 +1,14 @@
 import { useEffect, useState } from "react";
-import { TriangleAlert, Loader2, X } from "lucide-react";
+import {
+    TriangleAlert,
+    Loader2,
+    X,
+    ChevronDown,
+    ListFilter,
+    Wallet,
+    Search,
+    RotateCcw,
+} from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../../api/axios";
 import Pagination from "../../components/common/Pagination";
@@ -11,9 +20,12 @@ export default function History() {
     const [page, setPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(5);
 
-    // Added new state variables for filtering
+    // Filter state
     const [statusFilter, setStatusFilter] = useState("");
     const [paymentFilter, setPaymentFilter] = useState("");
+    const [paymentMethods, setPaymentMethods] = useState([]); // e.g. cash, kpay, aya — loaded from sale_payment table
+    const [voucherIdInput, setVoucherIdInput] = useState(""); // raw text box value
+    const [voucherIdFilter, setVoucherIdFilter] = useState(""); // debounced value used in the request
 
     const [lastPage, setLastPage] = useState(1);
     const [totalRecords, setTotalRecords] = useState(0);
@@ -31,23 +43,46 @@ export default function History() {
         "Test Transaction",
     ];
 
+    const hasActiveFilters = Boolean(statusFilter || paymentFilter || voucherIdFilter);
+
+    // Debounce the voucher ID search box so we don't fire a request on every keystroke
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setVoucherIdFilter(voucherIdInput.trim());
+            setPage(1);
+        }, 400);
+        return () => clearTimeout(timer);
+    }, [voucherIdInput]);
+
+    // Load the real list of payment methods (cash, kpay, aya, ...) for the filter dropdown
+    useEffect(() => {
+        const fetchPaymentMethods = async () => {
+            try {
+                const response = await api.get("/vouchers/payment-methods");
+                setPaymentMethods(response.data);
+            } catch (error) {
+                console.error(error);
+            }
+        };
+        fetchPaymentMethods();
+    }, []);
+
     const fetchHistory = async () => {
         try {
             setLoading(true);
             const response = await api.get("/vouchers", {
-                // Included status and payment parameters in the API request
-                params: { 
-                    page, 
+                params: {
+                    page,
                     per_page: rowsPerPage,
                     status: statusFilter || undefined,
-                    payment: paymentFilter || undefined
+                    payment: paymentFilter || undefined,
+                    voucher_id: voucherIdFilter || undefined,
                 },
             });
 
             setSalesData(response.data.data);
             setLastPage(response.data.last_page);
             setTotalRecords(response.data.total);
-
         } catch (error) {
             console.error(error);
             toast.error(error.response?.data?.message ?? "Unable to load voucher history");
@@ -56,10 +91,18 @@ export default function History() {
         }
     };
 
-    // Re-fetch data when filters change, resetting to page 1
+    // Re-fetch data when filters or pagination change
     useEffect(() => {
         fetchHistory();
-    }, [page, rowsPerPage, statusFilter, paymentFilter]);
+    }, [page, rowsPerPage, statusFilter, paymentFilter, voucherIdFilter]);
+
+    const clearFilters = () => {
+        setStatusFilter("");
+        setPaymentFilter("");
+        setVoucherIdInput("");
+        setVoucherIdFilter("");
+        setPage(1);
+    };
 
     const handleCancelVoid = () => {
         if (voiding) return;
@@ -85,64 +128,110 @@ export default function History() {
         }
     };
 
+    // Shared styling for the pill-style filter selects — border/background flips to
+    // emerald when that filter is actively narrowing the results.
+   const selectClass = (active) =>
+    `appearance-none pl-8 pr-8 py-2 rounded-lg border border-slate-400 text-xs font-semibold cursor-pointer transition-colors focus:outline-none focus:ring-4 focus:ring-emerald-500/15 ${
+        active
+            ? " text-emerald-700"
+            : "bg-white text-slate-600 hover:border-slate-500"
+    }`;
     return (
         <div className="min-h-screen">
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                 {/* Header */}
                 <div className="flex flex-col gap-4 p-6 pb-4 lg:flex-row lg:items-center lg:justify-between">
                     <h2 className="text-xl font-bold text-slate-800">Sales History</h2>
-                    
+
                     {/* Controls & Dropdowns Wrapper */}
-                    <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500">
+                    <div className="flex flex-wrap items-center gap-2.5 text-xs text-slate-500">
+                        {/* Voucher ID Search */}
+                        <div className="relative">
+                            <Search className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                            <input
+                                type="text"
+                                value={voucherIdInput}
+                                onChange={(e) => setVoucherIdInput(e.target.value)}
+                                placeholder="Voucher ID"
+                                className={`w-60 pl-8 pr-3 py-2 rounded-lg border text-xs font-semibold transition-colors focus:outline-none focus:ring-4 focus:ring-emerald-500/15 ${voucherIdFilter
+                                        ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                                        : "border-slate-400 bg-white text-slate-600 hover:border-emerald-300"
+                                    }`}
+                            />
+                        </div>
+
                         {/* Status Filter */}
-                        <div className="flex items-center gap-1.5">
-                            <span>Status:</span>
+                        <div className="relative">
+                            <ListFilter className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                             <select
                                 value={statusFilter}
                                 onChange={(e) => {
                                     setStatusFilter(e.target.value);
                                     setPage(1);
                                 }}
-                                className="border rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15 cursor-pointer"
+                                className={selectClass(Boolean(statusFilter))}
                             >
                                 <option value="">All Statuses</option>
                                 <option value="completed">Completed</option>
                                 <option value="voided">Voided</option>
                             </select>
+                            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                         </div>
 
                         {/* Payment Filter */}
-                        <div className="flex items-center gap-1.5">
-                            <span>Payment:</span>
+                        <div className="relative">
+                            <Wallet className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                             <select
                                 value={paymentFilter}
                                 onChange={(e) => {
                                     setPaymentFilter(e.target.value);
                                     setPage(1);
                                 }}
-                                className="border rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15 cursor-pointer"
+                                className={selectClass(Boolean(paymentFilter))}
                             >
                                 <option value="">All Payments</option>
-                                <option value="cash">Cash</option>
-                                <option value="card">Card</option>
-                            </select>
-                        </div>
-
-                        {/* Rows Per Page */}
-                        <div className="flex items-center gap-1.5 whitespace-nowrap">
-                            <span>Show</span>
-                            <select
-                                value={rowsPerPage}
-                                onChange={(e) => {
-                                    setRowsPerPage(Number(e.target.value));
-                                    setPage(1);
-                                }}
-                                className="border rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15 cursor-pointer"
-                            >
-                                {[5, 10, 15, 20, 25].map((n) => (
-                                    <option key={n} value={n}>{n}</option>
+                                {paymentMethods.map((method) => (
+                                    <option key={method} value={method}>
+                                        {method}
+                                    </option>
                                 ))}
                             </select>
+                            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={clearFilters}
+                            disabled={!hasActiveFilters}
+                            className={`flex items-center gap-1 px-3 py-2 rounded-lg border text-xs font-semibold transition-colors ${hasActiveFilters
+                                    ? "border-slate-200 bg-white text-slate-500 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 cursor-pointer"
+                                    : "border-slate-200 bg-slate-50 text-slate-300 cursor-not-allowed"
+                                }`}
+                        >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                            Clear
+                        </button>
+
+                        {/* Rows Per Page */}
+                        <div className="flex items-center gap-1.5 whitespace-nowrap lg:ml-2">
+                            <span>Show</span>
+                            <div className="relative">
+                                <select
+                                    value={rowsPerPage}
+                                    onChange={(e) => {
+                                        setRowsPerPage(Number(e.target.value));
+                                        setPage(1);
+                                    }}
+                                    className="appearance-none pl-3 pr-7 py-2 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-600 hover:border-emerald-300 focus:outline-none focus:ring-4 focus:ring-emerald-500/15 cursor-pointer transition-colors"
+                                >
+                                    {[5, 10, 15, 20, 25].map((n) => (
+                                        <option key={n} value={n}>
+                                            {n}
+                                        </option>
+                                    ))}
+                                </select>
+                                <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                            </div>
                             <span>records</span>
                         </div>
                     </div>
@@ -180,59 +269,72 @@ export default function History() {
                                     </td>
                                 </tr>
                             )}
-                            {!loading && salesData.map((sale) => {
-                                const isVoided = sale.status === "voided";
-                                return (
-                                    <tr
-                                        key={sale.voucher_id}
-                                        className={`hover:bg-slate-50 transition ${isVoided ? "bg-slate-100/50 opacity-75" : ""}`}
-                                    >
-                                        <td className="p-4 font-mono text-xs text-slate-500">#{sale.voucher_id}</td>
-                                        <td className="p-4 whitespace-nowrap text-slate-600">
-                                            {new Date(sale.sale_date).toLocaleString("sv-SE", { timeZone: "Asia/Yangon" })}
-                                        </td>
-                                        <td className="p-4 font-semibold text-slate-800">
-                                            {Number(sale.total).toLocaleString()}K
-                                        </td>
-                                        <td className="p-4 text-rose-600 font-semibold">
-                                            {sale.discount > 0 ? "-" : ""}{Number(sale.discount).toLocaleString()}K
-                                        </td>
-                                        <td className="p-4 font-semibold text-emerald-700">
-                                            {Number(sale.grand_total).toLocaleString()}K
-                                        </td>
-                                        <td className="p-4">
-                                            <span className={`font-semibold ${sale.payment === "cash" ? "text-amber-600" : "text-sky-600"}`}>
-                                                {sale.payment}
-                                            </span>
-                                        </td>
-                                        <td className="p-4">
-                                            <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${isVoided ? "text-red-500" : "text-emerald-600"}`}>
-                                                {sale.status}
-                                            </span>
-                                        </td>
-                                        {/* Centered Action Column */}
-                                        <td className="p-4 text-center">
-                                            <div className="flex justify-center items-center h-full">
-                                                {isVoided ? (
-                                                    <span
-                                                        className="block max-w-[220px] truncate text-xs text-slate-400 mx-auto"
-                                                        title={sale.void_reason}
-                                                    >
-                                                        {sale.void_reason}
-                                                    </span>
-                                                ) : (
-                                                    <button
-                                                        onClick={() => setSaleToDelete(sale)}
-                                                        className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-red-500 hover:bg-red-600 transition cursor-pointer"
-                                                    >
-                                                        Void
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
+                            {!loading &&
+                                salesData.map((sale) => {
+                                    const isVoided = sale.status === "voided";
+                                    return (
+                                        <tr
+                                            key={sale.voucher_id}
+                                            className={`hover:bg-slate-50 transition ${isVoided ? "bg-slate-100/50 opacity-75" : ""
+                                                }`}
+                                        >
+                                            <td className="p-4 font-mono text-xs text-slate-500">
+                                                #{sale.voucher_id}
+                                            </td>
+                                            <td className="p-4 whitespace-nowrap text-slate-600">
+                                                {new Date(sale.sale_date).toLocaleString("sv-SE", {
+                                                    timeZone: "Asia/Yangon",
+                                                })}
+                                            </td>
+                                            <td className="p-4 font-semibold text-slate-800">
+                                                {Number(sale.total).toLocaleString()}Ks
+                                            </td>
+                                            <td className="p-4 text-rose-600 font-semibold">
+                                                {sale.discount > 0 ? "-" : ""}
+                                                {Number(sale.discount).toLocaleString()}Ks
+                                            </td>
+                                            <td className="p-4 font-semibold text-emerald-700">
+                                                {Number(sale.grand_total).toLocaleString()}Ks
+                                            </td>
+                                            <td className="p-4">
+                                                <span
+                                                    className={`font-semibold ${sale.payment === "cash" ? "text-amber-600" : "text-sky-600"
+                                                        }`}
+                                                >
+                                                    {sale.payment}
+                                                </span>
+                                            </td>
+                                            <td className="p-4">
+                                                <span
+                                                    className={`px-2.5 py-1 rounded-full text-xs font-semibold ${isVoided ? "text-red-500" : "text-emerald-600"
+                                                        }`}
+                                                >
+                                                    {sale.status}
+                                                </span>
+                                            </td>
+                                            {/* Centered Action Column */}
+                                            <td className="p-4 text-center">
+                                                <div className="flex justify-center items-center h-full">
+                                                    {isVoided ? (
+                                                        <span
+                                                            className="block max-w-[220px] truncate text-xs text-slate-400 mx-auto"
+                                                            title={sale.void_reason}
+                                                        >
+                                                            {sale.void_reason}
+                                                        </span>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => setSaleToDelete(sale)}
+                                                            className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-red-500 hover:bg-red-600 transition cursor-pointer"
+                                                        >
+                                                            Void
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                         </tbody>
                     </table>
                 </div>
@@ -285,7 +387,9 @@ export default function History() {
                                 >
                                     <option value="">Select reason...</option>
                                     {voidReasons.map((reason) => (
-                                        <option key={reason} value={reason}>{reason}</option>
+                                        <option key={reason} value={reason}>
+                                            {reason}
+                                        </option>
                                     ))}
                                 </select>
                             </div>

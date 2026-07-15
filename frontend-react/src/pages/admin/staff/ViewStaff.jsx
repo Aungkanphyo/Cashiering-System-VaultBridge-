@@ -308,8 +308,8 @@ const ViewStaff = () => {
                                             <td className="p-4 font-semibold text-slate-800">
                                                 {staff.username}
                                             </td>
-                                            <td className="p-4 text-slate-600">{staff.gender}</td>
-                                            <td className="p-4 text-slate-600">{formatDate(staff.join_date)}</td>
+                                            <td className="p-4 text-slate-700">{staff.gender}</td>
+                                            <td className="p-4 text-slate-700">{formatDate(staff.join_date)}</td>
                                             <td className="p-4">
                                                 <span
                                                     className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
@@ -323,22 +323,20 @@ const ViewStaff = () => {
                                                 <div className="flex justify-end items-center gap-2">
                                                     <button
                                                         onClick={() => handleOpenDetail(staff.user_id)}
-                                                        className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-amber-500 hover:bg-amber-600 transition cursor-pointer"
+                                                        className="px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-yellow-400 hover:bg-yellow-500 transition cursor-pointer"
                                                     >
                                                         View
                                                     </button>
-                                                    {!isInactive && (
-                                                        <button
-                                                            onClick={() => handleOpenEdit(staff)}
-                                                            className="px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-sky-500 hover:bg-sky-600 transition cursor-pointer"
-                                                        >
-                                                            Edit
-                                                        </button>
-                                                    )}
+                                                    <button
+                                                        onClick={() => handleOpenEdit(staff)}
+                                                        className="px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-sky-500 hover:bg-sky-600 transition cursor-pointer"
+                                                    >
+                                                        Edit
+                                                    </button>
                                                     {isInactive ? (
                                                         <button
                                                             onClick={() => askConfirm(staff)}
-                                                            className="px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-emerald-700 border border-emerald-200 hover:bg-emerald-900 transition cursor-pointer"
+                                                            className="px-4.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-emerald-700 border border-emerald-200 hover:bg-emerald-900 transition cursor-pointer"
                                                         >
                                                             Activate
                                                         </button>

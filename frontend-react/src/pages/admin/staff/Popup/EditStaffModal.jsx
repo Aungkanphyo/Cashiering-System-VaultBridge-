@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import api from "../../../../api/axios";
-import { UserRoundPen, X } from "lucide-react";
+import { UserRoundPen, X, Loader2 } from "lucide-react";
 import nrcData from "../../../../data/nrc.json";
 import toast from 'react-hot-toast';
 
@@ -38,6 +38,9 @@ const EditStaffModal = ({ onClose, staff, onSuccess }) => {
     const [nrcTownship, setNrcTownship] = useState(initialNrc.township);
     const [nrcType, setNrcType] = useState(initialNrc.type);
     const [nrcNumber, setNrcNumber] = useState(initialNrc.number);
+
+    const [error, setError] = useState("");
+    const [fieldErrors, setFieldErrors] = useState({});
     const [submitting, setSubmitting] = useState(false);
 
     const uniqueNrcCodes = useMemo(() => {
@@ -53,9 +56,76 @@ const EditStaffModal = ({ onClose, staff, onSuccess }) => {
         );
     }, [nrcState]);
 
+    const clearFieldError = (field) => {
+        setFieldErrors((prev) => (prev[field] ? { ...prev, [field]: "" } : prev));
+    };
+
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        let updatedValue = value;
+
+        if (name === "phone_number") {
+            updatedValue = value.replace(/\D/g, '');
+        }
+
+        if (name === "username") {
+            updatedValue = value.slice(0, 20);
+        }
+
+        if (name === "date_of_birth") {
+            const today = new Date().toISOString().split('T')[0];
+            if (value > today) {
+                toast.error("Future dates are not allowed for Date of Birth.");
+                return;
+            }
+        }
+
+        setFormData({ ...formData, [name]: updatedValue });
+        clearFieldError(name);
+        if (error) setError("");
     }
+
+    const handleNrcChange = (setter, value) => {
+        setter(value);
+        clearFieldError("nrc");
+        if (error) setError("");
+    }
+
+    // Full per-field validation (ported from the AddStaffModal treatment)
+    const validate = () => {
+        const errs = {};
+
+        if (!formData.username.trim()) {
+            errs.username = "Full name is required.";
+        }
+
+        if (!formData.email.trim()) {
+            errs.email = "Email address is required.";
+        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+            errs.email = "Please enter a valid email address.";
+        }
+
+        if (!formData.phone_number.trim()) {
+            errs.phone_number = "Phone number is required.";
+        }
+
+        if (!formData.date_of_birth) {
+            errs.date_of_birth = "Date of birth is required.";
+        }
+
+        if (!formData.address.trim()) {
+            errs.address = "Address is required.";
+        }
+
+        // NRC Block Validation
+        if (!nrcState || !nrcTownship || !nrcType || !nrcNumber) {
+            errs.nrc = "NRC profile field must be completed.";
+        } else if (nrcNumber.length !== 6) {
+            errs.nrc = "NRC Number must be exactly 6 digits.";
+        }
+
+        return errs;
+    };
 
     const handleCancel = () => {
         if (submitting) return;
@@ -65,14 +135,10 @@ const EditStaffModal = ({ onClose, staff, onSuccess }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!nrcState || !nrcTownship || !nrcType || !nrcNumber) {
-            toast("Please complete the NRC profile field.", {
-                icon: '⚠️',
-            });
-            return;
-        }
-        if (nrcNumber.length !== 6) {
-            toast.error("NRC Number must be exactly 6 digits.");
+        const errs = validate();
+        setFieldErrors(errs);
+        if (Object.keys(errs).length > 0) {
+            setError("Please fix the highlighted fields.");
             return;
         }
 
@@ -84,6 +150,7 @@ const EditStaffModal = ({ onClose, staff, onSuccess }) => {
         };
 
         setSubmitting(true);
+        setError("");
         try {
             const response = await api.put(`/staff/${staff.user_id}`, finalPayload);
             if (response.data.status === 'success') {
@@ -91,13 +158,23 @@ const EditStaffModal = ({ onClose, staff, onSuccess }) => {
                 onSuccess();
                 onClose();
             }
-        } catch (error) {
-            console.error(error);
+        } catch (err) {
+            console.error(err);
+            setError(
+                err.response?.data?.message ||
+                "There was an error while editing."
+            );
             toast.error('There was an error while editing.');
         } finally {
             setSubmitting(false);
         }
     };
+
+    const inputClass = (field) =>
+        `w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:outline-none text-slate-800 ${fieldErrors[field]
+            ? "border-rose-400 focus:ring-rose-400"
+            : "border-slate-300 focus:ring-emerald-500"
+        }`;
 
     return (
         <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-md flex justify-center items-center z-50 p-4">
@@ -118,16 +195,40 @@ const EditStaffModal = ({ onClose, staff, onSuccess }) => {
                 </div>
 
                 {/* Form Body */}
-                <form onSubmit={handleSubmit} className="p-5 space-y-4 text-sm overflow-y-auto flex-1">
+                <form onSubmit={handleSubmit} noValidate className="p-5 space-y-4 text-sm overflow-y-auto flex-1">
+                    {error && (
+                        <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-sm font-medium">
+                            {error}
+                        </div>
+                    )}
+
                     {/* Row 1: Name & Email */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-semibold text-slate-600 mb-1">Full Name</label>
-                            <input type="text" name="username" value={formData.username} required onChange={handleChange} className="w-full p-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+                            <div className="flex justify-between items-center mb-1">
+                                <label className="block text-sm font-semibold text-slate-600">Full Name</label>
+                                <span className="text-xs text-slate-400">{formData.username.length}/20</span>
+                            </div>
+                            <input
+                                type="text"
+                                name="username"
+                                maxLength={20}
+                                value={formData.username}
+                                onChange={handleChange}
+                                className={inputClass("username")}
+                            />
+                            {fieldErrors.username && <p className="text-xs text-rose-600 mt-1">{fieldErrors.username}</p>}
                         </div>
                         <div>
                             <label className="block text-sm font-semibold text-slate-600 mb-1">Email Address</label>
-                            <input type="email" name="email" value={formData.email} required onChange={handleChange} className="w-full p-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+                            <input
+                                type="email"
+                                name="email"
+                                value={formData.email}
+                                onChange={handleChange}
+                                className={inputClass("email")}
+                            />
+                            {fieldErrors.email && <p className="text-xs text-rose-600 mt-1">{fieldErrors.email}</p>}
                         </div>
                     </div>
 
@@ -135,11 +236,23 @@ const EditStaffModal = ({ onClose, staff, onSuccess }) => {
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-semibold text-slate-600 mb-1">Phone Number</label>
-                            <input type="text" name="phone_number" value={formData.phone_number} required onChange={handleChange} className="w-full p-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+                            <input
+                                type="text"
+                                name="phone_number"
+                                value={formData.phone_number}
+                                onChange={handleChange}
+                                className={inputClass("phone_number")}
+                            />
+                            {fieldErrors.phone_number && <p className="text-xs text-rose-600 mt-1">{fieldErrors.phone_number}</p>}
                         </div>
                         <div>
                             <label className="block text-sm font-semibold text-slate-600 mb-1">Gender</label>
-                            <select name="gender" value={formData.gender} onChange={handleChange} className="w-full p-2.5 border border-slate-300 bg-white rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            <select
+                                name="gender"
+                                value={formData.gender}
+                                onChange={handleChange}
+                                className="w-full p-2.5 border border-slate-300 bg-white rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none text-slate-800"
+                            >
                                 <option value="Male">Male</option>
                                 <option value="Female">Female</option>
                             </select>
@@ -150,11 +263,24 @@ const EditStaffModal = ({ onClose, staff, onSuccess }) => {
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-semibold text-slate-600 mb-1">Date of Birth</label>
-                            <input type="date" name="date_of_birth" value={formData.date_of_birth} required onChange={handleChange} className="w-full p-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+                            <input
+                                type="date"
+                                name="date_of_birth"
+                                max={new Date().toISOString().split('T')[0]}
+                                value={formData.date_of_birth}
+                                onChange={handleChange}
+                                className={inputClass("date_of_birth")}
+                            />
+                            {fieldErrors.date_of_birth && <p className="text-xs text-rose-600 mt-1">{fieldErrors.date_of_birth}</p>}
                         </div>
                         <div>
                             <label className="block text-sm font-semibold text-slate-600 mb-1">System Role</label>
-                            <select name="role" value={formData.role} onChange={handleChange} className="w-full p-2.5 border border-slate-300 bg-white rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            <select
+                                name="role"
+                                value={formData.role}
+                                onChange={handleChange}
+                                className="w-full p-2.5 border border-slate-300 bg-white rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none text-slate-800"
+                            >
                                 <option value="staff">Cashier</option>
                                 <option value="admin">Admin</option>
                             </select>
@@ -163,17 +289,22 @@ const EditStaffModal = ({ onClose, staff, onSuccess }) => {
 
                     {/* Row 4: Passport Style NRC Input Block (Full Width) */}
                     <div>
-                        <label className="block text-sm font-semibold text-slate-600 mb-1.5">NRC Number</label>
+                        <div className="flex justify-between items-center mb-1.5">
+                            <label className="block text-sm font-semibold text-slate-600">NRC Number</label>
+                            <span className="text-xs text-slate-400">{nrcNumber.length}/6</span>
+                        </div>
                         <div className="flex items-center gap-1.5">
                             {/* NRC State Number Dropdown */}
                             <select
                                 value={nrcState}
                                 onChange={(e) => {
-                                    setNrcState(e.target.value);
+                                    handleNrcChange(setNrcState, e.target.value);
                                     setNrcTownship("");
                                 }}
-                                required
-                                className="w-20 p-2.5 border border-slate-300 bg-white rounded-lg text-sm text-center focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                                className={`w-20 p-2.5 border bg-white rounded-lg text-sm text-center focus:ring-2 focus:outline-none text-slate-800 ${fieldErrors.nrc
+                                    ? "border-rose-400 focus:ring-rose-400"
+                                    : "border-slate-300 focus:ring-emerald-500"
+                                    }`}
                             >
                                 <option value=""></option>
                                 {uniqueNrcCodes.map((code) => (
@@ -186,10 +317,12 @@ const EditStaffModal = ({ onClose, staff, onSuccess }) => {
                             {/* NRC Township Dropdown */}
                             <select
                                 value={nrcTownship}
-                                onChange={(e) => setNrcTownship(e.target.value)}
-                                required
+                                onChange={(e) => handleNrcChange(setNrcTownship, e.target.value)}
                                 disabled={!nrcState}
-                                className="flex-1 min-w-22.5 p-2.5 border border-slate-300 bg-white rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none disabled:bg-slate-50 disabled:text-slate-400"
+                                className={`flex-1 min-w-22.5 p-2.5 border bg-white rounded-lg text-sm focus:ring-2 focus:outline-none text-slate-800 disabled:bg-slate-50 disabled:text-slate-400 ${fieldErrors.nrc
+                                    ? "border-rose-400 focus:ring-rose-400"
+                                    : "border-slate-300 focus:ring-emerald-500"
+                                    }`}
                             >
                                 <option value=""></option>
                                 {availableTownships.map((township, idx) => (
@@ -202,9 +335,11 @@ const EditStaffModal = ({ onClose, staff, onSuccess }) => {
                             {/* NRC Type Dropdown */}
                             <select
                                 value={nrcType}
-                                onChange={(e) => setNrcType(e.target.value)}
-                                required
-                                className="w-24 p-2.5 border border-slate-300 bg-white rounded-lg text-sm text-center focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                                onChange={(e) => handleNrcChange(setNrcType, e.target.value)}
+                                className={`w-24 p-2.5 border bg-white rounded-lg text-sm text-center focus:ring-2 focus:outline-none text-slate-800 ${fieldErrors.nrc
+                                    ? "border-rose-400 focus:ring-rose-400"
+                                    : "border-slate-300 focus:ring-emerald-500"
+                                    }`}
                             >
                                 <option value="(N)">(N) နိုင်</option>
                                 <option value="(A)">(A) ပြု</option>
@@ -215,19 +350,29 @@ const EditStaffModal = ({ onClose, staff, onSuccess }) => {
                             <input
                                 type="text"
                                 value={nrcNumber}
-                                onChange={(e) => setNrcNumber(e.target.value.replace(/\D/g, ''))}
-                                maxLength="6"
+                                onChange={(e) => handleNrcChange(setNrcNumber, e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                maxLength={6}
                                 placeholder="123456"
-                                required
-                                className="w-28 p-2.5 border border-slate-300 rounded-lg text-sm text-center tracking-wider focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                                className={`w-28 p-2.5 border rounded-lg text-sm text-center tracking-wider focus:ring-2 focus:outline-none text-slate-800 ${fieldErrors.nrc
+                                    ? "border-rose-400 focus:ring-rose-400"
+                                    : "border-slate-300 focus:ring-emerald-500"
+                                    }`}
                             />
                         </div>
+                        {fieldErrors.nrc && <p className="text-xs text-rose-600 mt-1">{fieldErrors.nrc}</p>}
                     </div>
 
                     {/* Row 5: Home Address */}
                     <div>
                         <label className="block text-sm font-semibold text-slate-600 mb-1">Home Address</label>
-                        <textarea name="address" value={formData.address} required onChange={handleChange} rows="3" className="w-full p-2.5 border border-slate-300 rounded-lg text-sm resize-none focus:ring-2 focus:ring-emerald-500 focus:outline-none"></textarea>
+                        <textarea
+                            name="address"
+                            value={formData.address}
+                            onChange={handleChange}
+                            rows="3"
+                            className={`${inputClass("address")} resize-none`}
+                        ></textarea>
+                        {fieldErrors.address && <p className="text-xs text-rose-600 mt-1">{fieldErrors.address}</p>}
                     </div>
 
                     {/* Footer Actions */}
@@ -243,8 +388,9 @@ const EditStaffModal = ({ onClose, staff, onSuccess }) => {
                         <button
                             type="submit"
                             disabled={submitting}
-                            className="px-4 py-2 text-sm font-semibold text-white bg-emerald-700 hover:bg-emerald-600 rounded-lg shadow-sm disabled:opacity-60"
+                            className="px-4 py-2 text-sm font-semibold text-white bg-emerald-700 hover:bg-emerald-600 rounded-lg shadow-sm flex items-center gap-1.5 disabled:opacity-60"
                         >
+                            {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
                             {submitting ? "Saving..." : "Save Staff Profile"}
                         </button>
                     </div>
