@@ -42,16 +42,16 @@ const VoucherPrinter = forwardRef(({
 
   const isCashSelected = paymentMethod.toLowerCase() === 'cash';
 
-  return (
-    <div className="hidden">
-      <div ref={ref} className="p-5 bg-white font-mono text-slate-800 text-[11px] leading-relaxed max-w-[340px] mx-auto tracking-tight">
-        
-        {/* Store Information */}
-        <div className="text-center space-y-1 mb-5">
-          <h2 className="text-sm font-extrabold tracking-wider text-slate-950 uppercase">MART4U SUPERMARKET</h2>
-          <p className="text-[10px] text-slate-500 font-sans leading-normal">No. 123, Zawgyi Road, Pyigyitagon Township, Mandalay</p>
-          <p className="text-[10px] text-slate-500 font-sans">Tel: 02-234567, 09-987654321</p>
-        </div>
+    return (
+        <div className="hidden">
+            <div ref={ref} className="p-5 bg-white font-mono text-slate-800 text-[11px] leading-relaxed max-w-[340px] mx-auto tracking-tight">
+
+                {/* Store Information */}
+                <div className="text-center space-y-1 mb-5">
+                    <h2 className="text-sm font-extrabold tracking-wider text-slate-950 uppercase">MART4U SUPERMARKET</h2>
+                    <p className="text-[10px] text-slate-500 font-sans leading-normal">No. 123, Zawgyi Road, Pyigyitagon Township, Mandalay</p>
+                    <p className="text-[10px] text-slate-500 font-sans">Tel: 02-234567, 09-987654321</p>
+                </div>
 
         {/* Voucher Metadata */}
         <div className="border-t border-b border-dashed border-slate-300 py-2.5 my-4 space-y-1.5 text-[10px] text-slate-600">
@@ -69,19 +69,19 @@ const VoucherPrinter = forwardRef(({
           </div>
         </div>
 
-        {/* Table Header */}
-        <div className="grid grid-cols-12 gap-1 font-extrabold text-[10px] text-slate-500 uppercase mb-2.5 pb-1.5 border-b border-slate-200 tracking-wider">
-          <span className="col-span-5">Item</span>
-          <span className="col-span-3 text-right">Unit Price</span>
-          <span className="col-span-2 text-center">Qty</span>
-          <span className="col-span-2 text-right">Amount</span>
-        </div>
+                {/* Table Header */}
+                <div className="grid grid-cols-12 gap-1 font-extrabold text-[10px] text-slate-500 uppercase mb-2.5 pb-1.5 border-b border-slate-200 tracking-wider">
+                    <span className="col-span-5">Item</span>
+                    <span className="col-span-3 text-right">Unit Price</span>
+                    <span className="col-span-2 text-center">Qty</span>
+                    <span className="col-span-2 text-right">Amount</span>
+                </div>
 
-        {/* Cart Items List */}
-        <div className="space-y-3.5 my-2 border-b border-dashed border-slate-200 pb-3.5">
-          {cartItems.map((item) => {
-            const currentItemPrice = item.price - (item.price * (item.discountPercent || 0) / 100);
-            const totalRowPrice = currentItemPrice * item.quantity;
+                {/* Cart Items List */}
+                <div className="space-y-3.5 my-2 border-b border-dashed border-slate-200 pb-3.5">
+                    {cartItems.map((item) => {
+                        const currentItemPrice = item.price - (item.price * (item.discountPercent || 0) / 100);
+                        const totalRowPrice = currentItemPrice * item.quantity;
 
             return (
               <div key={item.id} className="space-y-1">
@@ -140,15 +140,15 @@ const VoucherPrinter = forwardRef(({
           )}
         </div>
 
-        {/* Footer / Greetings */}
-        <div className="text-center mt-7 pt-4 border-t border-dashed border-slate-200 text-[10px] text-slate-400 font-sans tracking-wide space-y-1">
-          <p className="font-medium">Thank you for shopping with us!</p>
-          <p className="text-[9px] text-slate-400/80">Goods sold are not returnable.</p>
-        </div>
+                {/* Footer / Greetings */}
+                <div className="text-center mt-7 pt-4 border-t border-dashed border-slate-200 text-[10px] text-slate-400 font-sans tracking-wide space-y-1">
+                    <p className="font-medium">Thank you for shopping with us!</p>
+                    <p className="text-[9px] text-slate-400/80">Goods sold are not returnable.</p>
+                </div>
 
-      </div>
-    </div>
-  );
+            </div>
+        </div>
+    );
 });
 
 VoucherPrinter.displayName = 'VoucherPrinter';

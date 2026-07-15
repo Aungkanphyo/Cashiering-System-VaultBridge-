@@ -9,235 +9,259 @@ import AddProduct from "./AddProduct";
 import EditProduct from "./EditProduct";
 
 const ProductsView = () => {
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState("");
-  const [toastType, setToastType] = useState("success");
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [editProductId, setEditProductId] = useState(null);
-  const [discountError, setDiscountError] = useState({});
-  const [statusFilter, setStatusFilter] = useState("all"); // all | active | inactive
-  const [search, setSearch] = useState("");
-  const [confirmState, setConfirmState] = useState(null); // { type: 'delete'|'restore', id, name }
-  const [pageSize, setPageSize] = useState(5);
-  const [currentPage, setCurrentPage] = useState(1);
+    const [products, setProducts] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [toast, setToast] = useState("");
+    const [toastType, setToastType] = useState("success");
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [editProductId, setEditProductId] = useState(null);
+    const [discountError, setDiscountError] = useState({});
+    const [statusFilter, setStatusFilter] = useState("all"); // all | active | inactive
+    const [search, setSearch] = useState("");
+    const [confirmState, setConfirmState] = useState(null); // { type: 'delete'|'restore', id, name }
+    const [pageSize, setPageSize] = useState(5);
+    const [currentPage, setCurrentPage] = useState(1);
 
-  const showToast = (message, type = "success") => {
-    setToast(message);
-    setToastType(type);
-    setTimeout(() => setToast(""), 2500);
-  };
+    useEffect(() => {
+        if (window.Echo) {
+            window.Echo.private('admin.dashboard')
+                .listen('.SaleProcessed', (data) => {
+                    // data.updatedProducts will contain the reduced product_id and stock_quantity
+                    setProducts((prevProducts) => {
+                        return prevProducts.map((p) => {
+                            const match = data.updatedProducts.find(
+                                (up) => Number(up.product_id) === Number(p.product_id)
+                            );
+                            // Real-time update of stock quantity if a matching product is available
+                            return match ? { ...p, stock_quantity: match.stock_quantity } : p;
+                        });
+                    });
+                });
+        }
 
-  // GET /api/products + GET /api/categories (to resolve category names)
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const [productsRes, categoriesRes] = await Promise.all([
-        api.get("/products"),
-        api.get("/categories"),
-      ]);
-      setProducts(productsRes.data);
-      setCategories(categoriesRes.data);
-    } catch (err) {
-      showToast(
-        err.response?.data?.message || "Failed to load products",
-        "error"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+        return () => {
+            if (window.Echo) {
+                window.Echo.leaveChannel('admin.dashboard');
+            }
+        };
+    }, []);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+    const showToast = (message, type = "success") => {
+        setToast(message);
+        setToastType(type);
+        setTimeout(() => setToast(""), 2500);
+    };
 
-  const getCategory = (categoryId) =>
-    categories.find((c) => c.category_id === categoryId) || null;
+    // GET /api/products + GET /api/categories (to resolve category names)
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            const [productsRes, categoriesRes] = await Promise.all([
+                api.get("/products"),
+                api.get("/categories"),
+            ]);
+            setProducts(productsRes.data);
+            setCategories(categoriesRes.data);
+        } catch (err) {
+            showToast(
+                err.response?.data?.message || "Failed to load products",
+                "error"
+            );
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  const getCategoryName = (categoryId) => {
-    const cat = getCategory(categoryId);
-    return cat ? cat.category_name : "General";
-  };
+    useEffect(() => {
+        fetchData();
+    }, []);
 
-  // sale price = price + category tax (tax applied on top of the base price)
-  const getSalePrice = (product) => {
-    const cat = getCategory(product.category_id);
-    const tax = cat ? Number(cat.tax || 0) : 0;
-    const price = Number(product.price || 0);
-    return price + (price * tax) / 100;
-  };
+    const getCategory = (categoryId) =>
+        categories.find((c) => c.category_id === categoryId) || null;
 
-  // The discount rate for a product can never go below its category's own
-  // discount (discount_category), but can be raised up to 100%.
-  const getDiscountFloor = (product) => {
-    const cat = getCategory(product.category_id);
-    return cat ? Number(cat.discount_category || 0) : 0;
-  };
+    const getCategoryName = (categoryId) => {
+        const cat = getCategory(categoryId);
+        return cat ? cat.category_name : "General";
+    };
 
-  const filteredProducts = useMemo(() => {
-    let list = products;
-    if (statusFilter !== "all") {
-      list = list.filter((p) => p.status === statusFilter);
-    }
-    const term = search.trim().toLowerCase();
-    if (term) {
-      list = list.filter((p) => {
-        const nameMatch = p.product_name?.toLowerCase().includes(term);
-        const categoryMatch = getCategoryName(p.category_id)
-          .toLowerCase()
-          .includes(term);
-        return nameMatch || categoryMatch;
-      });
-    }
-    return list;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [products, categories, statusFilter, search]);
+    // sale price = price + category tax (tax applied on top of the base price)
+    const getSalePrice = (product) => {
+        const cat = getCategory(product.category_id);
+        const tax = cat ? Number(cat.tax || 0) : 0;
+        const price = Number(product.price || 0);
+        return price + (price * tax) / 100;
+    };
 
-  // Reset back to page 1 whenever the filter, search term, or page size changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [statusFilter, search, pageSize]);
+    // The discount rate for a product can never go below its category's own
+    // discount (discount_category), but can be raised up to 100%.
+    const getDiscountFloor = (product) => {
+        const cat = getCategory(product.category_id);
+        return cat ? Number(cat.discount_category || 0) : 0;
+    };
 
-  const totalItems = filteredProducts.length;
-  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+    const filteredProducts = useMemo(() => {
+        let list = products;
+        if (statusFilter !== "all") {
+            list = list.filter((p) => p.status === statusFilter);
+        }
+        const term = search.trim().toLowerCase();
+        if (term) {
+            list = list.filter((p) => {
+                const nameMatch = p.product_name?.toLowerCase().includes(term);
+                const categoryMatch = getCategoryName(p.category_id)
+                    .toLowerCase()
+                    .includes(term);
+                return nameMatch || categoryMatch;
+            });
+        }
+        return list;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [products, categories, statusFilter, search]);
 
-  // Keep currentPage valid if the list shrinks (e.g. after a delete)
-  useEffect(() => {
-    if (currentPage > totalPages) setCurrentPage(totalPages);
-  }, [totalPages, currentPage]);
+    // Reset back to page 1 whenever the filter, search term, or page size changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [statusFilter, search, pageSize]);
 
-  const paginatedProducts = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    return filteredProducts.slice(start, start + pageSize);
-  }, [filteredProducts, currentPage, pageSize]);
+    const totalItems = filteredProducts.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
 
-  // PUT /api/products/:id (quick-edit discount rate from the table)
-  const handleDiscountChange = async (productId, value) => {
-    const discount_rate = parseFloat(value);
-    const product = products.find((p) => p.product_id === productId);
-    const floor = product ? getDiscountFloor(product) : 0;
+    // Keep currentPage valid if the list shrinks (e.g. after a delete)
+    useEffect(() => {
+        if (currentPage > totalPages) setCurrentPage(totalPages);
+    }, [totalPages, currentPage]);
 
-    if (Number.isNaN(discount_rate) || discount_rate < 0 || discount_rate > 100) {
-      setDiscountError((prev) => ({
-        ...prev,
-        [productId]: "Discount rate must be between 0 and 100.",
-      }));
-      return;
-    }
+    const paginatedProducts = useMemo(() => {
+        const start = (currentPage - 1) * pageSize;
+        return filteredProducts.slice(start, start + pageSize);
+    }, [filteredProducts, currentPage, pageSize]);
 
-    if (discount_rate < floor) {
-      setDiscountError((prev) => ({
-        ...prev,
-        [productId]: `Discount rate cannot be lower than ${floor}% for this category.`,
-      }));
-      return;
-    }
+    // PUT /api/products/:id (quick-edit discount rate from the table)
+    const handleDiscountChange = async (productId, value) => {
+        const discount_rate = parseFloat(value);
+        const product = products.find((p) => p.product_id === productId);
+        const floor = product ? getDiscountFloor(product) : 0;
 
-    setDiscountError((prev) => ({ ...prev, [productId]: "" }));
+        if (Number.isNaN(discount_rate) || discount_rate < 0 || discount_rate > 100) {
+            setDiscountError((prev) => ({
+                ...prev,
+                [productId]: "Discount rate must be between 0 and 100.",
+            }));
+            return;
+        }
 
-    try {
-      const res = await api.put(`/products/${productId}`, { discount_rate });
-      setProducts((prev) =>
-        prev.map((p) => (p.product_id === productId ? res.data : p))
-      );
-      showToast("Discount updated");
-    } catch (err) {
-      showToast(
-        err.response?.data?.message || "Failed to update discount",
-        "error"
-      );
-    }
-  };
+        if (discount_rate < floor) {
+            setDiscountError((prev) => ({
+                ...prev,
+                [productId]: `Discount rate cannot be lower than ${floor}% for this category.`,
+            }));
+            return;
+        }
 
-  // Opens the custom confirmation box (used for both Delete and Restore)
-  const askConfirm = (type, id, name) => setConfirmState({ type, id, name });
+        setDiscountError((prev) => ({ ...prev, [productId]: "" }));
 
-  const handleConfirm = async () => {
-    if (!confirmState) return;
-    const { type, id, name } = confirmState;
-    const newStatus = type === "delete" ? "inactive" : "active";
-    try {
-      const res = await api.put(`/products/${id}`, { status: newStatus });
-      setProducts((prev) => prev.map((p) => (p.product_id === id ? res.data : p)));
-      showToast(
-        type === "delete" ? `"${name}" set to inactive` : `"${name}" restored`
-      );
-    } catch (err) {
-      showToast(
-        err.response?.data?.message || "Failed to update product",
-        "error"
-      );
-    } finally {
-      setConfirmState(null);
-    }
-  };
+        try {
+            const res = await api.put(`/products/${productId}`, { discount_rate });
+            setProducts((prev) =>
+                prev.map((p) => (p.product_id === productId ? res.data : p))
+            );
+            showToast("Discount updated");
+        } catch (err) {
+            showToast(
+                err.response?.data?.message || "Failed to update discount",
+                "error"
+            );
+        }
+    };
 
-  const filterTabs = [
-    { key: "all", label: "All" },
-    { key: "active", label: "Active" },
-    { key: "inactive", label: "Inactive" },
-  ];
+    // Opens the custom confirmation box (used for both Delete and Restore)
+    const askConfirm = (type, id, name) => setConfirmState({ type, id, name });
 
-  return (
-    <section className="space-y-6">
-      <Toast message={toast} type={toastType} />
+    const handleConfirm = async () => {
+        if (!confirmState) return;
+        const { type, id, name } = confirmState;
+        const newStatus = type === "delete" ? "inactive" : "active";
+        try {
+            const res = await api.put(`/products/${id}`, { status: newStatus });
+            setProducts((prev) => prev.map((p) => (p.product_id === id ? res.data : p)));
+            showToast(
+                type === "delete" ? `"${name}" set to inactive` : `"${name}" restored`
+            );
+        } catch (err) {
+            showToast(
+                err.response?.data?.message || "Failed to update product",
+                "error"
+            );
+        } finally {
+            setConfirmState(null);
+        }
+    };
 
-      {/* Unified header + filters card: search + status dropdown on left, page-size + Add button rightmost */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 p-4">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-            <div className="relative w-full sm:w-72">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by category or product name ..."
-                className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent focus:outline-none transition"
-              />
+    const filterTabs = [
+        { key: "all", label: "All" },
+        { key: "active", label: "Active" },
+        { key: "inactive", label: "Inactive" },
+    ];
+
+    return (
+        <section className="space-y-6">
+            <Toast message={toast} type={toastType} />
+
+            {/* Unified header + filters card: search + status dropdown on left, page-size + Add button rightmost */}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                        <div className="relative w-full sm:w-72">
+                            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                            <input
+                                type="text"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                placeholder="Search by category or product name ..."
+                                className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent focus:outline-none transition"
+                            />
+                        </div>
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            className="px-3 py-2 rounded-lg text-sm font-semibold border border-slate-200 text-slate-600 bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                        >
+                            {filterTabs.map((tab) => (
+                                <option key={tab.key} value={tab.key}>
+                                    {tab.label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="flex items-center gap-3 shrink-0">
+                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                            <span>Show</span>
+                            <select
+                                value={pageSize}
+                                onChange={(e) => setPageSize(Number(e.target.value))}
+                                className="border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-700 bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                            >
+                                {[5, 10, 15, 20, 25].map((n) => (
+                                    <option key={n} value={n}>
+                                        {n}
+                                    </option>
+                                ))}
+                            </select>
+                            <span>entries</span>
+                        </div>
+
+                        <button
+                            onClick={() => setShowAddModal(true)}
+                            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold flex items-center space-x-1.5 shadow-sm shrink-0"
+                        >
+                            <Plus className="w-4 h-4" />
+                            <span>Add New Product</span>
+                        </button>
+                    </div>
+                </div>
             </div>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 rounded-lg text-sm font-semibold border border-slate-200 text-slate-600 bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-            >
-              {filterTabs.map((tab) => (
-                <option key={tab.key} value={tab.key}>
-                  {tab.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="flex items-center gap-2 text-xs text-slate-500">
-              <span>Show</span>
-              <select
-                value={pageSize}
-                onChange={(e) => setPageSize(Number(e.target.value))}
-                className="border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-700 bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-              >
-                {[5, 10, 15, 20, 25].map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-              <span>entries</span>
-            </div>
-
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold flex items-center space-x-1.5 shadow-sm shrink-0"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add New Product</span>
-            </button>
-          </div>
-        </div>
-      </div>
 
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
@@ -406,61 +430,61 @@ const ProductsView = () => {
           </table>
         </div>
 
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={totalItems}
-          pageSize={pageSize}
-          onPageChange={setCurrentPage}
-        />
-      </div>
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalItems={totalItems}
+                    pageSize={pageSize}
+                    onPageChange={setCurrentPage}
+                />
+            </div>
 
-      <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} maxWidth="max-w-lg">
-        <AddProduct
-          existingProductNames={products.map((p) => p.product_name)}
-          onClose={() => setShowAddModal(false)}
-          onSuccess={() => {
-            setShowAddModal(false);
-            fetchData();
-            showToast("Product added successfully");
-          }}
-        />
-      </Modal>
+            <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} maxWidth="max-w-lg">
+                <AddProduct
+                    existingProductNames={products.map((p) => p.product_name)}
+                    onClose={() => setShowAddModal(false)}
+                    onSuccess={() => {
+                        setShowAddModal(false);
+                        fetchData();
+                        showToast("Product added successfully");
+                    }}
+                />
+            </Modal>
 
-      <Modal isOpen={!!editProductId} onClose={() => setEditProductId(null)} maxWidth="max-w-lg">
-        <EditProduct
-          productId={editProductId}
-          existingProductNames={products
-            .filter((p) => p.product_id !== editProductId)
-            .map((p) => p.product_name)}
-          onClose={() => setEditProductId(null)}
-          onSuccess={() => {
-            setEditProductId(null);
-            fetchData();
-            showToast("Product updated successfully");
-          }}
-        />
-      </Modal>
+            <Modal isOpen={!!editProductId} onClose={() => setEditProductId(null)} maxWidth="max-w-lg">
+                <EditProduct
+                    productId={editProductId}
+                    existingProductNames={products
+                        .filter((p) => p.product_id !== editProductId)
+                        .map((p) => p.product_name)}
+                    onClose={() => setEditProductId(null)}
+                    onSuccess={() => {
+                        setEditProductId(null);
+                        fetchData();
+                        showToast("Product updated successfully");
+                    }}
+                />
+            </Modal>
 
-      <ConfirmDialog
-        isOpen={!!confirmState}
-        tone={confirmState?.type === "restore" ? "success" : "danger"}
-        title={
-          confirmState?.type === "restore"
-            ? `Restore "${confirmState?.name}"?`
-            : `Set "${confirmState?.name}" to inactive?`
-        }
-        message={
-          confirmState?.type === "restore"
-            ? "This product will become active again and visible on the cashier screen."
-            : "This product will be hidden from the cashier screen. You can restore it anytime."
-        }
-        confirmLabel={confirmState?.type === "restore" ? "Restore" : "Delete"}
-        onConfirm={handleConfirm}
-        onCancel={() => setConfirmState(null)}
-      />
-    </section>
-  );
+            <ConfirmDialog
+                isOpen={!!confirmState}
+                tone={confirmState?.type === "restore" ? "success" : "danger"}
+                title={
+                    confirmState?.type === "restore"
+                        ? `Restore "${confirmState?.name}"?`
+                        : `Set "${confirmState?.name}" to inactive?`
+                }
+                message={
+                    confirmState?.type === "restore"
+                        ? "This product will become active again and visible on the cashier screen."
+                        : "This product will be hidden from the cashier screen. You can restore it anytime."
+                }
+                confirmLabel={confirmState?.type === "restore" ? "Restore" : "Delete"}
+                onConfirm={handleConfirm}
+                onCancel={() => setConfirmState(null)}
+            />
+        </section>
+    );
 };
 
 export default ProductsView;

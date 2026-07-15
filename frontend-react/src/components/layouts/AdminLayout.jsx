@@ -49,7 +49,6 @@ const AdminLayout = () => {
         "edit-category": "Edit Category",
         "view-product": "View Product",
         "add-product": "Add Product",
-        "edit-product": "Edit Product",
         "view-staff": "View Staff",
         "add-staff": "Add Staff",
         "view-payment": "View Payment",
