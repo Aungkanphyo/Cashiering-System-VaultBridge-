@@ -1,5 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
+import {
+    Plus,
+    Loader2,
+    Search,
+    Users,
+    CheckCircle2,
+    XCircle,
+} from "lucide-react";
 import api from "../../../api/axios";
+import ConfirmDialog from "../../../components/common/ConfirmDialog";
+import Pagination from "../../../components/common/Pagination";
 import StaffDetailModal from "./Popup/StaffDetailModal";
 import AddStaffModal from "./Popup/AddStaffModal";
 import EditStaffModal from "./Popup/EditStaffModal";
@@ -18,9 +28,11 @@ const ViewStaff = () => {
     const [staffs, setStaffs] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState('All');
+    const [statusFilter, setStatusFilter] = useState('All'); // All | Active | Inactive
     const [selectedStaff, setSelectedStaff] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [pageSize, setPageSize] = useState(5);
+    const [currentPage, setCurrentPage] = useState(1);
 
     const [refreshTrigger, setRefreshTrigger] = useState(false);
 
@@ -28,8 +40,7 @@ const ViewStaff = () => {
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
-    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-    const [toggleStaffId, setToggleStaffId] = useState(null);
+    const [confirmState, setConfirmState] = useState(null); // { id, name, nextStatus }
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -39,16 +50,14 @@ const ViewStaff = () => {
         return () => clearTimeout(timer);
     }, [searchTerm])
 
-    // Auto refresh data every time you change the filter
+    // Auto refresh data every time the search term changes
     useEffect(() => {
-        // Retrieve Staff Data from the Backend
         const fetchStaffs = async () => {
             try {
                 setLoading(true);
                 const response = await api.get('/staff', {
                     params: {
                         search: debouncedSearchTerm,
-                        status: statusFilter
                     }
                 });
 
@@ -58,7 +67,6 @@ const ViewStaff = () => {
             } catch (error) {
                 console.error("Error fetching staff data:", error);
                 toast.error("There was an error retrieving staff information.");
-                // alert("There was an error retrieving staff information.");
             } finally {
                 setLoading(false);
             }
@@ -66,7 +74,7 @@ const ViewStaff = () => {
 
         fetchStaffs();
 
-    }, [statusFilter, debouncedSearchTerm, refreshTrigger])
+    }, [debouncedSearchTerm, refreshTrigger])
 
     const handleTriggerRefresh = () => {
         setRefreshTrigger(prev => prev + 1);
@@ -89,166 +97,276 @@ const ViewStaff = () => {
         setIsEditOpen(true);
     }
 
-    const handleToggleStatus = async (id) => {
-        setToggleStaffId(id);
-        setIsConfirmOpen(true);
+    const askConfirm = (staff) => {
+        setConfirmState({
+            id: staff.user_id,
+            name: staff.username,
+            nextStatus: staff.status === 'Active' ? 'Inactive' : 'Active',
+        });
     }
 
-    const executeToggleStatus = async () => {
+    const handleConfirmToggle = async () => {
+        if (!confirmState) return;
+        const { id } = confirmState;
         try {
-            const response = await api.patch(`/staff/${toggleStaffId}/toggle-status`);
+            const response = await api.patch(`/staff/${id}/toggle-status`);
             if (response.data.status === 'success') {
-                toast.success(response.data.message || "Status updated successfully!");
-                handleTriggerRefresh();
+                setStaffs(staffs.map(staff =>
+                    staff.user_id === id ? { ...staff, status: response.data.updated_status } : staff
+                ));
 
-                if (selectedStaff && selectedStaff.user_id === toggleStaffId) {
+                if (selectedStaff && selectedStaff.user_id === id) {
                     setSelectedStaff({ ...selectedStaff, status: response.data.updated_status });
                 }
+                toast.success(
+                    response.data.updated_status === 'Active'
+                        ? 'Staff member activated'
+                        : 'Staff member deactivated'
+                );
             }
         } catch (error) {
             console.error("Error updating status:", error);
-            toast.error("There was an error updating the staff status.");
+            toast.error("There was an error updating this employee's status.");
         } finally {
-            setIsConfirmOpen(false);
-            setToggleStaffId(null);
+            setConfirmState(null);
         }
     }
 
+    // Filtering happens client-side so the stat cards always reflect
+    // accurate totals regardless of which filter card is selected.
+    const filteredStaffs = useMemo(() => {
+        if (statusFilter === 'All') return staffs;
+        return staffs.filter((s) => s.status === statusFilter);
+    }, [staffs, statusFilter]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [statusFilter, debouncedSearchTerm, pageSize]);
+
+    const totalItems = filteredStaffs.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+
+    useEffect(() => {
+        if (currentPage > totalPages) setCurrentPage(totalPages);
+    }, [totalPages, currentPage]);
+
+    const paginatedStaffs = useMemo(() => {
+        const start = (currentPage - 1) * pageSize;
+        return filteredStaffs.slice(start, start + pageSize);
+    }, [filteredStaffs, currentPage, pageSize]);
+
+    const summaryStats = useMemo(() => {
+        const activeCount = staffs.filter((s) => s.status === 'Active').length;
+        const inactiveCount = staffs.filter((s) => s.status === 'Inactive').length;
+
+        return [
+            {
+                title: "TOTAL STAFF",
+                value: staffs.length,
+                filterKey: "All",
+                icon: Users,
+                colorClass: "text-slate-500 bg-slate-50 border-slate-200",
+                activeClass: "ring-2 ring-emerald-500 border-emerald-400 bg-slate-50/50",
+            },
+            {
+                title: "ACTIVE STAFF",
+                value: activeCount,
+                filterKey: "Active",
+                icon: CheckCircle2,
+                colorClass: "text-emerald-600 bg-emerald-50 border-emerald-100",
+                activeClass: "ring-2 ring-emerald-500 border-emerald-400 bg-emerald-50/50",
+            },
+            {
+                title: "INACTIVE STAFF",
+                value: inactiveCount,
+                filterKey: "Inactive",
+                icon: XCircle,
+                colorClass: "text-rose-600 bg-rose-50 border-rose-100",
+                activeClass: "ring-2 ring-emerald-500 border-emerald-400 bg-rose-50/50",
+            },
+        ];
+    }, [staffs]);
+
     return (
-        <div className="p-6 bg-white min-h-screen relative">
-            {/* Top Header Section */}
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold text-gray-800">Staff Management</h1>
-            </div>
+        <div className="min-h-screen">
+            {/* Interactive Stat Cards Section */}
+            <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
+                {summaryStats.map((item) => {
+                    const IconComponent = item.icon;
+                    const isActive = statusFilter === item.filterKey;
 
-            {/* Search and Filter Controls */}
-            <div className="flex justify-between items-center mb-4 gap-4">
-                <div className="flex gap-2">
-                    <input
-                        type="text"
-                        placeholder="Search by name..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="border border-gray-400 px-3 py-1.5 rounded w-72 focus:outline-none focus:border-emerald-600"
-                    />
-                </div>
-
-                <div className="flex items-center gap-3">
-                    <select
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                        className="border border-gray-800 px-4 py-1.5 rounded bg-white font-medium focus:outline-none"
-                    >
-                        <option value="All">All</option>
-                        <option value="Active">Active</option>
-                        <option value="Inactive">Inactive</option>
-                    </select>
-
-                    <button onClick={() => setIsAddOpen(true)} className="bg-emerald-600 text-white font-medium px-4 py-1.5 rounded flex items-center gap-1 hover:bg-emerald-700 transition">
-                        <span className="text-lg font-bold">+</span> Add new staff
-                    </button>
-                </div>
-            </div>
-
-            {/* Staff Table */}
-            <div className="border border-gray-300 rounded overflow-hidden">
-                <table className="w-full text-left border-collapse">
-                    <thead>
-                        <tr className="border-b border-gray-300 bg-gray-50 text-gray-700 font-semibold text-sm">
-                            <th className="p-3 text-center w-16">No</th>
-                            <th className="p-3">Name</th>
-                            <th className="p-3">Gender</th>
-                            <th className="p-3">Join Date</th>
-                            <th className="p-3">Status</th>
-                            <th className="p-3 text-center w-72">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {loading ? (
-                            <tr>
-                                <td colSpan="6" className="text-center p-6 text-gray-500">Loading staff data...</td>
-                            </tr>
-                        ) : staffs.length === 0 ? (
-                            <tr>
-                                <td colSpan="6" className="text-center p-6 text-gray-500">No staff list</td>
-                            </tr>
-                        ) : (
-                            staffs.map((staff, index) => (
-                                <tr key={staff.user_id} className="border-b border-gray-200 hover:bg-gray-50 text-gray-800 font-medium text-sm">
-                                    <td className="p-3 text-center font-bold">{index + 1}.</td>
-                                    <td className="p-3 font-bold">{staff.username}</td>
-                                    <td className="p-3">{staff.gender}</td>
-                                    <td className="p-3">{formatDate(staff.join_date)}</td>
-                                    <td className="p-3">
-                                        <span className={staff.status === 'Active' ? 'text-emerald-500 font-semibold' : 'text-red-500 font-semibold'}>
-                                            {staff.status}
-                                        </span>
-                                    </td>
-                                    <td className="p-3 flex justify-center gap-2">
-                                        <button
-                                            onClick={() => handleOpenDetail(staff.user_id)}
-                                            className="bg-amber-500 text-white font-semibold px-5 py-1 rounded w-20 shadow-sm hover:bg-amber-600 transition"
-                                        >
-                                            View
-                                        </button>
-                                        <button
-                                            onClick={() => handleOpenEdit(staff)}
-                                            className="bg-emerald-500 text-white font-semibold px-5 py-1 rounded w-20 shadow-sm hover:bg-emerald-600 transition">
-                                            Edit
-                                        </button>
-
-                                        <button onClick={() => handleToggleStatus(staff.user_id)} className={`text-white font-semibold px-3 py-1 rounded w-24 transition ${staff.status === 'Active' ? 'bg-red-600 hover:bg-red-700' : 'bg-cyan-500 hover:bg-cyan-600'}`}>
-                                            {staff.status === 'Active' ? 'Deactivate' : 'Activate'}
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
-            </div>
-
-            {/* Confirm box */}
-            {isConfirmOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center">
-                    <div
-                        className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
-                        onClick={() => setIsConfirmOpen(false)}
-                    ></div>
-
-                    {/* Modal Box */}
-                    <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 relative z-10 transform transition-all animate-in fade-in zoom-in-95 duration-200 mx-4">
-                        <div className="flex items-center gap-4 mb-4">
-                            <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center shrink-0 text-amber-500">
-                                <AlertTriangle className="w-6 h-6" strokeWidth={2.5} />
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-bold text-gray-900">Change Status?</h3>
-                                <p className="text-sm text-gray-500 mt-1">
-                                    Are you sure you want to change this employee's status?
+                    return (
+                        <button
+                            key={item.title}
+                            onClick={() => setStatusFilter(item.filterKey)}
+                            className={`w-full text-left bg-white rounded-2xl border p-5 flex items-center justify-between gap-3 transition-all duration-200 shadow-sm group hover:shadow-md cursor-pointer ${
+                                isActive ? item.activeClass : "hover:border-slate-300"
+                            }`}
+                        >
+                            <div className="space-y-1">
+                                <p className="text-xs uppercase tracking-wider font-bold text-slate-500 group-hover:text-slate-700 transition-colors">
+                                    {item.title}
                                 </p>
+                                <h2 className="text-2xl text-slate-800 font-bold">
+                                    {item.value}
+                                </h2>
                             </div>
-                        </div>
+                            <div className={`p-3 rounded-xl border ${item.colorClass} transition-transform group-hover:scale-105`}>
+                                <IconComponent className="w-5 h-5" />
+                            </div>
+                        </button>
+                    );
+                })}
+            </div>
 
-                        {/* Action Buttons */}
-                        <div className="flex justify-end gap-3 mt-6">
-                            <button
-                                onClick={() => setIsConfirmOpen(false)}
-                                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition text-sm"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={executeToggleStatus}
-                                className="px-4 py-2 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700 shadow-sm transition text-sm"
-                            >
-                                Yes, Change It
-                            </button>
+            {/* Table Section */}
+            <div className="bg-white rounded-2xl border shadow-sm overflow-hidden mt-8">
+                <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 p-6 pb-4 w-full">
+
+                    {/* Left Side: Search Bar */}
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <div className="relative w-full sm:w-84">
+                            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                            <input
+                                type="text"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                placeholder="Search by staff name ..."
+                                className="w-full pl-9 pr-3 py-2 border rounded-lg text-sm bg-transparent cursor-text focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15 transition"
+                            />
                         </div>
                     </div>
-                </div>
-            )}
 
+                    {/* Right Side: Entries Dropdown and Add New Staff Button */}
+                    <div className="flex items-center gap-4 w-full sm:w-auto sm:ml-auto justify-between sm:justify-end">
+                        <div className="flex items-center gap-2 text-xs text-slate-500 whitespace-nowrap">
+                            <span>Show</span>
+                            <select
+                                value={pageSize}
+                                onChange={(e) => setPageSize(Number(e.target.value))}
+                                className="border rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15 cursor-pointer"
+                            >
+                                {[5, 10, 15, 20, 25].map((n) => (
+                                    <option key={n} value={n}>
+                                        {n}
+                                    </option>
+                                ))}
+                            </select>
+                            <span>entries</span>
+                        </div>
+
+                        <button
+                            onClick={() => setIsAddOpen(true)}
+                            className="flex items-center gap-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 px-4 py-2 text-sm font-semibold shadow-sm whitespace-nowrap cursor-pointer"
+                        >
+                            <Plus size={18} /> Add New Staff
+                        </button>
+                    </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-emerald-700 border-b border-emerald-800 text-white text-xs font-semibold uppercase">
+                                <th className="p-4 w-16 text-center">No</th>
+                                <th className="p-4">Name</th>
+                                <th className="p-4">Gender</th>
+                                <th className="p-4">Join Date</th>
+                                <th className="p-4 w-28">Status</th>
+                                <th className="p-4 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 text-sm">
+                            {loading && (
+                                <tr>
+                                    <td colSpan={6} className="p-8 text-center text-slate-400">
+                                        <Loader2 className="w-5 h-5 animate-spin inline mr-2" />
+                                        Loading staff data...
+                                    </td>
+                                </tr>
+                            )}
+                            {!loading && filteredStaffs.length === 0 && (
+                                <tr>
+                                    <td colSpan={6} className="p-8 text-center text-slate-400">
+                                        No staff found under this view.
+                                    </td>
+                                </tr>
+                            )}
+                            {!loading &&
+                                paginatedStaffs.map((staff, index) => {
+                                    const isInactive = staff.status === 'Inactive';
+                                    return (
+                                        <tr
+                                            key={staff.user_id}
+                                            className={`hover:bg-slate-50 transition ${
+                                                isInactive ? "bg-slate-100/50 opacity-75" : ""
+                                            }`}
+                                        >
+                                            <td className="p-4 text-center font-bold text-slate-500">
+                                                {(currentPage - 1) * pageSize + index + 1}
+                                            </td>
+                                            <td className="p-4 font-semibold text-slate-800">
+                                                {staff.username}
+                                            </td>
+                                            <td className="p-4 text-slate-700">{staff.gender}</td>
+                                            <td className="p-4 text-slate-700">{formatDate(staff.join_date)}</td>
+                                            <td className="p-4">
+                                                <span
+                                                    className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                                                        isInactive ? "text-red-500" : "text-emerald-600"
+                                                    }`}
+                                                >
+                                                    {staff.status}
+                                                </span>
+                                            </td>
+                                            <td className="p-4 text-right">
+                                                <div className="flex justify-end items-center gap-2">
+                                                    <button
+                                                        onClick={() => handleOpenDetail(staff.user_id)}
+                                                        className="px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-yellow-400 hover:bg-yellow-500 transition cursor-pointer"
+                                                    >
+                                                        View
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleOpenEdit(staff)}
+                                                        className="px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-sky-500 hover:bg-sky-600 transition cursor-pointer"
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    {isInactive ? (
+                                                        <button
+                                                            onClick={() => askConfirm(staff)}
+                                                            className="px-4.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-emerald-700 border border-emerald-200 hover:bg-emerald-900 transition cursor-pointer"
+                                                        >
+                                                            Activate
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => askConfirm(staff)}
+                                                            className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-red-500 hover:bg-red-600 transition cursor-pointer"
+                                                        >
+                                                            Deactivate
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                        </tbody>
+                    </table>
+                </div>
+
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalItems={totalItems}
+                    pageSize={pageSize}
+                    onPageChange={setCurrentPage}
+                />
+            </div>
+
+            {/* Modals & Dialogs */}
             <StaffDetailModal
                 isOpen={isDetailOpen}
                 onClose={() => setIsDetailOpen(false)}
@@ -268,6 +386,24 @@ const ViewStaff = () => {
                     onSuccess={handleTriggerRefresh}
                 />
             )}
+
+            <ConfirmDialog
+                isOpen={!!confirmState}
+                tone={confirmState?.nextStatus === 'Active' ? "success" : "danger"}
+                title={
+                    confirmState?.nextStatus === 'Active'
+                        ? `Activate "${confirmState?.name}"?`
+                        : `Deactivate "${confirmState?.name}"?`
+                }
+                message={
+                    confirmState?.nextStatus === 'Active'
+                        ? "This employee will regain access and be marked active again."
+                        : "This employee will be marked inactive. You can activate them again anytime."
+                }
+                confirmLabel={confirmState?.nextStatus === 'Active' ? "Activate" : "Deactivate"}
+                onConfirm={handleConfirmToggle}
+                onCancel={() => setConfirmState(null)}
+            />
         </div>
     )
 }

@@ -67,7 +67,7 @@ class SaleController extends Controller
                     throw new \Exception("Insufficient stock for \"{$product->product_name}\". Available: {$product->stock_quantity}.");
                 }
 
-                $unitPrice       = $product->price;
+                $unitPrice   = $product->price;
                 $discountPercent = $product->discount_percent ?? $product->discount_rate ?? 0;
                 $discountAmount  = ($unitPrice * $discountPercent) / 100;
                 $finalItemPrice  = $unitPrice - $discountAmount;

@@ -1,5 +1,13 @@
 import { useState, useEffect, useMemo } from "react";
-import { Plus, Loader2, RotateCcw, Search } from "lucide-react";
+import {
+  Plus,
+  Loader2,
+  RotateCcw,
+  Search,
+  Tag,
+  CheckCircle2,
+  XCircle,
+} from "lucide-react";
 import api from "../../../api/axios";
 import Toast from "../../../components/common/Toast";
 import Modal from "../../../components/common/Modal";
@@ -15,6 +23,8 @@ const ViewCategory = () => {
   const [toastType, setToastType] = useState("success");
   const [showAddModal, setShowAddModal] = useState(false);
   const [editCategoryId, setEditCategoryId] = useState(null);
+  const [discountError, setDiscountError] = useState({});
+  const [taxError, setTaxError] = useState({});
   const [statusFilter, setStatusFilter] = useState("all"); // all | active | inactive
   const [search, setSearch] = useState("");
   const [confirmState, setConfirmState] = useState(null); // { type: 'delete'|'restore', id, name }
@@ -27,7 +37,6 @@ const ViewCategory = () => {
     setTimeout(() => setToast(""), 2500);
   };
 
-  // GET /api/categories
   const fetchCategories = async () => {
     setLoading(true);
     try {
@@ -59,7 +68,6 @@ const ViewCategory = () => {
     return list;
   }, [categories, statusFilter, search]);
 
-  // Reset back to page 1 whenever the filter, search term, or page size changes
   useEffect(() => {
     setCurrentPage(1);
   }, [statusFilter, search, pageSize]);
@@ -67,7 +75,6 @@ const ViewCategory = () => {
   const totalItems = filteredCategories.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
 
-  // Keep currentPage valid if the list shrinks (e.g. after a delete)
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(totalPages);
   }, [totalPages, currentPage]);
@@ -77,7 +84,63 @@ const ViewCategory = () => {
     return filteredCategories.slice(start, start + pageSize);
   }, [filteredCategories, currentPage, pageSize]);
 
-  // Opens the custom confirmation box (used for both Delete and Restore)
+  // PUT /api/categories/:id — inline tax edit, same onBlur save pattern
+  const handleTaxChange = async (categoryId, value) => {
+    const tax = parseFloat(value);
+
+    if (Number.isNaN(tax) || tax < 0 || tax > 100) {
+      setTaxError((prev) => ({
+        ...prev,
+        [categoryId]: "Tax rate must be between 0 and 100.",
+      }));
+      return;
+    }
+
+    setTaxError((prev) => ({ ...prev, [categoryId]: "" }));
+
+    try {
+      const res = await api.put(`/categories/${categoryId}`, { tax });
+      setCategories((prev) =>
+        prev.map((c) => (c.category_id === categoryId ? res.data : c))
+      );
+      showToast("Tax updated");
+    } catch (err) {
+      showToast(
+        err.response?.data?.message || "Failed to update tax",
+        "error"
+      );
+    }
+  };
+
+  // PUT /api/categories/:id — inline discount edit, mirrors ProductsView's
+  // handleDiscountChange pattern (onBlur save with per-row error state).
+  const handleDiscountChange = async (categoryId, value) => {
+    const discount_category = parseFloat(value);
+
+    if (Number.isNaN(discount_category) || discount_category < 0 || discount_category > 100) {
+      setDiscountError((prev) => ({
+        ...prev,
+        [categoryId]: "Discount rate must be between 0 and 100.",
+      }));
+      return;
+    }
+
+    setDiscountError((prev) => ({ ...prev, [categoryId]: "" }));
+
+    try {
+      const res = await api.put(`/categories/${categoryId}`, { discount_category });
+      setCategories((prev) =>
+        prev.map((c) => (c.category_id === categoryId ? res.data : c))
+      );
+      showToast("Discount updated");
+    } catch (err) {
+      showToast(
+        err.response?.data?.message || "Failed to update discount",
+        "error"
+      );
+    }
+  };
+
   const askConfirm = (type, id, name) => setConfirmState({ type, id, name });
 
   const handleConfirm = async () => {
@@ -100,50 +163,98 @@ const ViewCategory = () => {
     }
   };
 
-  const filterTabs = [
-    { key: "all", label: "All" },
-    { key: "active", label: "Active" },
-    { key: "inactive", label: "Inactive" },
-  ];
+  const summaryStats = useMemo(() => {
+    const activeCount = categories.filter((c) => c.status === "active").length;
+    const inactiveCount = categories.filter((c) => c.status === "inactive").length;
+
+    return [
+      {
+        title: "TOTAL CATEGORIES",
+        value: categories.length,
+        filterKey: "all",
+        icon: Tag,
+        colorClass: "text-slate-500 bg-slate-50 border-slate-200",
+        activeClass: "ring-2 ring-emerald-500 border-emerald-400 bg-slate-50/50",
+      },
+      {
+        title: "ACTIVE CATEGORIES",
+        value: activeCount,
+        filterKey: "active",
+        icon: CheckCircle2,
+        colorClass: "text-emerald-600 bg-emerald-50 border-emerald-100",
+        activeClass: "ring-2 ring-emerald-500 border-emerald-400 bg-emerald-50/50",
+      },
+      {
+        title: "INACTIVE CATEGORIES",
+        value: inactiveCount,
+        filterKey: "inactive",
+        icon: XCircle,
+        colorClass: "text-rose-600 bg-rose-50 border-rose-100",
+        activeClass: "ring-2 ring-emerald-500 border-emerald-400 bg-rose-50/50",
+      },
+    ];
+  }, [categories]);
 
   return (
-    <section className="space-y-6">
+    <div className="min-h-screen">
       <Toast message={toast} type={toastType} />
 
-      {/* Unified header + filters card: search + status dropdown on left, page-size + Add button rightmost */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 p-4">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-            <div className="relative w-full sm:w-72">
+      {/* Interactive Stat Cards Section */}
+      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
+        {summaryStats.map((item) => {
+          const IconComponent = item.icon;
+          const isActive = statusFilter === item.filterKey;
+
+          return (
+            <button
+              key={item.title}
+              onClick={() => setStatusFilter(item.filterKey)}
+              className={`w-full text-left bg-white rounded-2xl border p-5 flex items-center justify-between gap-3 transition-all duration-200 shadow-sm group hover:shadow-md cursor-pointer ${
+                isActive ? item.activeClass : "hover:border-slate-300"
+              }`}
+            >
+              <div className="space-y-1">
+                <p className="text-xs uppercase tracking-wider font-bold text-slate-500 group-hover:text-slate-700 transition-colors">
+                  {item.title}
+                </p>
+                <h2 className="text-2xl text-slate-800 font-bold">
+                  {item.value}
+                </h2>
+              </div>
+              <div className={`p-3 rounded-xl border ${item.colorClass} transition-transform group-hover:scale-105`}>
+                <IconComponent className="w-5 h-5" />
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Table Section */}
+      <div className="bg-white rounded-2xl border shadow-sm overflow-hidden mt-8">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 p-6 pb-4 w-full">
+
+          {/* Left Side: Search Bar */}
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="relative w-full sm:w-84">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by category name..."
-                className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent focus:outline-none transition"
+                className="w-full pl-9 pr-3 py-2 border rounded-lg text-sm bg-transparent cursor-text focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15 transition"
               />
             </div>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 rounded-lg text-sm font-semibold border border-slate-200 text-slate-600 bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-            >
-              {filterTabs.map((tab) => (
-                <option key={tab.key} value={tab.key}>
-                  {tab.label}
-                </option>
-              ))}
-            </select>
           </div>
 
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="flex items-center gap-2 text-xs text-slate-500">
+          {/* Right Side: Entries Dropdown and Add New Category Button */}
+          <div className="flex items-center gap-4 w-full sm:w-auto sm:ml-auto justify-between sm:justify-end">
+            <div className="flex items-center gap-2 text-xs text-slate-500 whitespace-nowrap">
               <span>Show</span>
               <select
                 value={pageSize}
                 onChange={(e) => setPageSize(Number(e.target.value))}
-                className="border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-700 bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                className="border rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15 cursor-pointer"
               >
                 {[5, 10, 15, 20, 25].map((n) => (
                   <option key={n} value={n}>
@@ -156,121 +267,157 @@ const ViewCategory = () => {
 
             <button
               onClick={() => setShowAddModal(true)}
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold flex items-center space-x-1.5 shadow-sm shrink-0"
+              className="flex items-center gap-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 px-4 py-2 text-sm font-semibold shadow-sm whitespace-nowrap cursor-pointer"
             >
-              <Plus className="w-4 h-4" />
-              <span>Add New Category</span>
+              <Plus size={18} /> Add New Category
             </button>
           </div>
         </div>
-      </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-emerald-700 border-b border-emerald-800 text-white text-xs font-semibold uppercase">
-              
-              <th className="p-4 w-100">Category Name</th>
-              <th className="p-4 w-100">Default Tax (%)</th>
-              <th className="p-4 w-100">Default Discount (%)</th>
-              <th className="p-4 w-30">Status</th>
-              <th className="p-4 w-50 text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 text-sm">
-            {loading && (
-              <tr>
-                <td colSpan={5} className="p-8 text-center text-slate-400">
-                  <Loader2 className="w-5 h-5 animate-spin inline mr-2" />
-                  Loading categories...
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-emerald-700 border-b border-emerald-800 text-white text-xs font-semibold uppercase">
+               
+                <th className="p-4 w-100">Category Name</th>
+                <th className="p-4 w-100">Tax</th>
+                <th className="p-4 w-100">Discount</th>
+                <th className="p-4 w-30">Status</th>
+                <th className="p-4 w-50 text-center">Actions</th>
               </tr>
-            )}
-            {!loading && filteredCategories.length === 0 && (
-              <tr>
-                <td colSpan={5} className="p-8 text-center text-slate-400">
-                  No categories found.
-                </td>
-              </tr>
-            )}
-            {!loading &&
-              paginatedCategories.map((cat) => {
-                const isInactive = cat.status === "inactive";
-                return (
-                  <tr
-                    key={cat.category_id}
-                    className={`hover:bg-slate-50 transition ${
-                      isInactive ? "bg-slate-100/50 opacity-75" : ""
-                    }`}
-                  >
-                    
-                    <td className="p-4 font-semibold text-slate-800">
-                      {cat.category_name}
-                    </td>
-                    <td className="p-4 font-bold text-slate-700">
-                      {Number(cat.tax) || 0}% 
-                    </td>
-                    <td className="p-4 font-bold text-slate-700">
-                      {Number(cat.discount_category) || 0}% 
-                    </td>
-                    <td className="p-4">
-                      <span
-                        className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                          isInactive
-                            ? "bg-slate-200 text-slate-600"
-                            : "bg-emerald-100 text-emerald-700"
-                        }`}
-                      >
-                        {isInactive ? "Inactive" : "Active"}
-                      </span>
-                    </td>
-                    <td className="p-4 text-right">
-                      <div className="flex justify-end items-center gap-2">
-                        {!isInactive && (
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-sm">
+              {loading && (
+                <tr>
+                  <td colSpan={5} className="p-8 text-center text-slate-400">
+                    <Loader2 className="w-5 h-5 animate-spin inline mr-2" />
+                    Loading categories...
+                  </td>
+                </tr>
+              )}
+              {!loading && filteredCategories.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="p-8 text-center text-slate-400">
+                    No categories found under this view.
+                  </td>
+                </tr>
+              )}
+              {!loading &&
+                paginatedCategories.map((cat) => {
+                  const isInactive = cat.status === "inactive";
+                  return (
+                    <tr
+                      key={cat.category_id}
+                      className={`hover:bg-slate-50 transition ${
+                        isInactive ? "bg-slate-100/50 opacity-75" : ""
+                      }`}
+                    >
+                      
+                      <td className="p-4 font-semibold text-slate-800">
+                        {cat.category_name}
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center space-x-1">
+                          <input
+                            type="number"
+                            step="1"
+                            min={0}
+                            max="100"
+                            defaultValue={cat.tax}
+                            disabled={isInactive}
+                            onBlur={(e) =>
+                              handleTaxChange(cat.category_id, e.target.value)
+                            }
+                            className="w-16 p-1 text-center border border-slate-200 rounded text-xs font-bold text-slate-700 focus:ring-1 focus:ring-emerald-500 focus:outline-none bg-white disabled:bg-slate-50 disabled:text-slate-400"
+                          />
+                          <span className="text-xs text-slate-400">%</span>
+                        </div>
+                        {taxError[cat.category_id] && (
+                          <p className="text-[10px] text-rose-600 mt-1">
+                            {taxError[cat.category_id]}
+                          </p>
+                        )}
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center space-x-1">
+                          <input
+                            type="number"
+                            step="1"
+                            min={0}
+                            max="100"
+                            defaultValue={cat.discount_category}
+                            disabled={isInactive}
+                            onBlur={(e) =>
+                              handleDiscountChange(cat.category_id, e.target.value)
+                            }
+                            className="w-16 p-1 text-center border border-slate-200 rounded text-xs font-bold text-slate-700 focus:ring-1 focus:ring-emerald-500 focus:outline-none bg-white disabled:bg-slate-50 disabled:text-slate-400"
+                          />
+                          <span className="text-xs text-slate-400">%</span>
+                        </div>
+                        {discountError[cat.category_id] && (
+                          <p className="text-[10px] text-rose-600 mt-1">
+                            {discountError[cat.category_id]}
+                          </p>
+                        )}
+                      </td>
+                      <td className="p-4">
+                        <span
+                          className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                            isInactive ? " text-red-500" : " text-green-600"
+                          }`}
+                        >
+                          {isInactive ? "Inactive" : "Active"}
+                        </span>
+                      </td>
+                      <td className="p-4 text-right">
+                        <div className="flex justify-end items-center gap-2">
                           <button
                             onClick={() => setEditCategoryId(cat.category_id)}
-                            className="px-3 py-1.5 rounded-lg text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 transition"
+                            className="px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-sky-500 hover:bg-sky-600 transition cursor-pointer"
                           >
                             Edit
                           </button>
-                        )}
-                        {isInactive ? (
-                          <button
-                            onClick={() =>
-                              askConfirm("restore", cat.category_id, cat.category_name)
-                            }
-                            className="px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 transition flex items-center gap-1"
-                          >
-                            <RotateCcw className="w-3.5 h-3.5" />
-                            Restore
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() =>
-                              askConfirm("delete", cat.category_id, cat.category_name)
-                            }
-                            className="px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 hover:bg-rose-200 transition"
-                          >
-                            Delete
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-          </tbody>
-        </table>
+                          {isInactive ? (
+                            <button
+                              onClick={() =>
+                                askConfirm("restore", cat.category_id, cat.category_name)
+                              }
+                              className="px-2 py-1.5 rounded-lg text-xs font-semibold text-white bg-emerald-700 border border-emerald-200 hover:bg-emerald-900 transition flex items-center gap-1 cursor-pointer"
+                            >
+                            
+                              Restore
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() =>
+                                askConfirm("delete", cat.category_id, cat.category_name)
+                              }
+                              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-red-500 hover:bg-red-600 transition cursor-pointer"
+                            >
+                              Delete
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+            </tbody>
+          </table>
+        </div>
 
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={totalItems}
-          pageSize={pageSize}
-          onPageChange={setCurrentPage}
-        />
+        <div className="overflow-x-auto">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+          />
+        </div>
       </div>
 
+      {/* Modals & Dialogs */}
       <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} maxWidth="max-w-lg">
         <AddCategory
           existingCategoryNames={categories.map((c) => c.category_name)}
@@ -315,7 +462,7 @@ const ViewCategory = () => {
         onConfirm={handleConfirm}
         onCancel={() => setConfirmState(null)}
       />
-    </section>
+    </div>
   );
 };
 

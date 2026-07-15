@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import api from "../../../../api/axios";
-import { Eye, EyeOff, UserPlus, X } from "lucide-react";
+import { Eye, EyeOff, UserPlus, X, Loader2 } from "lucide-react";
 import nrcData from "../../../../data/nrc.json";
 import toast from 'react-hot-toast';
 import useScrollLock from "../../../../hooks/useScrollLock";
@@ -24,7 +24,10 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
     const [nrcTownship, setNrcTownship] = useState("");
     const [nrcType, setNrcType] = useState("(N)");
     const [nrcNumber, setNrcNumber] = useState("");
-    const [errors, setErrors] = useState({});
+
+    const [error, setError] = useState("");
+    const [fieldErrors, setFieldErrors] = useState({});
+    const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
         if (!isOpen) {
@@ -37,9 +40,10 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
             setNrcState("");
             setNrcTownship("");
             setNrcNumber("");
-
-            setErrors({});
+            setError("");
+            setFieldErrors({});
             setShowPassword(false);
+            setSubmitting(false);
         }
     }, [isOpen]);
 
@@ -59,12 +63,20 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
 
     if (!isOpen) return null;
 
+    const clearFieldError = (field) => {
+        setFieldErrors((prev) => (prev[field] ? { ...prev, [field]: "" } : prev));
+    };
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         let updatedValue = value;
 
         if (name === "phone_number") {
             updatedValue = value.replace(/\D/g, '');
+        }
+
+        if (name === "username") {
+            updatedValue = value.slice(0, 20);
         }
 
         if (name === "date_of_birth") {
@@ -76,71 +88,65 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
         }
 
         setFormData({ ...formData, [name]: updatedValue });
-
-        // As you type, the error message for that field will be immediately cleared
-        if (errors[name]) {
-            setErrors(prev => {
-                const newErrors = { ...prev };
-                delete newErrors[name];
-                return newErrors;
-            });
-        }
+        clearFieldError(name);
+        if (error) setError("");
     }
 
     const handleNrcChange = (setter, value) => {
         setter(value);
-        if (errors.nrc) {
-            setErrors(prev => {
-                const newErrors = { ...prev };
-                delete newErrors.nrc;
-                return newErrors;
-            });
-        }
+        clearFieldError("nrc");
+        if (error) setError("");
     }
 
-    const validateForm = () => {
-        let tempErrors = {};
+    // Full validation logic (ported from original implementation)
+    const validate = () => {
+        const errs = {};
 
         if (!formData.username.trim()) {
-            tempErrors.username = "Full name is required.";
+            errs.username = "Full name is required.";
         }
+
         if (!formData.password.trim()) {
-            tempErrors.password = "Password is required.";
+            errs.password = "Password is required.";
         } else if (formData.password.length < 8) {
-            tempErrors.password = "Password must be at least 8 characters long.";
+            errs.password = "Password must be at least 8 characters long.";
         }
+
         if (!formData.email.trim()) {
-            tempErrors.email = "Email address is required.";
+            errs.email = "Email address is required.";
         } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-            tempErrors.email = "Please enter a valid email address.";
+            errs.email = "Please enter a valid email address.";
         }
+
         if (!formData.phone_number.trim()) {
-            tempErrors.phone_number = "Phone number is required.";
+            errs.phone_number = "Phone number is required.";
         }
+
         if (!formData.date_of_birth) {
-            tempErrors.date_of_birth = "Date of birth is required.";
+            errs.date_of_birth = "Date of birth is required.";
         }
+
         if (!formData.address.trim()) {
-            tempErrors.address = "Address is required.";
+            errs.address = "Address is required.";
         }
 
         // NRC Block Validation
         if (!nrcState || !nrcTownship || !nrcType || !nrcNumber) {
-            tempErrors.nrc = "NRC profile field must be completed.";
+            errs.nrc = "NRC profile field must be completed.";
         } else if (nrcNumber.length !== 6) {
-            tempErrors.nrc = "NRC Number must be exactly 6 digits.";
+            errs.nrc = "NRC Number must be exactly 6 digits.";
         }
 
-        return tempErrors;
+        return errs;
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        const formErrors = validateForm();
-        if (Object.keys(formErrors).length > 0) {
-            setErrors(formErrors);
-
+        const errs = validate();
+        setFieldErrors(errs);
+        if (Object.keys(errs).length > 0) {
+            setError("Please fix the highlighted fields.");
             const formBody = document.getElementById("staff-form-body");
             if (formBody) formBody.scrollTop = 0;
             return;
@@ -155,6 +161,8 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
             join_date: today
         };
 
+        setSubmitting(true);
+        setError("");
         try {
             const response = await api.post('/staff', finalPayload);
             if (response.data.status === 'success') {
@@ -165,156 +173,183 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
                     phone_number: '', nrc: '', date_of_birth: '', address: '',
                     gender: 'Male', email: '', join_date: ''
                 });
+
+               
                 setNrcState("");
                 setNrcTownship("");
                 setNrcNumber("");
                 setShowPassword(false);
-                setErrors({});
+                setFieldErrors({});
                 onSuccess();
                 onClose();
             }
-        } catch (error) {
-            console.error(error);
+        } catch (err) {
+            console.error(err);
+            setError(
+                err.response?.data?.message ||
+                "There was an error while entering the data. Please check the data again."
+            );
             toast.error('There was an error while entering the data. Please check the data again.');
-            // alert('There was an error while entering the data. Please check the data again.');
+        } finally {
+            setSubmitting(false);
         }
     }
 
+    const handleCancel = () => {
+        if (submitting) return;
+        onClose?.();
+    };
+
+    const inputClass = (field) =>
+        `w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:outline-none text-slate-800 ${fieldErrors[field]
+            ? "border-rose-400 focus:ring-rose-400"
+            : "border-slate-300 focus:ring-emerald-500"
+        }`;
+
     return (
         <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-md flex justify-center items-center z-50 p-4">
-            <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden border border-gray-100 flex flex-col max-h-[90vh]">
+            <div className="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-lg w-full flex flex-col max-h-[90vh]">
                 {/* Header */}
-                <div className="bg-white border-b border-gray-100 px-6 py-4 flex justify-between items-center">
-                    <div className="flex items-center gap-2 text-gray-800">
-                        <UserPlus className="w-5 h-5 text-emerald-600" strokeWidth={2.5} />
-                        <h3 className="text-lg font-bold text-gray-800">Add New Staff Profile</h3>
+                <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-emerald-700 rounded-t-2xl">
+                    <div className="flex items-center gap-3">
+                        <UserPlus className="text-white" size={28} />
+                        <h3 className="font-bold text-white text-lg">Add New Staff Profile</h3>
                     </div>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition">
-                        <X className="w-5 h-5" strokeWidth={2.5} />
+                    <button
+                        type="button"
+                        onClick={handleCancel}
+                        className="text-white/80 hover:text-white transition-colors"
+                    >
+                        <X className="w-5 h-5" />
                     </button>
                 </div>
 
                 {/* Form Body */}
-                <form onSubmit={handleSubmit} noValidate className="p-6 space-y-4 text-sm overflow-y-auto flex-1">
-                    {Object.keys(errors).length > 0 && (
-                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-xs font-semibold tracking-wide animate-fade-in">
-                            Please fix the highlighted fields.
+                <form id="staff-form-body" onSubmit={handleSubmit} noValidate className="p-5 space-y-4 overflow-y-auto flex-1">
+                    {error && (
+                        <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-sm font-medium">
+                            {error}
                         </div>
                     )}
 
                     {/* Row 1: Name & Password */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Full Name</label>
+                            <div className="flex justify-between items-center mb-1">
+                                <label className="block text-sm font-semibold text-slate-600">Full Name</label>
+                                <span className="text-xs text-slate-400">{formData.username.length}/20</span>
+                            </div>
                             <input
                                 type="text"
                                 name="username"
-                                maxLength="20"
+                                maxLength={20}
                                 value={formData.username}
                                 onChange={handleChange}
-                                className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-1 transition text-gray-800 ${errors.username
-                                    ? "border-red-400 focus:border-red-500 focus:ring-red-500 bg-red-50/10"
-                                    : "border-gray-300 focus:border-emerald-600 focus:ring-emerald-600"
-                                    }`}
+                                className={inputClass("username")}
                             />
-                            {errors.username && <p className="text-[11px] text-red-500 mt-1 font-semibold">{errors.username}</p>}
+                            {fieldErrors.username && <p className="text-xs text-rose-600 mt-1">{fieldErrors.username}</p>}
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Password</label>
+                            <div className="flex justify-between items-center mb-1">
+                                <label className="block text-sm font-semibold text-slate-600">Password</label>
+                                <span className="text-xs text-slate-400">{formData.password.length} (min 8)</span>
+                            </div>
                             <div className="relative">
                                 <input
                                     type={showPassword ? "text" : "password"}
                                     name="password"
-                                    minLength="8"
+                                    minLength={8}
                                     value={formData.password}
                                     onChange={handleChange}
-                                    className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-1 transition text-gray-800 ${errors.password
-                                        ? "border-red-400 focus:border-red-500 focus:ring-red-500 bg-red-50/10"
-                                        : "border-gray-300 focus:border-emerald-600 focus:ring-emerald-600"
-                                        }`}
+                                    autoComplete="new-password"
+                                    className={inputClass("password")}
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
                                 >
                                     {showPassword ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                                 </button>
                             </div>
-                            {errors.password && <p className="text-[11px] text-red-500 mt-1 font-semibold">{errors.password}</p>}
+                            {fieldErrors.password && <p className="text-xs text-rose-600 mt-1">{fieldErrors.password}</p>}
                         </div>
                     </div>
 
                     {/* Row 2: Email & Phone */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Email Address</label>
+                            <label className="block text-sm font-semibold text-slate-600 mb-1">Email Address</label>
                             <input
                                 type="email"
                                 name="email"
                                 value={formData.email}
                                 onChange={handleChange}
-                                className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-1 transition text-gray-800 ${errors.email
-                                    ? "border-red-400 focus:border-red-500 focus:ring-red-500 bg-red-50/10"
-                                    : "border-gray-300 focus:border-emerald-600 focus:ring-emerald-600"
-                                    }`}
+                                className={inputClass("email")}
                             />
-                            {errors.email && <p className="text-[11px] text-red-500 mt-1 font-semibold">{errors.email}</p>}
+                            {fieldErrors.email && <p className="text-xs text-rose-600 mt-1">{fieldErrors.email}</p>}
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Phone Number</label>
+                            <label className="block text-sm font-semibold text-slate-600 mb-1">Phone Number</label>
                             <input
                                 type="text"
                                 name="phone_number"
                                 value={formData.phone_number}
                                 onChange={handleChange}
-                                className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-1 transition text-gray-800 ${errors.phone_number
-                                    ? "border-red-400 focus:border-red-500 focus:ring-red-500 bg-red-50/10"
-                                    : "border-gray-300 focus:border-emerald-600 focus:ring-emerald-600"
-                                    }`}
+                                className={inputClass("phone_number")}
                             />
-                            {errors.phone_number && <p className="text-[11px] text-red-500 mt-1 font-semibold">{errors.phone_number}</p>}
+                            {fieldErrors.phone_number && <p className="text-xs text-rose-600 mt-1">{fieldErrors.phone_number}</p>}
                         </div>
                     </div>
 
                     {/* Row 3: Gender & Date of Birth */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Gender</label>
-                            <select name="gender" onChange={handleChange} className="w-full border border-gray-300 px-3 py-2 bg-white rounded-lg focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition text-gray-800">
+                            <label className="block text-sm font-semibold text-slate-600 mb-1">Gender</label>
+                            <select
+                                name="gender"
+                                value={formData.gender}
+                                onChange={handleChange}
+                                className="w-full p-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white text-slate-800"
+                            >
                                 <option value="Male">Male</option>
                                 <option value="Female">Female</option>
                             </select>
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Date of Birth</label>
+                            <label className="block text-sm font-semibold text-slate-600 mb-1">Date of Birth</label>
                             <input
                                 type="date"
                                 name="date_of_birth"
                                 max={new Date().toISOString().split('T')[0]}
                                 value={formData.date_of_birth}
                                 onChange={handleChange}
-                                className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-1 transition text-gray-800 ${errors.date_of_birth
-                                    ? "border-red-400 focus:border-red-500 focus:ring-red-500 bg-red-50/10"
-                                    : "border-gray-300 focus:border-emerald-600 focus:ring-emerald-600"
-                                    }`}
+                                className={inputClass("date_of_birth")}
                             />
-                            {errors.date_of_birth && <p className="text-[11px] text-red-500 mt-1 font-semibold">{errors.date_of_birth}</p>}
+                            {fieldErrors.date_of_birth && <p className="text-xs text-rose-600 mt-1">{fieldErrors.date_of_birth}</p>}
                         </div>
                     </div>
 
                     {/* Row 4: System Role */}
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">System Role</label>
-                        <select name="role" value={formData.role} onChange={handleChange} className="w-full border border-gray-300 px-3 py-2 bg-white rounded-lg focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition text-gray-800">
+                        <label className="block text-sm font-semibold text-slate-600 mb-1">System Role</label>
+                        <select
+                            name="role"
+                            value={formData.role}
+                            onChange={handleChange}
+                            className="w-full p-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white text-slate-800"
+                        >
                             <option value="staff">Cashier</option>
                             <option value="admin">Admin</option>
                         </select>
                     </div>
 
-                    {/* Row 5: Passport Style NRC Input Block (Full Width) */}
+                    {/* Row 5: NRC Input Block (Full Width) */}
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">NRC Number</label>
+                        <div className="flex justify-between items-center mb-1.5">
+                            <label className="block text-sm font-semibold text-slate-600">NRC Number</label>
+                            <span className="text-xs text-slate-400">{nrcNumber.length}/6</span>
+                        </div>
                         <div className="flex items-center gap-1.5">
                             {/* NRC State Number Dropdown */}
                             <select
@@ -323,9 +358,9 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
                                     handleNrcChange(setNrcState, e.target.value);
                                     setNrcTownship("");
                                 }}
-                                className={`w-20 border px-2 py-2 bg-white rounded-lg focus:outline-none focus:ring-1 transition text-gray-800 text-center ${errors.nrc
-                                    ? "border-red-400 focus:border-red-500 focus:ring-red-500 bg-red-50/10"
-                                    : "border-gray-300 focus:border-emerald-600 focus:ring-emerald-600"
+                                className={`w-20 border px-2 py-2.5 bg-white rounded-lg text-sm focus:ring-2 focus:outline-none text-slate-800 text-center ${fieldErrors.nrc
+                                    ? "border-rose-400 focus:ring-rose-400"
+                                    : "border-slate-300 focus:ring-emerald-500"
                                     }`}
                             >
                                 <option value=""></option>
@@ -334,16 +369,16 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
                                 ))}
                             </select>
 
-                            <span className="font-bold text-gray-400 text-base">/</span>
+                            <span className="font-bold text-slate-400 text-base">/</span>
 
                             {/* NRC Township Dropdown */}
                             <select
                                 value={nrcTownship}
                                 onChange={(e) => handleNrcChange(setNrcTownship, e.target.value)}
                                 disabled={!nrcState}
-                                className={`flex-1 min-w-22.5 border px-2 py-2 bg-white rounded-lg focus:outline-none focus:ring-1 transition text-gray-800 disabled:bg-gray-50 disabled:text-gray-400 ${errors.nrc
-                                    ? "border-red-400 focus:border-red-500 focus:ring-red-500 bg-red-50/10"
-                                    : "border-gray-300 focus:border-emerald-600 focus:ring-emerald-600"
+                                className={`flex-1 min-w-22.5 border px-2 py-2.5 bg-white rounded-lg text-sm focus:ring-2 focus:outline-none text-slate-800 disabled:bg-slate-50 disabled:text-slate-400 ${fieldErrors.nrc
+                                    ? "border-rose-400 focus:ring-rose-400"
+                                    : "border-slate-300 focus:ring-emerald-500"
                                     }`}
                             >
                                 <option value=""></option>
@@ -358,9 +393,9 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
                             <select
                                 value={nrcType}
                                 onChange={(e) => handleNrcChange(setNrcType, e.target.value)}
-                                className={`w-24 border px-1 py-2 bg-white rounded-lg focus:outline-none focus:ring-1 transition text-gray-800 text-center ${errors.nrc
-                                    ? "border-red-400 focus:border-red-500 focus:ring-red-500 bg-red-50/10"
-                                    : "border-gray-300 focus:border-emerald-600 focus:ring-emerald-600"
+                                className={`w-24 border px-1 py-2.5 bg-white rounded-lg text-sm focus:ring-2 focus:outline-none text-slate-800 text-center ${fieldErrors.nrc
+                                    ? "border-rose-400 focus:ring-rose-400"
+                                    : "border-slate-300 focus:ring-emerald-500"
                                     }`}
                             >
                                 <option value="N">(N) နိုင်</option>
@@ -372,38 +407,49 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
                             <input
                                 type="text"
                                 value={nrcNumber}
-                                onChange={(e) => handleNrcChange(setNrcNumber, e.target.value.replace(/\D/g, ''))}
-                                maxLength="6"
+                                onChange={(e) => handleNrcChange(setNrcNumber, e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                maxLength={6}
                                 placeholder="123456"
-                                className={`w-28 border px-3 py-2 rounded-lg focus:outline-none focus:ring-1 transition text-gray-800 tracking-wider text-center ${errors.nrc
-                                    ? "border-red-400 focus:border-red-500 focus:ring-red-500 bg-red-50/10"
-                                    : "border-gray-300 focus:border-emerald-600 focus:ring-emerald-600"
+                                className={`w-28 border px-3 py-2.5 rounded-lg text-sm focus:ring-2 focus:outline-none text-slate-800 tracking-wider text-center ${fieldErrors.nrc
+                                    ? "border-rose-400 focus:ring-rose-400"
+                                    : "border-slate-300 focus:ring-emerald-500"
                                     }`}
                             />
                         </div>
-                        {errors.nrc && <p className="text-[11px] text-red-500 mt-1 font-semibold">{errors.nrc}</p>}
+                        {fieldErrors.nrc && <p className="text-xs text-rose-600 mt-1">{fieldErrors.nrc}</p>}
                     </div>
 
                     {/* Row 6: Address */}
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Address</label>
+                        <label className="block text-sm font-semibold text-slate-600 mb-1">Address</label>
                         <textarea
                             name="address"
                             value={formData.address}
                             onChange={handleChange}
                             rows="2"
-                            className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-1 transition text-gray-800 resize-none ${errors.address
-                                ? "border-red-400 focus:border-red-500 focus:ring-red-500 bg-red-50/10"
-                                : "border-gray-300 focus:border-emerald-600 focus:ring-emerald-600"
-                                }`}
+                            className={`${inputClass("address")} resize-none`}
                         ></textarea>
-                        {errors.address && <p className="text-[11px] text-red-500 mt-1 font-semibold">{errors.address}</p>}
+                        {fieldErrors.address && <p className="text-xs text-rose-600 mt-1">{fieldErrors.address}</p>}
                     </div>
 
                     {/* Footer Actions */}
-                    <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-4">
-                        <button type="button" onClick={onClose} className="px-5 py-2 bg-gray-100 text-gray-600 rounded-lg font-semibold hover:bg-gray-200 transition">Cancel</button>
-                        <button type="submit" className="px-5 py-2 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition">Save</button>
+                    <div className="flex justify-end space-x-3 pt-1">
+                        <button
+                            type="button"
+                            onClick={handleCancel}
+                            disabled={submitting}
+                            className="px-4 py-2 text-sm font-semibold text-slate-500 hover:text-slate-700 bg-slate-100 rounded-lg disabled:opacity-50"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={submitting}
+                            className="px-4 py-2 text-sm font-semibold text-white bg-emerald-700 hover:bg-emerald-600 rounded-lg shadow-sm flex items-center gap-1.5 disabled:opacity-60"
+                        >
+                            {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                            {submitting ? "Saving..." : "Save"}
+                        </button>
                     </div>
                 </form>
             </div>
