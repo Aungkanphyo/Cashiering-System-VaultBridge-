@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { Search } from "lucide-react";
 import api from '../../api/axios';
 import Voucher from './Voucher'; // voucher import for right column
 import { io } from 'socket.io-client';
@@ -36,11 +37,7 @@ const SaleWorkspace = () => {
     // Current Cart Setup
     const [cartItems, setCartItems] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
-
-    const [paymentMethod, setPaymentMethod] = useState('Cash');
-    const [payAmount, setPayAmount] = useState('');
     const [recentProductId, setRecentProductId] = useState(null);
-
     const [voucherId, setVoucherId] = useState();
 
     // To save Payment Methods from the Database
@@ -88,10 +85,6 @@ const SaleWorkspace = () => {
         try {
             const response = await api.get('/payment-methods');
             setDbPaymentMethods(response.data || []);
-
-            if (response.data && response.data.length > 0) {
-                setPaymentMethod(response.data[0].payment_name);
-            }
         } catch (err) {
             console.error("Error fetching payment methods:", err);
         }
@@ -122,7 +115,8 @@ const SaleWorkspace = () => {
                         name: product.name || product.product_name,
                         price: parseFloat(product.price || product.selling_price || 0),
                         discountPercent: parseFloat(product.discount_percent || product.discount_rate || 0),
-                        status: product.status ? product.status.toLowerCase() : 'active'
+                        status: product.status ? product.status.toLowerCase() : 'active',
+                        stock_quantity: product.stock_quantity !== undefined ? parseInt(product.stock_quantity, 10) : 0
                     };
                 });
 
@@ -160,6 +154,13 @@ const SaleWorkspace = () => {
                 setRecentProductId(matchedProduct.id);
                 setCartItems((prev) => {
                     const exist = prev.find((item) => item.id === matchedProduct.id);
+                    const currentQty = exist ? exist.quantity : 0;
+
+                    if (currentQty + 1 > matchedProduct.stock_quantity) {
+                        toast.error(`"${product.name}" exceeds the available stock ${product.stock_quantity} `);
+                        return prev;
+                    }
+
                     if (exist) {
                         return prev.map((item) => item.id === matchedProduct.id ? { ...item, quantity: item.quantity + 1 } : item);
                     }
@@ -187,15 +188,7 @@ const SaleWorkspace = () => {
         );
     });
 
-    // --- Calculation Logics ---
-    const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const totalDiscount = cartItems.reduce((sum, item) => sum + ((item.price * item.discountPercent / 100) * item.quantity), 0);
-    const finalTotal = subtotal - totalDiscount;
-
-    const isCashSelected = paymentMethod.toLowerCase() === 'cash';
-    const currentPayAmount = isCashSelected ? (parseFloat(payAmount) || 0) : finalTotal;
-    const changeDue = currentPayAmount > finalTotal ? currentPayAmount - finalTotal : 0;
-
+    // Cart Qty Event Handlers
     const handleUpdateQty = (id, delta) => {
         setRecentProductId(id);
         setCartItems(prev => prev.map(item => {
@@ -225,9 +218,26 @@ const SaleWorkspace = () => {
         }
     };
 
+    // Quick Click Item 
     const handleAddProduct = (product) => {
         if (product.status === 'inactive') {
             showNotification(`"${product.name}" is inactive`, "error");
+            return;
+        }
+
+        const existItem = cartItems.find(item => item.id === product.id);
+        const currentQty = existItem ? existItem.quantity : 0;
+
+        if (currentQty + 1 > product.stock_quantity) {
+            toast.error(`"${product.name}" exceeds the available stock ${product.stock_quantity} `);
+            return;
+        }
+
+        const existItem = cartItems.find(item => item.id === product.id);
+        const currentQty = existItem ? existItem.quantity : 0;
+
+        if (currentQty + 1 > product.stock_quantity) {
+            toast.error(`"${product.name}" exceeds the available stock ${product.stock_quantity} `);
             return;
         }
 
@@ -244,7 +254,6 @@ const SaleWorkspace = () => {
 
     const handleClearCart = () => {
         setCartItems([]);
-        setPayAmount('');
         setRecentProductId(null);
     };
 
@@ -315,23 +324,23 @@ const SaleWorkspace = () => {
                     {/* LEFT COLUMN: CATALOG & SEARCH BAR */}
                     <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm flex flex-col">
                         <div className="relative w-full mb-6">
-                            <span className="absolute left-4 top-3.5 text-slate-400 text-base">🔍</span>
+                            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                             <input
                                 type="text"
                                 disabled={loading || !!error}
                                 placeholder={error ? "Cannot search due to server error..." : "Search product name or barcode..."}
-                                className="w-full pl-11 pr-4 py-3 text-sm font-medium border border-slate-200 rounded-xl bg-slate-50/50 focus:outline-none focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 transition-all text-slate-700 shadow-inner disabled:opacity-60"
+                                className="w-full pl-9 pr-3 py-2 text-sm font-medium border border-slate-200 rounded-lg bg-slate-50 focus:outline-none focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500 transition-all text-slate-700 shadow-inner disabled:opacity-60"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
                         </div>
 
                         <div className="mb-4 flex items-center justify-between">
-                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                            <h3 className="text-sm font-bold text-emerald-600 uppercase ">
                                 {searchQuery.trim() ? "SEARCH RESULTS" : "QUICK CLICK ITEMS"}
                             </h3>
                             {!loading && !error && (
-                                <span className="text-[11px] font-semibold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
+                                <span className="text-xs font-semibold bg-green-200 text-slate-700 px-2 py-0.5 rounded-full">
                                     {filteredProducts.length} Items
                                 </span>
                             )}
@@ -369,13 +378,13 @@ const SaleWorkspace = () => {
                                                         </div>
 
                                                         <div className="w-full mt-auto pt-2 flex flex-col gap-1.5">
-                                                            <div className="h-5 flex items-center">
+                                                            <div className="h-5 flex items-center gap-1">
                                                                 {isInactive ? (
                                                                     <span className="text-[10px] font-extrabold bg-red-50 text-red-600 px-1.5 py-0.5 rounded border border-red-200 uppercase tracking-wider">
                                                                         Inactive
                                                                     </span>
                                                                 ) : p.discountPercent > 0 ? (
-                                                                    <span className="text-[10px] font-extrabold bg-rose-50 text-rose-600 px-1.5 py-0.5 rounded border border-rose-100 uppercase tracking-wider animate-pulse">
+                                                                    <span className="text-[10px] font-extrabold bg-red-100 text-red-500 px-1.5 py-0.5 rounded border border-rose-100 uppercase tracking-wider animate-pulse">
                                                                         {p.discountPercent}%
                                                                     </span>
                                                                 ) : (
@@ -407,25 +416,18 @@ const SaleWorkspace = () => {
                         </div>
                     </div>
 
-                    {/* RIGHT COLUMN */}
+                    {/* RIGHT COLUMN: VOUCHER COMPONENT (Refactored) */}
                     <Voucher
                         voucherId={voucherId}
                         cartItems={cartItems}
                         recentProductId={recentProductId}
-                        subtotal={subtotal}
-                        totalDiscount={totalDiscount}
-                        finalTotal={finalTotal}
-                        paymentMethod={paymentMethod}
-                        payAmount={payAmount}
-                        changeDue={changeDue}
-                        setPaymentMethod={setPaymentMethod}
-                        setPayAmount={setPayAmount}
                         handleUpdateQty={handleUpdateQty}
                         handleDirectQtyChange={handleDirectQtyChange}
                         handleDeleteItem={handleDeleteItem}
                         handleClearCart={handleClearCart}
-                        handleProcessSale={handleProcessSale}
                         dbPaymentMethods={dbPaymentMethods}
+                        fetchNextVoucherId={fetchNextVoucherId}
+                        setAvailableProducts={setAvailableProducts}
                     />
 
                 </div>
