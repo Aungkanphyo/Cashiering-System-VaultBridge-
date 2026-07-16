@@ -37,7 +37,8 @@ const AdminSidebar = () => {
                 <div className="border-b border-white/10 mb-4" />
 
                 {/* Navigation Items */}
-                <nav className="space-y-1.5 overflow-y-auto max-h-[calc(100vh-180px)] pr-1">
+                {/* Navigation Items */}
+<nav className="space-y-1.5 overflow-y-auto max-h-[calc(100vh-180px)] pr-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                     {/* Dashboard Section*/}
                     <NavLink to="/admin/dashboard" className={({ isActive }) => isActive ? activeClass : inactiveClass}>
                         <LayoutDashboard className="w-4 h-4 mr-4" /> Dashboard

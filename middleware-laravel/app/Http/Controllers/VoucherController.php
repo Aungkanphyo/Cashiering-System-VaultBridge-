@@ -33,11 +33,27 @@ class VoucherController extends Controller
             }
 
             // Get only vouchers from current session
-            $vouchers = Voucher::with(['salePayment', 'details'])
-                ->where('session_id', $session->session_id)
-                ->latest('voucher_id')
-                ->paginate($perPage);
+            $query = Voucher::with(['salePayment', 'details'])
+                ->where('session_id', $session->session_id);
 
+            // Filter by status (completed / voided)
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
+
+            // Filter by payment method — lives on the related salePayment record
+            if ($request->filled('payment')) {
+                $query->whereHas('salePayment', function ($q) use ($request) {
+                    $q->where('payment_name', $request->payment);
+                });
+            }
+
+            // Search by voucher ID (partial match)
+            if ($request->filled('voucher_id')) {
+                $query->where('voucher_id', 'like', '%' . $request->voucher_id . '%');
+            }
+
+            $vouchers = $query->latest('voucher_id')->paginate($perPage);
 
             $data = $vouchers->through(function ($voucher) {
                 $subTotal = $voucher->details->sum('sub_total');
@@ -63,6 +79,24 @@ class VoucherController extends Controller
                 'line' => $e->getLine(),
             ], 500);
         }
+    }
+
+    /**
+     * List distinct payment methods (cash, kpay, aya, ...) for the filter dropdown
+     */
+    public function paymentMethods()
+    {
+        // Ask the Voucher model's own salePayment() relation what the related
+        // model actually is, so we don't have to guess/hardcode its class name.
+        $methods = (new Voucher())->salePayment()->getRelated()
+            ->newQuery()
+            ->select('payment_name')
+            ->whereNotNull('payment_name')
+            ->distinct()
+            ->orderBy('payment_name')
+            ->pluck('payment_name');
+
+        return response()->json($methods);
     }
 
     /**

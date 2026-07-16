@@ -1,5 +1,6 @@
 import { CalendarDays, Banknote, Wallet, QrCode, ChartColumn, TriangleAlert, RotateCcw, } from "lucide-react";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast"
 import api from "../../api/axios";
 
 export default function Dashboard() {
@@ -12,6 +13,7 @@ export default function Dashboard() {
 
     const [from, setFrom] = useState("");
     const [to, setTo] = useState("");
+    const today = new Date().toISOString().split("T")[0];
     const stats = [
         {
             title: "TODAY TOTAL SALES",
@@ -64,23 +66,56 @@ export default function Dashboard() {
                 </div>
 
                 {/* Filter Section */}
-                <div className="flex flex-wrap items-center gap-4">
+                <div className="flex flex-wrap items-center gap-3">
+                    {/* FROM Date */}
                     <div className="flex items-center gap-2">
-                        <label className="text-sm font-semibold">FROM:</label>
-                        <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="border rounded-lg px-3 py-2 cursor-text focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15" />
+                        <label className="text-sm font-semibold">FROM</label>
+                        <input type="date" value={from} max={today}
+                            onChange={(e) => {
+                                const value = e.target.value;
+
+                                if (new Date(value) > new Date(today)) {
+                                    toast.error("From date cannot be greater than today.");
+                                    return;
+                                }
+                                
+                                if (to && new Date(to) < new Date(value)) {
+                                    toast.error("From date cannot be greater than to date. Please select again!");
+                                    return;
+                                }
+
+                                setFrom(value);
+                            }}
+                            className="border rounded-lg px-3 py-2 cursor-text focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15"
+                        />
+                    </div>
+                    
+                    {/* TO Date */}
+                    <div className="flex items-center gap-2">
+                        <label className="text-sm font-semibold">TO</label>
+                        <input type="date" value={to} min={from || undefined}  max={today}
+                            onChange={(e) => {
+                                const value = e.target.value;
+
+                                if (from && new Date(value) < new Date(from)) {
+                                    toast.error("To date cannot be earlier than From date.");
+                                    return;
+                                }
+
+                                if (new Date(value) > new Date(today)) {
+                                    toast.error("To date cannot be greater than today.");
+                                    return;
+                                }
+
+                                setTo(value);
+                            }}
+                            className="border rounded-lg px-3 py-2 cursor-text focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15"
+                        />
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        <label className="text-sm font-semibold">TO:</label>
-                        <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="border rounded-lg px-3 py-2 cursor-text focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15" />
-                    </div>
-
-                    <button
-                        onClick={() => { setFrom(""); setTo(""); }}
-                        className="flex items-center gap-2 rounded-lg bg-red-600 text-white px-4 py-2"
-                    >
+                    <button onClick={() => { setFrom(""); setTo(""); }} className="flex items-center gap-2 rounded-lg bg-red-600 text-white px-4 py-2">
                         <RotateCcw size={18} />
-                        Reset Filter
+                        Reset 
                     </button>
                 </div>
             </div>

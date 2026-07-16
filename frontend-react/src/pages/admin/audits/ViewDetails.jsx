@@ -1,152 +1,166 @@
-import { X } from "lucide-react";
+import React from "react";
+import { X, FileText, AlertOctagon } from "lucide-react";
 
-const ViewDetails = ({ isOpen, onClose, transaction }) => {
-	if (!isOpen || !transaction) return null;
+const ViewDetails = ({ transaction, onClose }) => {
+  if (!transaction) return null;
 
-	const items = transaction.items || [];
+  const items = transaction.items || [];
+  const isVoided = transaction.status?.toUpperCase() === "VOIDED";
+  const voidReason = transaction.void_reason || transaction.voidReason;
 
-	return (
-		<div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
-			<div className="bg-white w-full max-w-lg rounded-2xl shadow-xl overflow-hidden border border-gray-100 flex flex-col transform transition-all animate-scale-in">
+  return (
+    <div className="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-md w-full flex flex-col max-h-[90vh]">
+      {/* Header - Adapts dynamically based on status matching your design */}
+      <div className={`p-6 border-b border-slate-100 flex items-center justify-between rounded-t-2xl shrink-0 ${isVoided ? "bg-rose-700" : "bg-emerald-700"}`}>
+        <div className="flex items-center gap-3 min-w-0">
+          {isVoided ? (
+            <AlertOctagon className="text-white shrink-0" size={28} />
+          ) : (
+            <FileText className="text-white shrink-0" size={28} />
+          )}
+          <div className="min-w-0">
+            <h3 className="font-bold text-white text-lg leading-tight truncate">
+              Voucher Detail
+            </h3>
+            <p className="text-xs text-white/70 font-medium mt-0.5 font-mono truncate">
+              {transaction.id} | {transaction.dateTime}
+            </p>
+          </div>
+        </div>
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-white/80 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10"
+            aria-label="Close modal"
+          >
+            <X className="w-5 h-5 cursor-pointer" />
+          </button>
+        )}
+      </div>
 
-				{/* Header */}
-				<div className="p-5 border-b border-gray-100 flex items-center justify-between">
-					<div>
-						<h3 className="text-lg font-bold text-gray-900">Voucher Detail</h3>
-						<p className="text-xs text-gray-400 font-medium mt-0.5 font-mono">
-							Voucher No: #{transaction.id} | Date: {transaction.dateTime} | Status:{" "}
-							<span className={transaction.status === "VOIDED" ? "text-red-500 font-bold" : "text-emerald-600 font-bold"}>
-								{transaction.status}
-							</span>
-						</p>
-					</div>
-					<button
-						onClick={onClose}
-						className="p-1.5 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
-					>
-						<X className="w-5 h-5" />
-					</button>
-				</div>
+      {/* Body Details */}
+      <div className="p-5 space-y-4 text-sm text-slate-800 overflow-y-auto">
+        
+        {/* Status Indicator */}
+        <div>
+          <span className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Transaction Status</span>
+          <span className={`text-xs font-semibold px-2 py-0.5 rounded w-max mt-0.5 block ${isVoided ? "text-rose-700 bg-rose-50" : "text-emerald-700 bg-emerald-50"}`}>
+            {transaction.status || "-"}
+          </span>
+        </div>
 
-				{/* Content Body */}
-				<div className="p-5 space-y-5 overflow-y-auto max-h-[calc(100vh-200px)] scrollbar-thin">
+        {/* Purchase Line Items Table */}
+        <div>
+          <span className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Purchase Line Items</span>
+          <div className="border border-slate-200 rounded-xl overflow-hidden mt-1">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
+                  <th className="py-2.5 px-3">Product Name</th>
+                  <th className="py-2.5 px-2 text-center">Qty</th>
+                  <th className="py-2.5 px-3 text-right">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
+                {items.length > 0 ? (
+                  items.map((item, index) => (
+                    <tr key={`item-${index}`} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="py-2.5 px-3 font-semibold text-slate-800 break-words max-w-[160px]">
+                        {item.name}
+                        {item.discount > 0 && (
+                          <span className="block text-[10px] text-rose-500 font-normal font-mono">
+                            Disc: {item.discount}% (Unit: {(item.unitPrice || 0).toLocaleString()})
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-2.5 px-2 text-center font-mono text-slate-500">{item.qty}</td>
+                      <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-800">
+                        {(item.subTotal || 0).toLocaleString()}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={3} className="text-center py-6 text-slate-400">
+                      No items found in this voucher.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
 
-					{/* Purchase Line Items Table */}
-					<div className="space-y-2">
-						<h4 className="text-xs uppercase tracking-wider font-bold text-gray-400 select-none">
-							Purchase Line Items (SALES_DETAILS)
-						</h4>
-						<div className="border border-gray-100 rounded-xl overflow-hidden">
-							<table className="w-full text-left text-xs border-collapse">
-								<thead>
-									<tr className="bg-gray-50/75 text-gray-500 font-bold border-b border-gray-100 select-none">
-										<th className="py-3 px-4">Product Name</th>
-										<th className="py-3 px-2 text-center">Qty</th>
-										<th className="py-3 px-2 text-right">Unit Price</th>
-										<th className="py-3 px-2 text-center">Discount (%)</th>
-										<th className="py-3 px-4 text-right">Subtotal</th>
-									</tr>
-								</thead>
-								<tbody className="divide-y divide-gray-50 text-gray-700 font-medium">
-									{items.length > 0 ? (
-										items.map((item, index) => (
-											<tr key={index} className="hover:bg-gray-50/50 transition-colors">
-												<td className="py-3 px-4 font-semibold text-gray-900">{item.name}</td>
-												<td className="py-3 px-2 text-center font-mono text-gray-500">{item.qty}</td>
-												<td className="py-3 px-2 text-right font-mono">{(item.unitPrice || 0).toLocaleString()}</td>
-												<td className="py-3 px-2 text-center font-mono text-red-500">
-													{item.discount || 0}%
-													 {/* (-{(((item.unitPrice || 0) * (item.discount || 0)) / 100).toLocaleString()}) */}
-												</td>
-												<td className="py-3 px-4 text-right font-mono font-bold text-gray-900">{(item.subTotal || 0).toLocaleString()}</td>
-											</tr>
-										))
-									) : (
-										<tr>
-											<td colSpan="6" className="text-center py-6 text-gray-400">No items found in this voucher.</td>
-										</tr>
-									)}
-								</tbody>
-							</table>
-						</div>
-					</div>
+        {/* Pricing Breakdown Card */}
+        <div>
+          <span className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Voucher Summary</span>
+          <div className="font-medium text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-200 mt-1 space-y-1.5 text-xs">
+            <div className="flex justify-between">
+              <span className="text-slate-500">Subtotal:</span>
+              <span className="font-mono font-semibold text-slate-800">
+                {(transaction.subtotal || 0).toLocaleString()} Ks
+              </span>
+            </div>
+            {transaction.totalDiscount > 0 && (
+              <div className="flex justify-between text-rose-600 font-semibold">
+                <span>(-) Total Discount:</span>
+                <span className="font-mono">-{(transaction.totalDiscount || 0).toLocaleString()} Ks</span>
+              </div>
+            )}
+            <div className="border-t border-dashed border-slate-300 pt-2 flex justify-between items-baseline">
+              <span className="text-sm font-bold text-slate-800">Grand Total:</span>
+              <span className="text-base font-black text-emerald-700 font-mono">
+                {(transaction.finalAmount || 0).toLocaleString()} Ks
+              </span>
+            </div>
+          </div>
+        </div>
 
-					{/* Pricing Breakdown Layout Grid */}
-					<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Payments Breakdown Card */}
+        <div>
+          <span className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Sales Payment Details</span>
+          <div className="font-medium text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-200 mt-1 space-y-1.5 text-xs">
+            <div className="flex justify-between items-center">
+              <span className="text-slate-500 font-semibold">{transaction.paymentMethod || "Cash"} Received:</span>
+              <span className="font-mono font-bold text-slate-800">
+                {(transaction.paidAmount || transaction.finalAmount || 0).toLocaleString()} Ks
+              </span>
+            </div>
+            <div className="flex justify-between items-center text-amber-700 font-semibold">
+              <span>(-) Change Amount:</span>
+              <span className="font-mono font-bold">
+                {(transaction.changeAmount || 0).toLocaleString()} Ks
+              </span>
+            </div>
+          </div>
+        </div>
 
-						{/* Voucher Summary Card */}
-						<div className="bg-gray-50/50 border border-gray-100 rounded-xl p-4 space-y-2.5">
-							<h5 className="text-[10px] uppercase tracking-wider font-bold text-gray-400 select-none">
-								Voucher Summary
-							</h5>
-							<div className="space-y-1.5 text-xs font-semibold text-gray-600">
-								<div className="flex justify-between">
-									<span>Subtotal:</span>
-									<span className="font-mono text-gray-900">{(transaction.subtotal || 0).toLocaleString()} Ks</span>
-								</div>
-								<div className="flex justify-between text-red-500">
-									<span>(-) Total Discount:</span>
-									<span className="font-mono">-{(transaction.totalDiscount || 0).toLocaleString()} Ks</span>
-								</div>
+        {/* Void Reason Section - Rendered exactly like the total errors breakdown wrapper */}
+        {isVoided && voidReason && (
+          <div className="pt-4 border-t border-slate-100">
+            <span className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Void Reason</span>
+            <div className="flex flex-col gap-1.5">
+              <p className="font-medium text-rose-600 bg-rose-50 p-3 rounded-lg border border-rose-200 mt-1 leading-relaxed break-words text-xs">
+                {voidReason}
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
 
-								<div className="border-t border-dashed border-gray-200 pt-2 flex justify-between items-baseline">
-									<span className="text-sm font-bold text-gray-900">Grand Total:</span>
-									<span className="text-base font-black text-[#08694b] font-mono">
-										{(transaction.finalAmount || 0).toLocaleString()} Ks
-									</span>
-								</div>
-							</div>
-						</div>
-
-						{/* Payments Breakdown Card */}
-						<div className="bg-gray-50/50 border border-gray-100 rounded-xl p-4 space-y-2.5">
-							<h5 className="text-[10px] uppercase tracking-wider font-bold text-gray-400 select-none">
-								Sales Payment
-							</h5>
-							<div className="space-y-2">
-								{/* Received Amount */}
-								<div className="p-2.5 bg-purple-50 border border-purple-100 rounded-lg flex justify-between items-center text-xs font-semibold text-purple-700">
-									<span>{transaction.paymentMethod} Received:</span>
-									<span className="font-mono text-sm font-bold">
-										{(transaction.paidAmount || transaction.finalAmount).toLocaleString()} Ks
-									</span>
-								</div>
-
-								{/*  Change Amount Box */}
-								<div className="p-2.5 bg-amber-50 border border-amber-100 rounded-lg flex justify-between items-center text-xs font-semibold text-amber-700">
-									<span>(-) Change:</span>
-									<span className="font-mono text-sm font-black">
-										{(transaction.changeAmount || 0).toLocaleString()} Ks
-									</span>
-								</div>
-							</div>
-						</div>
-
-					</div>
-
-					{/* Void Reason Card */}
-					{(transaction.status?.toUpperCase() === "VOIDED" || transaction.status?.toUpperCase() === "CANCELLED") && 
-					(transaction.void_reason || transaction.voidReason) && (
-						<div className="mt-4 p-4 bg-red-50/60 border border-red-100 rounded-xl space-y-2 w-full">
-							<div className="flex items-center gap-1.5 text-xs font-bold text-red-700 select-none">
-								<span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
-								Void Reason
-							</div>
-							<p
-								className="text-[11px] text-red-600 font-medium font-sans leading-relaxed break-words bg-white/80 p-3 rounded-lg border border-red-50 max-h-[120px] overflow-y-auto [scrollbar-width:thin]"
-								title={transaction.void_reason || transaction.voidReason}
-							>
-								
-								{transaction.void_reason || transaction.voidReason}
-							</p>
-						</div>
-					)}
-
-				</div>
-
-			</div>
-		</div>
-	);
+      {/* Footer */}
+      <div className="flex justify-end p-5 pt-2 border-t border-slate-50 shrink-0">
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-4 py-2 text-sm font-semibold text-slate-700 hover:text-slate-500 hover:bg-slate-200 bg-slate-100 rounded-lg transition-colors cursor-pointer"
+        >
+          Close Detail
+        </button>
+      </div>
+    </div>
+  );
 };
 
 export default ViewDetails;

@@ -21,7 +21,6 @@ export default function Report() {
         const fetchSession = async () => {
             try {
                 const response = await api.get("/cash-register/session");
-                console.log(response.data);
                 setSession(response.data);
             } catch (error) {
                 console.error("Session Error:", error.response?.data);
@@ -93,7 +92,7 @@ export default function Report() {
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                         <div>
                             <label className="mb-2 block font-semibold uppercase text-slate-600">Session ID</label>
-                            <input value={session ? `#${session.session_id}` : ""} readOnly className="h-14 w-full rounded-xl border bg-green-50 px-4" />
+                            <input value={session ? `${session.session_id}` : ""} readOnly className="h-14 w-full rounded-xl border bg-green-50 px-4" />
                         </div>
 
                         <div>
@@ -105,12 +104,12 @@ export default function Report() {
                     {/* Cash */}
                     <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
                         <div>
-                            <label className="mb-2 block font-semibold uppercase text-slate-600">Expected Closing Cash</label>
+                            <label className="mb-2 block font-semibold uppercase text-slate-600">Expected Closing Amount</label>
                             <input value={expectedCash.toLocaleString()} readOnly className="h-14 w-full rounded-xl border bg-green-50 px-4 font-bold text-green-600" />
                         </div>
 
                         <div>
-                            <label className="mb-2 block font-semibold uppercase text-slate-600">Actual Closing Cash</label>
+                            <label className="mb-2 block font-semibold uppercase text-slate-600">Actual Closing Amount</label>
                             <input type="number" placeholder="Enter cash amount" value={actualCash}
                                 onChange={e => setActualCash(e.target.value)} className="h-14 w-full rounded-xl border px-4 focus:border-green-500" />
                         </div>
@@ -124,7 +123,7 @@ export default function Report() {
                                 <Info className={discrepancy >= 0 ? "text-green-500" : "text-red-500"} />
                                 <div>
                                     <h3 className="text-xl font-bold">Discrepancy</h3>
-                                    <p className= {discrepancy >= 0 ? "mt-2 text-green-600 text-md font-bold" : "mt-2 text-red-600 text-md font-bold"}>
+                                    <p className={discrepancy >= 0 ? "mt-2 text-green-600 text-md font-bold" : "mt-2 text-red-600 text-md font-bold"}>
                                         {discrepancy > 0 ? "+" : ""}
                                         {discrepancy.toLocaleString()}{" "}MMK
                                     </p>
@@ -138,7 +137,7 @@ export default function Report() {
                     {discrepancy !== null && (
                         <div className={`mt-8 rounded-2xl border p-4 ${discrepancy >= 0 ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"}`}>
                             <div className="flex gap-4">
-                                <NotepadText className={discrepancy >= 0 ? "text-green-500": "text-red-500"} />
+                                <NotepadText className={discrepancy >= 0 ? "text-green-500" : "text-red-500"} />
                                 <div>
                                     <h3 className="text-xl font-bold text-slate-700">Report Text</h3>
                                     <p className={`mt-2 text-md font-bold ${discrepancy >= 0 ? "text-green-600" : "text-red-600"}`}>{getReportText()}</p>
@@ -163,17 +162,26 @@ export default function Report() {
 
                     <hr className="my-6" />
 
-                    <SummaryCard title="Total Sales" value={`${Number(session?.summary?.total ?? 0).toLocaleString()} MMK`}/>
-                    <SummaryCard title="Cash" value={`${Number(session?.summary?.cash ?? 0).toLocaleString()} MMK`} bg="bg-yellow-100" text="text-yellow-700" />
-                    <SummaryCard title="Kpay" value={`${Number(session?.summary?.kpay ?? 0).toLocaleString()} MMK`} bg="bg-blue-100" text="text-blue-700"/>
-                    <SummaryCard title="Voided voucher" value={`${Number(session?.summary?.voided ?? 0).toLocaleString()}`} bg="bg-red-100" text="text-red-700"/>
+                    <SummaryCard title="TOTAL SALES" value={`${Number(session?.summary?.total ?? 0).toLocaleString()} MMK`} />
+
+
+                    {Object.entries(session?.summary?.payments || {}).filter(([, amount]) => Number(amount) > 0).map(([name, amount]) => {
+                        const isCash = name.toLowerCase() === "cash";
+
+                        return (
+                            <SummaryCard key={name} title={name.toUpperCase()} value={`${Number(amount).toLocaleString()} MMK`}
+                                         bg={isCash ? "bg-yellow-100" : "bg-blue-100"} text={isCash ? "text-yellow-700" : "text-blue-700"} />
+                        );
+                    })}
+
+                    <SummaryCard title="VOIDED VOUCHERS" value={`${Number(session?.summary?.voided ?? 0).toLocaleString()}`} bg="bg-red-100" text="text-red-700" />
                 </div>
             </div>
         </div>
     );
 }
 
-function SummaryCard({ title, value, bg = "bg-green-100",text = "text-green-700",}) {
+function SummaryCard({ title, value, bg = "bg-green-100", text = "text-green-700", }) {
     return (
         <div className={`flex justify-between rounded-2xl ${bg} px-5 py-5 mb-5`}>
             <span className={`font-semibold ${text}`}>{title}</span>

@@ -69,10 +69,13 @@ const AdminLayout = () => {
             <div className="flex-1 flex flex-col h-full overflow-hidden">
                 <header className="h-16 bg-white border-b border-green-400 flex items-center justify-between px-8 shadow-sm">
                     {/* Nav left side */}
-                    <div className="text-gray-700 font-medium text-lg transition-all duration-300">
-                        {pageTitle}
+                    {/* Nav left side */}
+                    <div className="flex items-center gap-3">
+                        <span className="w-1.5 h-6 bg-[#07a876] rounded-full" />
+                        <h1 className="text-gray-800 font-semibold text-xl tracking-tight transition-all duration-300">
+                            {pageTitle}
+                        </h1>
                     </div>
-
                     {/* Nav right side */}
                     <div className="flex items-center gap-4">
                         <div className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
@@ -139,9 +142,9 @@ const AdminLayout = () => {
                         )}
 
                         {/* Change Password Modal Popup */}
-                        <ChangePassword 
-                            isOpen={isChangePasswordOpen} 
-                            onClose={() => setIsChangePasswordOpen(false)} 
+                        <ChangePassword
+                            isOpen={isChangePasswordOpen}
+                            onClose={() => setIsChangePasswordOpen(false)}
                         />
                     </div>
                 </header>

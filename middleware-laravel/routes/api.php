@@ -66,6 +66,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/cash-register/session', [SessionController::class, 'currentSession']);
     Route::post('/cash-register/close',[SessionController::class, 'closeSession']);
     Route::get('/vouchers', [VoucherController::class, 'index']);
+    Route::get('/vouchers/payment-methods', [VoucherController::class, 'paymentMethods']);
     Route::post('/vouchers/{id}/void', [VoucherController::class, 'void']);
 });
 

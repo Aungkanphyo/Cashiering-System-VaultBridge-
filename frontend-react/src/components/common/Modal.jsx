@@ -14,7 +14,7 @@ const Modal = ({ isOpen, onClose, children, maxWidth = "max-w-xl" }) => {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/20 backdrop-blur-[3px]" />
+      <div className="absolute inset-0 bg-black/5 backdrop-blur-[7px]" />
 
       <div
         className={`relative z-10 w-full ${maxWidth} max-h-[90vh] overflow-y-auto rounded-2xl`}

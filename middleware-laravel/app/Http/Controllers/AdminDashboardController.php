@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
@@ -16,13 +17,13 @@ class AdminDashboardController extends Controller
     {
         // Validate date filter
         $request->validate([
-            'from' => 'nullable|date',
-            'to'   => 'nullable|date|after_or_equal:from',
+            'from' => 'nullable|date|before_or_equal:today',
+            'to'   => 'nullable|date|after_or_equal:from|before_or_equal:today',
         ]);
 
         // If no dates are provided, default both to today's date
-        $from = $request->from ?? date('Y-m-d');
-        $to   = $request->to ?? date('Y-m-d');
+        $from = $request->from ?? now()->toDateString();
+        $to   = $request->to ?? now()->toDateString();
 
         $vouchers = Voucher::with(['details', 'salePayment'])
             ->where('status', 'completed')
@@ -44,7 +45,7 @@ class AdminDashboardController extends Controller
                 'details' => $detailsData
             ]);
 
-            if($response->successful()) {
+            if ($response->successful()) {
                 $totalSales = $response->json()['totalSales'] ?? 0;
             } else {
                 $totalSales = 0;
