@@ -206,8 +206,7 @@ const SaleWorkspace = () => {
         setRecentProductId(null);
     };
 
-<<<<<<<<< Temporary merge branch 1
-=========
+
     // Process Sale with Laravel API Integration ---
     const handleProcessSale = async () => {
         if (cartItems.length === 0) {
@@ -264,7 +263,7 @@ const SaleWorkspace = () => {
         }
     };
 
->>>>>>>>> Temporary merge branch 2
+
     return (
         <div className="w-full min-h-screen bg-[#F8FAFC] font-sans flex text-slate-800 antialiased px-4 pt-0 pb-4 relative">
             <div className="flex-1 flex flex-col overflow-y-auto">

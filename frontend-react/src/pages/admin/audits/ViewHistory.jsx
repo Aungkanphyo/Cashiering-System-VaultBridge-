@@ -298,9 +298,9 @@ const ViewHistory = () => {
                           </span>
                         ) : (
                           <div className="flex flex-col items-center gap-0.5">
-                            <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-rose-100 text-rose-700 font-bold text-[10px] uppercase tracking-wide">
-                              Voided
-                            </span>
+                           <span className="inline-block w-[70px] text-center py-1 rounded-lg text-xs font-semibold bg-rose-50 text-red-600 border border-green-200">
+                            Voided
+                          </span>
                             {tx.voidReason && (
                               <span
                                 className="text-[10px] text-rose-400 italic max-w-[140px] truncate"

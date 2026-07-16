@@ -5,7 +5,7 @@ import Pagination from "../../../components/common/Pagination";
 import { Search, RotateCcw, User, FileText, Loader2 } from "lucide-react";
 
 const ViewSession = () => {
-  //  Server-side State Management
+  // Server-side State Management
   const [sessions, setSessions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -16,6 +16,7 @@ const ViewSession = () => {
   const today = new Date().toISOString().split("T")[0];
 
   // Server-side Pagination States
+  const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
@@ -23,6 +24,7 @@ const ViewSession = () => {
 
   useEffect(() => {
     const fetchSessions = async () => {
+      setIsLoading(true);
       try {
         const response = await api.get("/admin/cash-sessions", {
           params: {
@@ -30,8 +32,8 @@ const ViewSession = () => {
             search: searchTerm.trim(),
             from_date: fromDate,
             to_date: toDate,
-            per_page: 8
-          }
+            per_page: pageSize,
+          },
         });
 
         const responseData = response.data.data ? response.data.data : response.data;
@@ -187,22 +189,24 @@ const ViewSession = () => {
                 <th className="p-4">Report / Notes</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 text-sm font-medium text-gray-700">
-              {isLoading ? (
+            <tbody className="divide-y divide-slate-100 text-sm">
+              {isLoading && (
                 <tr>
-                  <td colSpan="8" className="text-center py-16 text-emerald-600 font-bold animate-pulse">
-                    Loading register sessions from database...
+                  <td colSpan={8} className="p-8 text-center text-slate-400">
+                    <Loader2 className="w-5 h-5 animate-spin inline mr-2" />
+                    Loading register sessions...
                   </td>
                 </tr>
-              ) : error ? (
+              )}
+              {!isLoading && sessions.length === 0 && (
                 <tr>
-                  <td colSpan="8" className="text-center py-16 text-red-500 font-semibold">
-                    {error}
+                  <td colSpan={8} className="p-8 text-center text-slate-400">
+                    No cash register sessions match the selected filters.
                   </td>
                 </tr>
-              ) : sessions.length > 0 ? (
+              )}
+              {!isLoading &&
                 sessions.map((session, idx) => {
-                  // If closing_time is null or empty, track the session status as Running
                   const isRunning = !session.closing_time;
                   const discrepancy = session.discrepancy;
 
@@ -248,8 +252,8 @@ const ViewSession = () => {
                         ) : Number(discrepancy) === 0 ? (
                           <span className="text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg text-xs">0</span>
                         ) : (
-                          <span className="text-red-600 bg-red-50 px-2.5 py-1 rounded-lg text-xs">
-                            {Number(session.discrepancy).toLocaleString()} Ks
+                          <span className="text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg text-xs">
+                            {Number(discrepancy).toLocaleString()} Ks
                           </span>
                         )}
                       </td>
@@ -266,14 +270,7 @@ const ViewSession = () => {
                       </td>
                     </tr>
                   );
-                })
-              ) : (
-                <tr>
-                  <td colSpan="8" className="text-center py-16 text-gray-400 font-medium italic">
-                    No active or historical cash register sessions match the specified filters.
-                  </td>
-                </tr>
-              )}
+                })}
             </tbody>
           </table>
         </div>

@@ -4,7 +4,7 @@ import { BanknoteArrowDown } from "lucide-react";
 import VoucherPrinter from './VoucherPrinter';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
-
+ 
 const Voucher = ({
     voucherId,
     cartItems,
@@ -20,50 +20,55 @@ const Voucher = ({
     // --- Local States for Payments ---
     const [paymentMethod, setPaymentMethod] = useState('Cash');
     const [payAmount, setPayAmount] = useState('');
-    
+   
+    // FILTER ACTIVE PAYMENT METHODS
+    const activePaymentMethods = (dbPaymentMethods || []).filter(
+        method => method.status?.toLowerCase() === 'active'
+    );
+ 
     // Default payment method setup when dbPaymentMethods are loaded
     useEffect(() => {
-        if (dbPaymentMethods && dbPaymentMethods.length > 0) {
-            setPaymentMethod(dbPaymentMethods[0].payment_name);
+        // active default select
+        if (activePaymentMethods && activePaymentMethods.length > 0) {
+            setPaymentMethod(activePaymentMethods[0].payment_name);
         }
     }, [dbPaymentMethods]);
-
+ 
     // --- Calculation Logics ---
     const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const totalDiscount = cartItems.reduce((sum, item) => sum + ((item.price * item.discountPercent / 100) * item.quantity), 0);
     const finalTotal = subtotal - totalDiscount;
-
+ 
     const isCashSelected = paymentMethod.toLowerCase() === 'cash';
     const currentPayAmount = isCashSelected ? (parseFloat(payAmount) || 0) : finalTotal;
     const changeDue = currentPayAmount > finalTotal ? currentPayAmount - finalTotal : 0;
-
+ 
     // React to Print Integration target node ref
     const printComponentRef = useRef();
-
+ 
     // Print trigger execution (resets cart on success)
     const handlePrintFn = useReactToPrint({
         contentRef: printComponentRef,
-        // chang documentTitle to function expression 
         documentTitle: () => `Mark4U_Voucher_${voucherId || '0000'}`,
         onAfterPrint: () => {
             onClearAll();
             toast.success('Sale processed successfully!');
         }
     });
-
+ 
     // Local handler to reset inputs
     const onClearAll = () => {
         setPayAmount('');
         handleClearCart();
     };
-
+ 
     // Action flow control with UI form validation
     const handlePayAndPrint = async () => {
         if (cartItems.length === 0) {
             toast.error('No products in the cart to process sale.');
             return;
         }
-
+ 
         // Qty limits verification before submit
         for (const item of cartItems) {
             const stockLimit = item.stock_quantity ?? 0;
@@ -72,29 +77,30 @@ const Voucher = ({
                 return;
             }
         }
-
+ 
         if (isCashSelected) {
             const parsedPayAmount = parseFloat(payAmount);
             if (!payAmount || isNaN(parsedPayAmount) || parsedPayAmount <= 0) {
                 toast.error('Please enter a received payment amount!');
-                return; 
+                return;
             }
-
+ 
             if (parsedPayAmount < finalTotal) {
                 toast.error(`Insufficient amount! Received amount is less than ${finalTotal.toLocaleString()} Ks.`);
-                return; 
+                return;
             }
         }
-
-        const matchedPaymentObj = dbPaymentMethods.find(
+ 
+        // activePaymentMethods
+        const matchedPaymentObj = activePaymentMethods.find(
             method => method.payment_name.toLowerCase() === paymentMethod.toLowerCase()
         );
-
+ 
         if (!matchedPaymentObj) {
-            toast.error(`The selected payment method [${paymentMethod}] was not found in the database.`);
+            toast.error(`The selected payment method [${paymentMethod}] is currently inactive or not found.`);
             return;
         }
-
+ 
         const salePayload = {
             payment_id: matchedPaymentObj.payment_id,
             status: 'completed',
@@ -104,11 +110,11 @@ const Voucher = ({
                 quantity: parseInt(item.quantity, 10),
             }))
         };
-
+ 
         try {
             // 1. API Post Request
             const response = await api.post('/vouchers', salePayload);
-
+ 
             if (response.status === 200 || response.status === 201 || response.data.success) {
                 // 2. Fetch fresh stock quantities
                 const prodResponse = await api.get('/products');
@@ -121,12 +127,12 @@ const Voucher = ({
                     status: p.status ? p.status.toLowerCase() : 'active',
                     stock_quantity: p.stock_quantity !== undefined ? parseInt(p.stock_quantity, 10) : 0
                 }));
-                
+               
                 setAvailableProducts(updatedProducts);
-                
+               
                 // 3. Next Voucher Pre-fetch
                 fetchNextVoucherId();
-
+ 
                 // 4. Trigger receipt print layout rendering
                 handlePrintFn();
             }
@@ -136,31 +142,31 @@ const Voucher = ({
             toast.error(serverError);
         }
     };
-
+ 
     // Incremental validation controller
     const checkAndUpdateQty = (item, change) => {
         const currentQty = item.quantity;
         const newQty = currentQty + change;
         const stockLimit = item.stock_quantity ?? 0;
-
+ 
         if (change > 0 && newQty > stockLimit) {
             toast.error(`"${item.name}" cannot exceed the remaining stock of ${stockLimit}.`);
             return;
         }
         handleUpdateQty(item.id, change);
     };
-
+ 
     // Manual input box controller with fallback auto-corrector
     const checkAndDirectQtyChange = (item, rawValue) => {
         const stockLimit = item.stock_quantity ?? 0;
-        
+       
         if (rawValue === '') {
             handleDirectQtyChange(item.id, '');
             return;
         }
-
+ 
         const value = parseInt(rawValue, 10);
-
+ 
         if (!isNaN(value) && value > stockLimit) {
             toast.error(`Stock limit reached for "${item.name}". Quantity adjusted to ${stockLimit}.`);
             handleDirectQtyChange(item.id, stockLimit);
@@ -168,12 +174,12 @@ const Voucher = ({
             handleDirectQtyChange(item.id, rawValue);
         }
     };
-
+ 
     return (
         <div className="lg:col-span-5 bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between max-h-[calc(90vh-40px)] h-auto sticky top-4">
-            
+           
             {/* Hidden Printer Element Node Target */}
-            <VoucherPrinter 
+            <VoucherPrinter
                 ref={printComponentRef}
                 voucherId={voucherId}
                 cartItems={cartItems}
@@ -184,7 +190,7 @@ const Voucher = ({
                 payAmount={isCashSelected ? payAmount : finalTotal}
                 changeDue={changeDue}
             />
-
+ 
             <div className="flex flex-col flex-1 min-h-0">
                 <div className="flex justify-between items-center pb-2 border-b border-slate-100 mb-3">
                     <h3 className="text-xs font-black text-slate-900 tracking-wide uppercase flex items-center gap-1.5">
@@ -195,13 +201,13 @@ const Voucher = ({
                         Clear All
                     </button>
                 </div>
-
+ 
                 <div className="space-y-1.5 flex-1 overflow-y-auto pr-0.5 min-h-0 chunk-scrollbar">
                     {cartItems.map((item) => {
                         const itemDiscountPrice = item.price - (item.price * item.discountPercent / 100);
                         const itemFinalRowTotal = itemDiscountPrice * item.quantity;
                         const itemStock = item.stock_quantity ?? 0;
-
+ 
                         return (
                             <div
                                 key={item.id}
@@ -228,7 +234,7 @@ const Voucher = ({
                                         </span>
                                     </div>
                                 </div>
-
+ 
                                 <div className="flex items-center">
                                     <button onClick={() => checkAndUpdateQty(item, -1)} className="px-2.5 py-1 text-sm text-black font-bold">-</button>
                                     <input
@@ -241,18 +247,18 @@ const Voucher = ({
                                     />
                                     <button onClick={() => checkAndUpdateQty(item, 1)} className="px-2 py-1 text-sm text-black font-bold">+</button>
                                 </div>
-
+ 
                                 <div className="text-right font-sans text-xs font-bold text-slate-900 min-w-[65px]">
                                     {itemFinalRowTotal.toLocaleString()} <span className="text-[9px] font-sans font-normal text-slate-400">Ks</span>
                                 </div>
-
+ 
                                 <button onClick={() => handleDeleteItem(item.id)} className="p-1 text-slate-400 hover:text-red-500 text-base font-medium leading-none">&times;</button>
                             </div>
                         );
                     })}
                 </div>
             </div>
-
+ 
             <div className="border-t border-slate-100 pt-3 mt-3 space-y-1.5 text-xs font-medium bg-white">
                 <div className="flex justify-between text-xs">
                     <span>Subtotal</span>
@@ -267,7 +273,7 @@ const Voucher = ({
                     <span className="font-sans text-base text-emerald-600">{finalTotal.toLocaleString()} Ks</span>
                 </div>
             </div>
-
+ 
             <div className="mt-3 pt-2 border-t border-slate-100 grid grid-cols-12 gap-2.5 items-center bg-white">
                 <div className="col-span-4">
                     <label className="block text-xs font-black text-slate-900 mb-1">Method</label>
@@ -279,14 +285,15 @@ const Voucher = ({
                         }}
                         className="w-full px-2 py-1 h-7 text-xs font-bold border rounded-md bg-white border-slate-200 focus:outline-none focus:border-emerald-500 text-slate-700 cursor-pointer shadow-xs"
                     >
-                        {(dbPaymentMethods || []).map((method) => (
+                        {/*  FILTERED ACTIVE METHODS DISPLAY */}
+                        {activePaymentMethods.map((method) => (
                             <option key={method.payment_id} value={method.payment_name}>
                                 {method.payment_name}
                             </option>
                         ))}
                     </select>
                 </div>
-
+ 
                 <div className="col-span-8 grid grid-cols-2 gap-2">
                     <div>
                         <label className="block text-xs font-black text-slate-900 mb-1">Pay Amount</label>
@@ -307,23 +314,24 @@ const Voucher = ({
                     </div>
                 </div>
             </div>
-
+ 
             <div className="pt-3 bg-white">
                 <button
-                    disabled={cartItems.length === 0} 
-                    onClick={handlePayAndPrint} 
+                    disabled={cartItems.length === 0}
+                    onClick={handlePayAndPrint}
                     className={`w-full py-2 px-4 rounded-lg font-bold text-xs border shadow-xs transition-all flex items-center justify-center gap-1.5 ${
-                        cartItems.length === 0 
-                            ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-60' 
+                        cartItems.length === 0
+                            ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-60'
                             : 'bg-emerald-600 hover:bg-emerald-700 border-emerald-700 text-white active:scale-[0.99]'
                     }`}
                 >
                     <BanknoteArrowDown className="w-5 h-5 me-1" />Pay & Print
                 </button>
             </div>
-
+ 
         </div>
     );
 };
-
+ 
 export default Voucher;
+ 
