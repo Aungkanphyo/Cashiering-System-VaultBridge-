@@ -20,7 +20,7 @@ const Voucher = ({
     // --- Local States for Payments ---
     const [paymentMethod, setPaymentMethod] = useState('Cash');
     const [payAmount, setPayAmount] = useState('');
-
+    
     // Default payment method setup when dbPaymentMethods are loaded
     useEffect(() => {
         if (dbPaymentMethods && dbPaymentMethods.length > 0) {
@@ -43,9 +43,11 @@ const Voucher = ({
     // Print trigger execution (resets cart on success)
     const handlePrintFn = useReactToPrint({
         contentRef: printComponentRef,
+        // chang documentTitle to function expression 
+        documentTitle: () => `Mark4U_Voucher_${voucherId || '0000'}`,
         onAfterPrint: () => {
             onClearAll();
-            toast.success('Sale processed and receipt printed successfully!');
+            toast.success('Sale processed successfully!');
         }
     });
 
@@ -121,9 +123,11 @@ const Voucher = ({
                 }));
                 
                 setAvailableProducts(updatedProducts);
+                
+                // 3. Next Voucher Pre-fetch
                 fetchNextVoucherId();
 
-                // 3. Trigger receipt print layout rendering
+                // 4. Trigger receipt print layout rendering
                 handlePrintFn();
             }
         } catch (error) {
@@ -207,7 +211,7 @@ const Voucher = ({
                                 }`}
                             >
                                 <div className="w-[45%]">
-                                    <p className={`text-sm font-bold line-clamp-1 ${(recentProductId && item.id && recentProductId === item.id) ? 'text-emerald-800 font-extrabold' : 'text-slate-800'}`}>
+                                    <p className={`text-xs font-bold line-clamp-1 ${(recentProductId && item.id && recentProductId === item.id) ? 'text-emerald-800 font-extrabold' : 'text-slate-800'}`}>
                                         {item.name}
                                     </p>
                                     <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
@@ -215,12 +219,11 @@ const Voucher = ({
                                             {item.price.toLocaleString()} ks
                                         </p>
                                         {item.discountPercent > 0 && (
-                                            <span className="text-red-500 text-xs font-medium bg-red-100 p-1 rounded-lg">
+                                            <span className="text-red-500 text-xs font-medium bg-red-100 px-1 rounded-lg">
                                                 -{item.discountPercent}%
                                             </span>
                                         )}
-                                        {/* Orange text alert for low stock quantities */}
-                                        <span className={`text-xs p-1 rounded-lg font-medium ${itemStock <= 10 ? 'bg-red-100 text-red-500' : 'bg-blue-100 text-blue-500'}`}>
+                                        <span className={`text-xs p-1 rounded-lg font-medium ${itemStock <= 10 ? 'bg-red-50 text-red-500' : 'bg-blue-100 text-blue-500'}`}>
                                             Stock: {itemStock}
                                         </span>
                                     </div>
@@ -240,7 +243,7 @@ const Voucher = ({
                                 </div>
 
                                 <div className="text-right font-sans text-xs font-bold text-slate-900 min-w-[65px]">
-                                    {itemFinalRowTotal.toLocaleString()} Ks
+                                    {itemFinalRowTotal.toLocaleString()} <span className="text-[9px] font-sans font-normal text-slate-400">Ks</span>
                                 </div>
 
                                 <button onClick={() => handleDeleteItem(item.id)} className="p-1 text-slate-400 hover:text-red-500 text-base font-medium leading-none">&times;</button>
@@ -250,7 +253,7 @@ const Voucher = ({
                 </div>
             </div>
 
-            <div className="border-t border-slate-200 pt-3 mt-3 space-y-1.5 text-xs font-medium bg-white">
+            <div className="border-t border-slate-100 pt-3 mt-3 space-y-1.5 text-xs font-medium bg-white">
                 <div className="flex justify-between text-xs">
                     <span>Subtotal</span>
                     <span>{subtotal.toLocaleString()} Ks</span>
@@ -260,12 +263,11 @@ const Voucher = ({
                     <span>-{totalDiscount.toLocaleString()} Ks</span>
                 </div>
                 <div className="flex justify-between items-center pt-2 border-t border-dashed border-slate-200 text-sm font-black text-slate-900">
-                    <span className="text-emerald-600">Total (Inclusive Tax)</span>
-                    <span className="text-md text-emerald-600">{finalTotal.toLocaleString()} Ks</span>
+                    <span>Total (Inclusive Tax):</span>
+                    <span className="font-sans text-base text-emerald-600">{finalTotal.toLocaleString()} Ks</span>
                 </div>
             </div>
 
-            {/* DYNAMIC SELECT BOX METHOD SELECTOR */}
             <div className="mt-3 pt-2 border-t border-slate-100 grid grid-cols-12 gap-2.5 items-center bg-white">
                 <div className="col-span-4">
                     <label className="block text-xs font-black text-slate-900 mb-1">Method</label>
@@ -298,8 +300,8 @@ const Voucher = ({
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-black text-slate-900 mb-1">Change</label>
-                        <div className="w-full px-2 py-0.5 h-7 flex items-center text-xs font-sans font-black text-emerald-600 bg-green-100 rounded-md border border-emerald-100">
+                        <label className="block text-[9px] font-black text-slate-900 mb-1">Change Due</label>
+                        <div className="w-full px-2 py-0.5 h-7 flex items-center text-xs font-sans font-black text-emerald-600 bg-emerald-50 rounded-md border border-emerald-100">
                             {changeDue.toLocaleString()}
                         </div>
                     </div>

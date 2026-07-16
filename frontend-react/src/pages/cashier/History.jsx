@@ -130,21 +130,20 @@ export default function History() {
 
     // Shared styling for the pill-style filter selects — border/background flips to
     // emerald when that filter is actively narrowing the results.
-   const selectClass = (active) =>
-    `appearance-none pl-8 pr-8 py-2 rounded-lg border border-slate-400 text-xs font-semibold cursor-pointer transition-colors focus:outline-none focus:ring-4 focus:ring-emerald-500/15 ${
-        active
+    const selectClass = (active) =>
+        `appearance-none pl-8 pr-8 py-2 rounded-lg border border-slate-400 text-xs font-semibold cursor-pointer transition-colors focus:outline-none focus:ring-4 focus:ring-emerald-500/15 ${active
             ? " text-emerald-700"
             : "bg-white text-slate-600 hover:border-slate-500"
-    }`;
+        }`;
     return (
         <div className="min-h-screen">
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
                 {/* Header */}
                 <div className="flex flex-col gap-4 p-6 pb-4 lg:flex-row lg:items-center lg:justify-between">
                     <h2 className="text-xl font-bold text-slate-800">Sales History</h2>
 
                     {/* Controls & Dropdowns Wrapper */}
-                    <div className="flex flex-wrap items-center gap-2.5 text-xs text-slate-500">
+                    <div className="flex flex-wrap items-center gap-2.5 text-xs text-slate-400">
                         {/* Voucher ID Search */}
                         <div className="relative">
                             <Search className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
@@ -154,66 +153,57 @@ export default function History() {
                                 onChange={(e) => setVoucherIdInput(e.target.value)}
                                 placeholder="Voucher ID"
                                 className={`w-60 pl-8 pr-3 py-2 rounded-lg border text-xs font-semibold transition-colors focus:outline-none focus:ring-4 focus:ring-emerald-500/15 ${voucherIdFilter
-                                        ? "border-emerald-500 bg-emerald-50 text-emerald-700"
-                                        : "border-slate-400 bg-white text-slate-600 hover:border-emerald-300"
+                                    ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                                    : " bg-white text-slate-600 hover:border-emerald-300"
                                     }`}
                             />
                         </div>
 
                         {/* Status Filter */}
-                        <div className="relative">
-                            <ListFilter className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-                            <select
-                                value={statusFilter}
-                                onChange={(e) => {
-                                    setStatusFilter(e.target.value);
-                                    setPage(1);
-                                }}
-                                className={selectClass(Boolean(statusFilter))}
-                            >
-                                <option value="">All Statuses</option>
-                                <option value="completed">Completed</option>
-                                <option value="voided">Voided</option>
-                            </select>
-                            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-                        </div>
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => {
+                                setStatusFilter(e.target.value);
+                                setPage(1);
+                            }}
+                            className="border rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 bg-white focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15 cursor-pointer"
+                        >
+                            <option value="">All Statuses</option>
+                            <option value="completed">Completed</option>
+                            <option value="voided">Voided</option>
+                        </select>
+                        <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+
 
                         {/* Payment Filter */}
-                        <div className="relative">
-                            <Wallet className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-                            <select
-                                value={paymentFilter}
-                                onChange={(e) => {
-                                    setPaymentFilter(e.target.value);
-                                    setPage(1);
-                                }}
-                                className={selectClass(Boolean(paymentFilter))}
-                            >
-                                <option value="">All Payments</option>
-                                {paymentMethods.map((method) => (
-                                    <option key={method} value={method}>
-                                        {method}
-                                    </option>
-                                ))}
-                            </select>
-                            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-                        </div>
-
-                        <button
-                            type="button"
-                            onClick={clearFilters}
-                            disabled={!hasActiveFilters}
-                            className={`flex items-center gap-1 px-3 py-2 rounded-lg border text-xs font-semibold transition-colors ${hasActiveFilters
-                                    ? "border-slate-200 bg-white text-slate-500 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 cursor-pointer"
-                                    : "border-slate-200 bg-slate-50 text-slate-300 cursor-not-allowed"
-                                }`}
+                        <select
+                            value={paymentFilter}
+                            onChange={(e) => {
+                                setPaymentFilter(e.target.value);
+                                setPage(1);
+                            }}
+                            className="border rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 bg-white focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15 cursor-pointer"
                         >
-                            <RotateCcw className="w-3.5 h-3.5" />
-                            Clear
+                            <option value="">All Payments</option>
+                            {paymentMethods.map((method) => (
+                                <option key={method} value={method}>
+                                    {method}
+                                </option>
+                            ))}
+                        </select>
+                        <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+
+                        {/* Reset Button  */}
+                        <button
+                            onClick={clearFilters}
+                            className="flex items-center gap-2 rounded-lg bg-red-600 text-white hover:bg-red-700 px-4 py-2 text-sm font-semibold shadow-sm whitespace-nowrap cursor-pointer lg:ml-auto"
+                        >
+                            <RotateCcw size={18} />
+                            Reset
                         </button>
 
                         {/* Rows Per Page */}
-                        <div className="flex items-center gap-1.5 whitespace-nowrap lg:ml-2">
+                        <div className="flex items-center text-xs text-slate-500 gap-1.5 whitespace-nowrap lg:ml-2">
                             <span>Show</span>
                             <div className="relative">
                                 <select
@@ -242,7 +232,7 @@ export default function History() {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-emerald-700 border-b border-emerald-800 text-white text-xs font-semibold uppercase">
-                                <th className="p-4">ID</th>
+                                <th className="p-4">Voucher ID</th>
                                 <th className="p-4">Date</th>
                                 <th className="p-4">Total</th>
                                 <th className="p-4">Discount</th>
@@ -278,22 +268,22 @@ export default function History() {
                                             className={`hover:bg-slate-50 transition ${isVoided ? "bg-slate-100/50 opacity-75" : ""
                                                 }`}
                                         >
-                                            <td className="p-4 font-mono text-xs text-slate-500">
-                                                #{sale.voucher_id}
+                                            <td className="p-4 font-semibold text-slate-800">
+                                                {sale.voucher_id}
                                             </td>
-                                            <td className="p-4 whitespace-nowrap text-slate-600">
+                                            <td className="p-4 whitespace-nowrap text-xs font-semibold text-slate-800">
                                                 {new Date(sale.sale_date).toLocaleString("sv-SE", {
                                                     timeZone: "Asia/Yangon",
                                                 })}
                                             </td>
-                                            <td className="p-4 font-semibold text-slate-800">
+                                            <td className="p-4 font-semibold text-xs text-slate-800">
                                                 {Number(sale.total).toLocaleString()}Ks
                                             </td>
-                                            <td className="p-4 text-rose-600 font-semibold">
+                                            <td className="p-4 text-rose-600 text-xs font-semibold">
                                                 {sale.discount > 0 ? "-" : ""}
                                                 {Number(sale.discount).toLocaleString()}Ks
                                             </td>
-                                            <td className="p-4 font-semibold text-emerald-700">
+                                            <td className="p-4 font-semibold text-xs text-emerald-700">
                                                 {Number(sale.grand_total).toLocaleString()}Ks
                                             </td>
                                             <td className="p-4">

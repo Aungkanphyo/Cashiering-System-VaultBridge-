@@ -162,7 +162,7 @@ export default function Report() {
 
                     <hr className="my-6" />
 
-                    <SummaryCard title="Total Sales" value={`${Number(session?.summary?.total ?? 0).toLocaleString()} MMK`} />
+                    <SummaryCard title="TOTAL SALES" value={`${Number(session?.summary?.total ?? 0).toLocaleString()} MMK`} />
 
 
                     {Object.entries(session?.summary?.payments || {}).filter(([, amount]) => Number(amount) > 0).map(([name, amount]) => {
@@ -174,7 +174,7 @@ export default function Report() {
                         );
                     })}
 
-                    <SummaryCard title="Voided Voucher" value={`${Number(session?.summary?.voided ?? 0).toLocaleString()}`} bg="bg-red-100" text="text-red-700" />
+                    <SummaryCard title="VOIDED VOUCHERS" value={`${Number(session?.summary?.voided ?? 0).toLocaleString()}`} bg="bg-red-100" text="text-red-700" />
                 </div>
             </div>
         </div>

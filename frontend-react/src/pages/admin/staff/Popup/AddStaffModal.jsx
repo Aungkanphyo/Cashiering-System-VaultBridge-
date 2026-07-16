@@ -173,6 +173,8 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
                     phone_number: '', nrc: '', date_of_birth: '', address: '',
                     gender: 'Male', email: '', join_date: ''
                 });
+
+               
                 setNrcState("");
                 setNrcTownship("");
                 setNrcNumber("");

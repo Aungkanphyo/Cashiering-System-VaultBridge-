@@ -39,8 +39,6 @@ class AdminDashboardController extends Controller
             });
         })->values()->toArray();
 
-        Log::info('Data sent to COBOL:', $detailsData);
-
         try {
             // Directly sending raw data (details) to COBOL Micro-services
             $response = Http::timeout(10)->post('http://cobol-service:4000/calculate-total', [
@@ -74,7 +72,9 @@ class AdminDashboardController extends Controller
                 'name'   => $paymentName,
                 'amount' => (float) $paymentTotal,
             ];
-        });
+        })->filter(function ($payment) {
+            return $payment['amount'] > 0;
+        })->values();
 
         // Best Seller Items (Keep this database-driven for performance and ranking)
         $bestSeller = DB::table('voucher_details')

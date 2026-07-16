@@ -10,7 +10,7 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import api from "../../../api/axios";
-import Toast from "../../../components/common/Toast";
+import toast from "react-hot-toast"
 import Modal from "../../../components/common/Modal";
 import ConfirmDialog from "../../../components/common/ConfirmDialog";
 import Pagination from "../../../components/common/Pagination";
@@ -21,8 +21,6 @@ const ProductsView = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState("");
-  const [toastType, setToastType] = useState("success");
   const [showAddModal, setShowAddModal] = useState(false);
   const [editProductId, setEditProductId] = useState(null);
   const [discountError, setDiscountError] = useState({});
@@ -31,12 +29,6 @@ const ProductsView = () => {
   const [confirmState, setConfirmState] = useState(null); // { type: 'delete'|'restore', id, name }
   const [pageSize, setPageSize] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
-
-  const showToast = (message, type = "success") => {
-    setToast(message);
-    setToastType(type);
-    setTimeout(() => setToast(""), 2500);
-  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -48,26 +40,23 @@ const ProductsView = () => {
       setProducts(productsRes.data);
       setCategories(categoriesRes.data);
     } catch (err) {
-      showToast(
-        err.response?.data?.message || "Failed to load products",
-        "error"
-      );
+      toast.error("Failed to load products");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+    useEffect(() => {
+        fetchData();
+    }, []);
 
-  const getCategory = (categoryId) =>
-    categories.find((c) => c.category_id === categoryId) || null;
+    const getCategory = (categoryId) =>
+        categories.find((c) => c.category_id === categoryId) || null;
 
-  const getCategoryName = (categoryId) => {
-    const cat = getCategory(categoryId);
-    return cat ? cat.category_name : "General";
-  };
+    const getCategoryName = (categoryId) => {
+        const cat = getCategory(categoryId);
+        return cat ? cat.category_name : "General";
+    };
 
   const getSalePrice = (product) => {
     const cat = getCategory(product.category_id);
@@ -108,76 +97,68 @@ const ProductsView = () => {
     setCurrentPage(1);
   }, [statusFilter, search, pageSize]);
 
-  const totalItems = filteredProducts.length;
-  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+    const totalItems = filteredProducts.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
 
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(totalPages);
   }, [totalPages, currentPage]);
 
-  const paginatedProducts = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    return filteredProducts.slice(start, start + pageSize);
-  }, [filteredProducts, currentPage, pageSize]);
+    const paginatedProducts = useMemo(() => {
+        const start = (currentPage - 1) * pageSize;
+        return filteredProducts.slice(start, start + pageSize);
+    }, [filteredProducts, currentPage, pageSize]);
 
   const handleDiscountChange = async (productId, value) => {
     const discount_rate = parseFloat(value);
     const product = products.find((p) => p.product_id === productId);
     const floor = product ? getDiscountFloor(product) : 0;
 
-    if (Number.isNaN(discount_rate) || discount_rate < 0 || discount_rate > 100) {
-      setDiscountError((prev) => ({
-        ...prev,
-        [productId]: "Discount rate must be between 0 and 100.",
-      }));
-      return;
-    }
+        if (Number.isNaN(discount_rate) || discount_rate < 0 || discount_rate > 100) {
+            setDiscountError((prev) => ({
+                ...prev,
+                [productId]: "Discount rate must be between 0 and 100.",
+            }));
+            return;
+        }
 
-    if (discount_rate < floor) {
-      setDiscountError((prev) => ({
-        ...prev,
-        [productId]: `Discount rate cannot be lower than ${floor}% for this category.`,
-      }));
-      return;
-    }
+        if (discount_rate < floor) {
+            setDiscountError((prev) => ({
+                ...prev,
+                [productId]: `Discount rate cannot be lower than ${floor}% for this category.`,
+            }));
+            return;
+        }
 
-    setDiscountError((prev) => ({ ...prev, [productId]: "" }));
+        setDiscountError((prev) => ({ ...prev, [productId]: "" }));
 
-    try {
-      const res = await api.put(`/products/${productId}`, { discount_rate });
-      setProducts((prev) =>
-        prev.map((p) => (p.product_id === productId ? res.data : p))
-      );
-      showToast("Discount updated");
-    } catch (err) {
-      showToast(
-        err.response?.data?.message || "Failed to update discount",
-        "error"
-      );
-    }
-  };
+        try {
+            const res = await api.put(`/products/${productId}`, { discount_rate });
+            setProducts((prev) =>
+                prev.map((p) => (p.product_id === productId ? res.data : p))
+            );
+            toast.success("Discount updated");
+        } catch (err) {
+          toast.error("Failed to update discount");
+        }
+    };
 
   const askConfirm = (type, id, name) => setConfirmState({ type, id, name });
 
-  const handleConfirm = async () => {
-    if (!confirmState) return;
-    const { type, id, name } = confirmState;
-    const newStatus = type === "delete" ? "inactive" : "active";
-    try {
-      const res = await api.put(`/products/${id}`, { status: newStatus });
-      setProducts((prev) => prev.map((p) => (p.product_id === id ? res.data : p)));
-      showToast(
-        type === "delete" ? `"${name}" set to inactive` : `"${name}" restored`
-      );
-    } catch (err) {
-      showToast(
-        err.response?.data?.message || "Failed to update product",
-        "error"
-      );
-    } finally {
-      setConfirmState(null);
-    }
-  };
+    const handleConfirm = async () => {
+        if (!confirmState) return;
+        const { type, id, name } = confirmState;
+        const newStatus = type === "delete" ? "inactive" : "active";
+        try {
+            const res = await api.put(`/products/${id}`, { status: newStatus });
+            setProducts((prev) => prev.map((p) => (p.product_id === id ? res.data : p)));
+            toast.success(type === "delete" ? `"${name}" set to inactive` : `"${name}" restored`);
+        } catch (err) {
+          toast.error("Failed to update product");
+        } finally {
+            setConfirmState(null);
+        }
+    };
 
   const summaryStats = useMemo(() => {
     const activeCount = products.filter((p) => p.status === "active").length;
@@ -224,8 +205,6 @@ const ProductsView = () => {
 
   return (
     <div className="min-h-screen">
-      <Toast message={toast} type={toastType} />
-
       {/* Interactive Stat Cards Section */}
       <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-5">
         {summaryStats.map((item) => {
@@ -310,9 +289,9 @@ const ProductsView = () => {
                 <th className="p-4">Sale Price</th>
                 <th className="p-4">Stock Qty</th>
                 <th className="p-4">Min Stock Level</th>
-                <th className="p-4 w-32">Discount (%)</th>
-                <th className="p-4 w-32">Discount Amount</th>
-                <th className="p-4 w-28">Status</th>
+                <th className="p-4 w-30">Discount (%)</th>
+                <th className="p-4 w-30">Discount Price</th>
+                <th className="p-4 w-15 text-center">Status</th>
                 <th className="p-4 text-center">Actions</th>
               </tr>
             </thead>
@@ -343,7 +322,7 @@ const ProductsView = () => {
                       key={prod.product_id}
                       className={`hover:bg-slate-50 transition`}
                     >
-                      <td className="p-4 font-mono text-xs text-slate-500">
+                      <td className="p-4 font-semibold text-slate-800 text-xs">
                         {prod.barcode}
                       </td>
                       <td className="p-4">
@@ -357,20 +336,21 @@ const ProductsView = () => {
                       <td className="p-4 font-semibold text-slate-800">
                         {Number(prod.price).toLocaleString()}Ks
                       </td>
-                      <td className="p-4 font-semibold text-emerald-700">
+                      <td className="p-4 font-semibold text-emerald-600">
                         {salePrice.toLocaleString(undefined, {
                           maximumFractionDigits: 2,
                         })}Ks
                       </td>
                       <td className="p-4">
                         <span
-                          className={`font-bold ${isLowStock ? "text-rose-600" : "text-slate-700"
-                            }`}
+                          className={`font-bold ${
+                            isLowStock ? "text-rose-600" : "text-slate-800"
+                          }`}
                         >
                           {prod.stock_quantity}
                         </span>
                       </td>
-                      <td className="p-4 text-slate-500 font-semibold">
+                      <td className="p-4 text-slate-800 font-semibold">
                         {prod.min_stock_level}
                       </td>
                       <td className="p-4">
@@ -387,7 +367,7 @@ const ProductsView = () => {
                                 e.target.value
                               )
                             }
-                            className="w-16 p-1 text-center border border-slate-200 rounded text-xs font-bold text-slate-700 focus:ring-1 focus:ring-emerald-500 focus:outline-none bg-white"
+                            className="w-16 p-1 text-center border border-slate-200 rounded text-xs font-bold text-slate-800 focus:ring-1 focus:ring-emerald-500 focus:outline-none bg-white"
                           />
                           <span className="text-xs text-slate-400">%</span>
                         </div>
@@ -450,14 +430,14 @@ const ProductsView = () => {
           </table>
         </div>
 
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={totalItems}
-          pageSize={pageSize}
-          onPageChange={setCurrentPage}
-        />
-      </div>
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalItems={totalItems}
+                    pageSize={pageSize}
+                    onPageChange={setCurrentPage}
+                />
+            </div>
 
       {/* Modals & Dialogs */}
       <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} maxWidth="max-w-lg">
@@ -467,25 +447,25 @@ const ProductsView = () => {
           onSuccess={() => {
             setShowAddModal(false);
             fetchData();
-            showToast("Product added successfully");
+            toast.success("Product added successfully");
           }}
         />
       </Modal>
 
-      <Modal isOpen={!!editProductId} onClose={() => setEditProductId(null)} maxWidth="max-w-lg">
-        <EditProduct
-          productId={editProductId}
-          existingProductNames={products
-            .filter((p) => p.product_id !== editProductId)
-            .map((p) => p.product_name)}
-          onClose={() => setEditProductId(null)}
-          onSuccess={() => {
-            setEditProductId(null);
-            fetchData();
-            showToast("Product updated successfully");
-          }}
-        />
-      </Modal>
+            <Modal isOpen={!!editProductId} onClose={() => setEditProductId(null)} maxWidth="max-w-lg">
+                <EditProduct
+                    productId={editProductId}
+                    existingProductNames={products
+                        .filter((p) => p.product_id !== editProductId)
+                        .map((p) => p.product_name)}
+                    onClose={() => setEditProductId(null)}
+                    onSuccess={() => {
+                        setEditProductId(null);
+                        fetchData();
+                        toast.success("Product updated successfully");
+                    }}
+                />
+            </Modal>
 
       <ConfirmDialog
         isOpen={!!confirmState}

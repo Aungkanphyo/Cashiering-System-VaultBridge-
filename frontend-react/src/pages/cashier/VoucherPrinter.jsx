@@ -134,7 +134,7 @@ const VoucherPrinter = forwardRef(({
           </div>
           {isCashSelected && (
             <div className="flex justify-between items-center text-slate-600">
-              <span className="uppercase tracking-tight">Change :</span>
+              <span className="uppercase tracking-tight">Change Due:</span>
               <span className="font-sans font-bold text-emerald-600 text-[11px]">{changeDue.toLocaleString()}Ks</span>
             </div>
           )}

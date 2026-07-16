@@ -167,7 +167,7 @@ const EditProduct = ({ productId, onClose, onSuccess, existingProductNames = [] 
   };
 
   const handlePriceChange = (e) => {
-    const value = e.target.value.slice(0, 7);
+    const value = e.target.value.slice(0, 10);
     setPrice(value);
     clearFieldError("price");
     if (error) setError("");
