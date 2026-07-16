@@ -199,9 +199,8 @@ const ViewStaff = () => {
                         <button
                             key={item.title}
                             onClick={() => setStatusFilter(item.filterKey)}
-                            className={`w-full text-left bg-white rounded-2xl border p-5 flex items-center justify-between gap-3 transition-all duration-200 shadow-sm group hover:shadow-md cursor-pointer ${
-                                isActive ? item.activeClass : "hover:border-slate-300"
-                            }`}
+                            className={`w-full text-left bg-white rounded-2xl border p-5 flex items-center justify-between gap-3 transition-all duration-200 shadow-sm group hover:shadow-md cursor-pointer ${isActive ? item.activeClass : "hover:border-slate-300"
+                                }`}
                         >
                             <div className="space-y-1">
                                 <p className="text-xs uppercase tracking-wider font-bold text-slate-500 group-hover:text-slate-700 transition-colors">
@@ -298,9 +297,7 @@ const ViewStaff = () => {
                                     return (
                                         <tr
                                             key={staff.user_id}
-                                            className={`hover:bg-slate-50 transition ${
-                                                isInactive ? "bg-slate-100/50 opacity-75" : ""
-                                            }`}
+                                            className={`hover:bg-slate-50 transition`}
                                         >
                                             <td className="p-4 text-center font-bold text-slate-500">
                                                 {(currentPage - 1) * pageSize + index + 1}
@@ -312,11 +309,12 @@ const ViewStaff = () => {
                                             <td className="p-4 text-slate-700">{formatDate(staff.join_date)}</td>
                                             <td className="p-4">
                                                 <span
-                                                    className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                                                        isInactive ? "text-red-500" : "text-emerald-600"
-                                                    }`}
+                                                    className={`inline-block w-[70px] text-center py-1 rounded-lg text-xs font-semibold ${isInactive
+                                                        ? "bg-red-50 text-red-500 border border-red-200"
+                                                        : "bg-green-50 text-green-600 border border-green-200"
+                                                        }`}
                                                 >
-                                                    {staff.status}
+                                                    {isInactive ? "Inactive" : "Active"}
                                                 </span>
                                             </td>
                                             <td className="p-4 text-right">
@@ -336,7 +334,7 @@ const ViewStaff = () => {
                                                     {isInactive ? (
                                                         <button
                                                             onClick={() => askConfirm(staff)}
-                                                            className="px-4.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-emerald-700 border border-emerald-200 hover:bg-emerald-900 transition cursor-pointer"
+                                                            className="px-4.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-emerald-500 border border-emerald-200 hover:bg-emerald-600 transition cursor-pointer"
                                                         >
                                                             Activate
                                                         </button>

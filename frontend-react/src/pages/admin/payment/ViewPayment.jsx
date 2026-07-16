@@ -152,9 +152,8 @@ const ViewPayment = () => {
             <button
               key={item.title}
               onClick={() => setStatusFilter(item.filterKey)}
-              className={`w-full text-left bg-white rounded-2xl border p-5 flex items-center justify-between gap-3 transition-all duration-200 shadow-sm group hover:shadow-md cursor-pointer ${
-                isActive ? item.activeClass : "hover:border-slate-300"
-              }`}
+              className={`w-full text-left bg-white rounded-2xl border p-5 flex items-center justify-between gap-3 transition-all duration-200 shadow-sm group hover:shadow-md cursor-pointer ${isActive ? item.activeClass : "hover:border-slate-300"
+                }`}
             >
               <div className="space-y-1">
                 <p className="text-xs uppercase tracking-wider font-bold text-slate-500 group-hover:text-slate-700 transition-colors">
@@ -249,25 +248,20 @@ const ViewPayment = () => {
                   return (
                     <tr
                       key={method.payment_id}
-                      className={`hover:bg-slate-50 transition ${
-                        isInactive ? "bg-slate-100/50 opacity-75" : ""
-                      }`}
+                      className={`hover:bg-slate-50 transition `}
                     >
                       <td className="p-4">
                         <div className="font-semibold text-slate-800 flex items-center">
-                          <span
-                            className={`w-2.5 h-2.5 rounded-full ${
-                              isInactive ? "bg-slate-400" : "bg-emerald-500"
-                            } mr-2`}
-                          ></span>
+
                           {method.payment_name}
                         </div>
                       </td>
                       <td className="p-4">
                         <span
-                          className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                            isInactive ? " text-red-500" : " text-green-600"
-                          }`}
+                          className={`inline-block w-[70px] text-center py-1 rounded-lg text-xs font-semibold ${isInactive
+                            ? "bg-red-50 text-red-500 border border-red-200"
+                            : "bg-green-50 text-green-600 border border-green-200"
+                            }`}
                         >
                           {isInactive ? "Inactive" : "Active"}
                         </span>
@@ -291,11 +285,10 @@ const ViewPayment = () => {
                                   ? "Default payment methods can't be changed"
                                   : "Restore"
                               }
-                              className={`px-2 py-1.5 rounded-lg text-xs font-semibold text-white bg-emerald-700 border border-emerald-200 hover:bg-emerald-900 transition flex items-center gap-1 cursor-pointer ${
-                                isProtected ? "opacity-30 cursor-not-allowed" : ""
-                              }`}
+                              className={`px-2 py-1.5 rounded-lg text-xs font-semibold text-white bg-emerald-500 border border-emerald-200 hover:bg-emerald-600 transition flex items-center gap-1 cursor-pointer ${isProtected ? "opacity-30 cursor-not-allowed" : ""
+                                }`}
                             >
-                              
+
                               Restore
                             </button>
                           ) : (
@@ -309,9 +302,8 @@ const ViewPayment = () => {
                                   ? "Default payment methods can't be deleted"
                                   : "Delete"
                               }
-                              className={`px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-red-500 hover:bg-red-600 transition cursor-pointer ${
-                                isProtected ? "opacity-30 cursor-not-allowed" : ""
-                              }`}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-red-500 hover:bg-red-600 transition cursor-pointer ${isProtected ? "opacity-30 cursor-not-allowed" : ""
+                                }`}
                             >
                               Delete
                             </button>

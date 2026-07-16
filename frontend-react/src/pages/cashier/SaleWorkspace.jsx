@@ -225,14 +225,7 @@ const SaleWorkspace = () => {
             return;
         }
 
-        const existItem = cartItems.find(item => item.id === product.id);
-        const currentQty = existItem ? existItem.quantity : 0;
-
-        if (currentQty + 1 > product.stock_quantity) {
-            toast.error(`"${product.name}" exceeds the available stock ${product.stock_quantity} `);
-            return;
-        }
-
+       
         const existItem = cartItems.find(item => item.id === product.id);
         const currentQty = existItem ? existItem.quantity : 0;
 

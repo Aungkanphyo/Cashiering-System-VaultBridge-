@@ -209,9 +209,8 @@ const ViewCategory = () => {
             <button
               key={item.title}
               onClick={() => setStatusFilter(item.filterKey)}
-              className={`w-full text-left bg-white rounded-2xl border p-5 flex items-center justify-between gap-3 transition-all duration-200 shadow-sm group hover:shadow-md cursor-pointer ${
-                isActive ? item.activeClass : "hover:border-slate-300"
-              }`}
+              className={`w-full text-left bg-white rounded-2xl border p-5 flex items-center justify-between gap-3 transition-all duration-200 shadow-sm group hover:shadow-md cursor-pointer ${isActive ? item.activeClass : "hover:border-slate-300"
+                }`}
             >
               <div className="space-y-1">
                 <p className="text-xs uppercase tracking-wider font-bold text-slate-500 group-hover:text-slate-700 transition-colors">
@@ -278,7 +277,7 @@ const ViewCategory = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-emerald-700 border-b border-emerald-800 text-white text-xs font-semibold uppercase">
-               
+
                 <th className="p-4 w-100">Category Name</th>
                 <th className="p-4 w-100">Tax</th>
                 <th className="p-4 w-100">Discount</th>
@@ -308,11 +307,9 @@ const ViewCategory = () => {
                   return (
                     <tr
                       key={cat.category_id}
-                      className={`hover:bg-slate-50 transition ${
-                        isInactive ? "bg-slate-100/50 opacity-75" : ""
-                      }`}
+                      className={`hover:bg-slate-50 transition`}
                     >
-                      
+
                       <td className="p-4 font-semibold text-slate-800">
                         {cat.category_name}
                       </td>
@@ -324,7 +321,7 @@ const ViewCategory = () => {
                             min={0}
                             max="100"
                             defaultValue={cat.tax}
-                            disabled={isInactive}
+                         
                             onBlur={(e) =>
                               handleTaxChange(cat.category_id, e.target.value)
                             }
@@ -346,7 +343,7 @@ const ViewCategory = () => {
                             min={0}
                             max="100"
                             defaultValue={cat.discount_category}
-                            disabled={isInactive}
+                            
                             onBlur={(e) =>
                               handleDiscountChange(cat.category_id, e.target.value)
                             }
@@ -362,9 +359,10 @@ const ViewCategory = () => {
                       </td>
                       <td className="p-4">
                         <span
-                          className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                            isInactive ? " text-red-500" : " text-green-600"
-                          }`}
+                          className={`inline-block w-[70px] text-center py-1 rounded-lg text-xs font-semibold ${isInactive
+                            ? "bg-red-50 text-red-500 border border-red-200"
+                            : "bg-green-50 text-green-600 border border-green-200"
+                            }`}
                         >
                           {isInactive ? "Inactive" : "Active"}
                         </span>
@@ -382,9 +380,9 @@ const ViewCategory = () => {
                               onClick={() =>
                                 askConfirm("restore", cat.category_id, cat.category_name)
                               }
-                              className="px-2 py-1.5 rounded-lg text-xs font-semibold text-white bg-emerald-700 border border-emerald-200 hover:bg-emerald-900 transition flex items-center gap-1 cursor-pointer"
+                              className="px-2 py-1.5 rounded-lg text-xs font-semibold text-white bg-emerald-500 border border-emerald-200 hover:bg-emerald-600 transition flex items-center gap-1 cursor-pointer"
                             >
-                            
+
                               Restore
                             </button>
                           ) : (

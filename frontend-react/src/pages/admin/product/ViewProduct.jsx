@@ -83,7 +83,7 @@ const ProductsView = () => {
 
   const filteredProducts = useMemo(() => {
     let list = products;
-    
+
     // Support the regular status states + the custom low_stock rule
     if (statusFilter === "active" || statusFilter === "inactive") {
       list = list.filter((p) => p.status === statusFilter);
@@ -236,9 +236,8 @@ const ProductsView = () => {
             <button
               key={item.title}
               onClick={() => setStatusFilter(item.filterKey)}
-              className={`w-full text-left bg-white rounded-2xl border p-5 flex items-center justify-between gap-3 transition-all duration-200 shadow-sm group hover:shadow-md cursor-pointer ${
-                isActive ? item.activeClass : "hover:border-slate-300"
-              }`}
+              className={`w-full text-left bg-white rounded-2xl border p-5 flex items-center justify-between gap-3 transition-all duration-200 shadow-sm group hover:shadow-md cursor-pointer ${isActive ? item.activeClass : "hover:border-slate-300"
+                }`}
             >
               <div className="space-y-1">
                 <p className="text-xs uppercase tracking-wider font-bold text-slate-500 group-hover:text-slate-700 transition-colors">
@@ -342,9 +341,7 @@ const ProductsView = () => {
                   return (
                     <tr
                       key={prod.product_id}
-                      className={`hover:bg-slate-50 transition ${
-                        isInactive ? "bg-slate-100/50 opacity-75" : ""
-                      }`}
+                      className={`hover:bg-slate-50 transition`}
                     >
                       <td className="p-4 font-mono text-xs text-slate-500">
                         {prod.barcode}
@@ -367,9 +364,8 @@ const ProductsView = () => {
                       </td>
                       <td className="p-4">
                         <span
-                          className={`font-bold ${
-                            isLowStock ? "text-rose-600" : "text-slate-700"
-                          }`}
+                          className={`font-bold ${isLowStock ? "text-rose-600" : "text-slate-700"
+                            }`}
                         >
                           {prod.stock_quantity}
                         </span>
@@ -409,9 +405,10 @@ const ProductsView = () => {
                       </td>
                       <td className="p-4">
                         <span
-                          className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                            isInactive ? " text-red-500" : " text-green-600"
-                          }`}
+                          className={`inline-block w-[70px] text-center py-1 rounded-lg text-xs font-semibold ${isInactive
+                              ? "bg-red-50 text-red-500 border border-red-200"
+                              : "bg-green-50 text-green-600 border border-green-200"
+                            }`}
                         >
                           {isInactive ? "Inactive" : "Active"}
                         </span>
@@ -429,9 +426,9 @@ const ProductsView = () => {
                               onClick={() =>
                                 askConfirm("restore", prod.product_id, prod.product_name)
                               }
-                              className="px-2 py-1.5 rounded-lg text-xs font-semibold text-white bg-emerald-700 border border-emerald-200 hover:bg-emerald-900 transition flex items-center gap-1 cursor-pointer"
+                              className="px-2 py-1.5 rounded-lg text-xs font-semibold text-white bg-emerald-500 border border-emerald-200 hover:bg-emerald-600 transition flex items-center gap-1 cursor-pointer"
                             >
-                              
+
                               Restore
                             </button>
                           ) : (

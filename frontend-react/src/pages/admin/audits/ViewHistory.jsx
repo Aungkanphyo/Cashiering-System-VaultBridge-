@@ -258,9 +258,7 @@ const ViewHistory = () => {
                   return (
                     <tr
                       key={`${tx.id}-${idx}`}
-                      className={`hover:bg-slate-50 transition ${
-                        isVoided ? "bg-rose-50/40" : ""
-                      }`}
+                      className={`hover:bg-slate-50 transition`}
                     >
                       <td className="p-4 font-bold text-center text-slate-400">
                         {(currentPage - 1) * pageSize + idx + 1}.
@@ -272,13 +270,13 @@ const ViewHistory = () => {
                         {tx.dateTime}
                       </td>
                       <td className="p-4 text-right font-mono font-semibold text-slate-800 whitespace-nowrap">
-                        <span className={isVoided ? "line-through text-slate-400" : ""}>
+                        <span>
                           {(tx.finalAmount || 0).toLocaleString()} Ks
                         </span>
                       </td>
                       <td className="p-4 text-right font-mono font-semibold text-amber-600 whitespace-nowrap">
                         {isVoided ? (
-                          <span className="text-slate-400 line-through">
+                          <span>
                             {(tx.changeAmount || 0).toLocaleString()} Ks
                           </span>
                         ) : (
@@ -287,35 +285,35 @@ const ViewHistory = () => {
                       </td>
                       <td className="p-4 text-center whitespace-nowrap">
                         <span
-                          className={`inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-bold border ${
-                            isCash
+                          className={`inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-bold border ${isCash
                               ? "bg-yellow-50 text-yellow-700 border-yellow-100"
                               : "bg-blue-50 text-blue-600 border-blue-100"
-                          }`}
+                            }`}
                         >
-                          
+
                           {tx.paymentMethod}: {(tx.paidAmount || tx.finalAmount || 0).toLocaleString()} Ks
                         </span>
                       </td>
                       <td className="p-4 text-center whitespace-nowrap">
                         {!isVoided ? (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 font-bold text-[10px] uppercase tracking-wide">
+                          <span className="inline-block w-[70px] text-center py-1 rounded-lg text-xs font-semibold bg-green-50 text-green-600 border border-green-200">
                             Completed
                           </span>
                         ) : (
                           <div className="flex flex-col items-center gap-0.5">
-                            <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-rose-100 text-rose-700 font-bold text-[10px] uppercase tracking-wide">
-                              Voideddddddddddddddddddddddddddddddddddddd
+                            <span className="inline-block w-[70px] text-center py-1 rounded-lg text-xs font-semibold bg-red-50 text-red-500 border border-red-200">
+                              Voided
                             </span>
                             {tx.voidReason && (
                               <span
                                 className="text-[10px] text-rose-400 italic max-w-[140px] truncate"
                                 title={tx.voidReason}
                               >
-                                {tx.voidReason}
+                                
                               </span>
                             )}
                           </div>
+
                         )}
                       </td>
                       <td className="p-4 text-center">

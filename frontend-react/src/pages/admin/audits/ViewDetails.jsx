@@ -23,7 +23,7 @@ const ViewDetails = ({ transaction, onClose }) => {
               Voucher Detail
             </h3>
             <p className="text-xs text-white/70 font-medium mt-0.5 font-mono truncate">
-              #{transaction.id} | {transaction.dateTime}
+              {transaction.id} | {transaction.dateTime}
             </p>
           </div>
         </div>
@@ -34,7 +34,7 @@ const ViewDetails = ({ transaction, onClose }) => {
             className="text-white/80 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10"
             aria-label="Close modal"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5 cursor-pointer" />
           </button>
         )}
       </div>
@@ -154,7 +154,7 @@ const ViewDetails = ({ transaction, onClose }) => {
         <button
           type="button"
           onClick={onClose}
-          className="px-4 py-2 text-sm font-semibold text-slate-500 hover:text-slate-700 hover:bg-slate-200 bg-slate-100 rounded-lg transition-colors"
+          className="px-4 py-2 text-sm font-semibold text-slate-700 hover:text-slate-500 hover:bg-slate-200 bg-slate-100 rounded-lg transition-colors cursor-pointer"
         >
           Close Detail
         </button>
