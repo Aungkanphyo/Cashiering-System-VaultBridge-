@@ -10,8 +10,14 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
 
     useScrollLock(isOpen);
 
+    const maxDate = useMemo(() => {
+        const today = new Date();
+        const eighteenYearsAgo = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+        return eighteenYearsAgo.toISOString().split('T')[0];
+    }, []);
+
     const [formData, setFormData] = useState({
-        username: '', password: '', role: 'staff', status: 'Active',
+        username: '', password: '', status: 'Active',
         phone_number: '', nrc: '', date_of_birth: '', address: '',
         gender: 'Male', email: '', join_date: ''
     });
@@ -30,7 +36,7 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
         if (!isOpen) {
             // eslint-disable-next-line react-hooks/set-state-in-effect
             setFormData({
-                username: '', password: '', role: 'staff', status: 'Active',
+                username: '', password: '', status: 'Active',
                 phone_number: '', nrc: '', date_of_birth: '', address: '',
                 gender: 'Male', email: '', join_date: ''
             });
@@ -68,9 +74,8 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
         }
 
         if (name === "date_of_birth") {
-            const today = new Date().toISOString().split('T')[0];
-            if (value > today) {
-                toast.error("Future dates are not allowed for Date of Birth.");
+            if (value > maxDate) {
+                toast.error("Staff must be at least 18 years old.");
                 return;
             }
         }
@@ -119,9 +124,14 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
         }
         if (!formData.date_of_birth) {
             tempErrors.date_of_birth = "Date of birth is required.";
+        } else if (formData.date_of_birth > maxDate) {
+            tempErrors.date_of_birth = "Staff must be at least 18 years old.";
         }
         if (!formData.address.trim()) {
             tempErrors.address = "Address is required.";
+        }
+        if (!formData.join_date) {
+            tempErrors.join_date = "Join date is required.";
         }
 
         // NRC Block Validation
@@ -146,13 +156,11 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
             return;
         }
 
-        const today = new Date().toISOString().split('T')[0];
         const combinedNrc = `${nrcState}/${nrcTownship}${nrcType}${nrcNumber}`;
 
         const finalPayload = {
             ...formData,
             nrc: combinedNrc,
-            join_date: today
         };
 
         try {
@@ -161,7 +169,7 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
                 toast.success('New employee successfully added.');
 
                 setFormData({
-                    username: '', password: '', role: 'staff', status: 'Active',
+                    username: '', password: '', status: 'Active',
                     phone_number: '', nrc: '', date_of_birth: '', address: '',
                     gender: 'Male', email: '', join_date: ''
                 });
@@ -175,8 +183,19 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
             }
         } catch (error) {
             console.error(error);
-            toast.error('There was an error while entering the data. Please check the data again.');
-            // alert('There was an error while entering the data. Please check the data again.');
+            if (error.response && error.response.status === 422) {
+                const backendErrors = error.response.data.errors;
+                const newErrors = {};
+                if (backendErrors) {
+                    Object.keys(backendErrors).forEach((key) => {
+                        newErrors[key] = backendErrors[key][0]; // ပထမဆုံး error message ကို ယူသုံးပါမယ်
+                    });
+                    setErrors(newErrors);
+                    toast.error("The information provided is incorrect.");
+                }
+            } else {
+                toast.error('There was an error while entering the data. Please check the data again.');
+            }
         }
     }
 
@@ -291,7 +310,7 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
                             <input
                                 type="date"
                                 name="date_of_birth"
-                                max={new Date().toISOString().split('T')[0]}
+                                max={maxDate}
                                 value={formData.date_of_birth}
                                 onChange={handleChange}
                                 className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-1 transition text-gray-800 ${errors.date_of_birth
@@ -303,13 +322,21 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
                         </div>
                     </div>
 
-                    {/* Row 4: System Role */}
+                    {/* Row 4: Join Date */}
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">System Role</label>
-                        <select name="role" value={formData.role} onChange={handleChange} className="w-full border border-gray-300 px-3 py-2 bg-white rounded-lg focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition text-gray-800">
-                            <option value="staff">Cashier</option>
-                            <option value="admin">Admin</option>
-                        </select>
+                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Join Date</label>
+                        <input
+                            type="date"
+                            name="join_date"
+                            max={new Date().toISOString().split('T')[0]}
+                            value={formData.join_date}
+                            onChange={handleChange}
+                            className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-1 transition text-gray-800 ${errors.join_date
+                                ? "border-red-400 focus:border-red-500 focus:ring-red-500 bg-red-50/10"
+                                : "border-gray-300 focus:border-emerald-600 focus:ring-emerald-600"
+                                }`}
+                        />
+                        {errors.join_date && <p className="text-[11px] text-red-500 mt-1 font-semibold">{errors.join_date}</p>}
                     </div>
 
                     {/* Row 5: Passport Style NRC Input Block (Full Width) */}
@@ -386,12 +413,18 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
 
                     {/* Row 6: Address */}
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Address</label>
+                        <div className="flex justify-between items-center mb-1">
+                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Address</label>
+                            <span className="text-[11px] text-gray-400 font-semibold">
+                                {formData.address.length} / 100
+                            </span>
+                        </div>
                         <textarea
                             name="address"
                             value={formData.address}
                             onChange={handleChange}
                             rows="2"
+                            maxLength="100"
                             className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-1 transition text-gray-800 resize-none ${errors.address
                                 ? "border-red-400 focus:border-red-500 focus:ring-red-500 bg-red-50/10"
                                 : "border-gray-300 focus:border-emerald-600 focus:ring-emerald-600"

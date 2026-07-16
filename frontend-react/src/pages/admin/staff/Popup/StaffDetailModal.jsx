@@ -46,6 +46,11 @@ const StaffDetailModal = ({ isOpen, onClose, staff }) => {
                         </div>
                     </div>
 
+                    <div>
+                        <span className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-0.5">Email Address</span>
+                        <span className="font-semibold text-gray-700 break-all">{staff.email || "-"}</span>
+                    </div>
+
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <span className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-0.5">Date of Birth</span>

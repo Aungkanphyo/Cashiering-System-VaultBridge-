@@ -115,7 +115,7 @@ class StaffController extends Controller
         $staff->phone_number = $request->phone_number;
         $staff->gender = $request->gender;
         $staff->date_of_birth = $request->date_of_birth;
-        $staff->role = $request->role;
+        $staff->role = 'cashier';
         $staff->nrc = $request->nrc;
         $staff->address = $request->address;
         $staff->join_date = $request->join_date;
@@ -140,7 +140,6 @@ class StaffController extends Controller
         $staff->phone_number = $request->phone_number;
         $staff->gender = $request->gender;
         $staff->date_of_birth = $request->date_of_birth;
-        $staff->role = $request->role;
         $staff->nrc = $request->nrc;
         $staff->address = $request->address;
 
