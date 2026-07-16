@@ -20,9 +20,7 @@ const Voucher = ({
     // --- Local States for Payments ---
     const [paymentMethod, setPaymentMethod] = useState('Cash');
     const [payAmount, setPayAmount] = useState('');
-    // Temporary Page Title  State
-    const [originalTitle, setOriginalTitle] = useState('');
-
+    
     // Default payment method setup when dbPaymentMethods are loaded
     useEffect(() => {
         if (dbPaymentMethods && dbPaymentMethods.length > 0) {
@@ -45,11 +43,9 @@ const Voucher = ({
     // Print trigger execution (resets cart on success)
     const handlePrintFn = useReactToPrint({
         contentRef: printComponentRef,
+        // chang documentTitle to function expression 
+        documentTitle: () => `Mark4U_Voucher_${voucherId || '0000'}`,
         onAfterPrint: () => {
-            // if printer box is closed, restore the original title and clear cart
-            if (originalTitle) {
-                document.title = originalTitle;
-            }
             onClearAll();
             toast.success('Sale processed successfully!');
         }
@@ -128,11 +124,7 @@ const Voucher = ({
                 
                 setAvailableProducts(updatedProducts);
                 
-                // 3. change the document title to include the voucher ID for PDF naming
-                const currentTitle = document.title;
-                setOriginalTitle(currentTitle); // original title 
-                document.title = `Mark4U_Voucher_${voucherId}`; // change pdf title for download
-                
+                // 3. Next Voucher Pre-fetch
                 fetchNextVoucherId();
 
                 // 4. Trigger receipt print layout rendering
@@ -197,7 +189,7 @@ const Voucher = ({
                 <div className="flex justify-between items-center pb-2 border-b border-slate-100 mb-3">
                     <h3 className="text-xs font-black text-slate-900 tracking-wide uppercase flex items-center gap-1.5">
                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-600"></span>
-                        VOUCHER NO: #{voucherId || 'N/A'}
+                        VOUCHER NO: {voucherId || 'N/A'}
                     </h3>
                     <button onClick={onClearAll} className="text-[10px] font-bold text-red-500 hover:underline">
                         Clear All

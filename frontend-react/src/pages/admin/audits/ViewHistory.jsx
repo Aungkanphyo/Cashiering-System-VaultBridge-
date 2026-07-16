@@ -1,9 +1,8 @@
 import "../../../api/echo";
 import { useEffect, useState } from "react";
 import ViewDetails from "./ViewDetails";
-import toast from "react-hot-toast"
 import api from "../../../api/axios";
-import Toast from "../../../components/common/Toast";
+import toast from "react-hot-toast";
 import Modal from "../../../components/common/Modal";
 import Pagination from "../../../components/common/Pagination";
 import { Search, RotateCcw, Eye, Loader2, Wallet, QrCode } from "lucide-react";
@@ -12,8 +11,7 @@ const ViewHistory = () => {
   // Server-side State Management
   const [transactions, setTransactions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [toast, setToast] = useState("");
-  const [toastType, setToastType] = useState("success");
+
 
   // Database Payment Methods State
   const [dbPaymentMethods, setDbPaymentMethods] = useState([]);
@@ -24,6 +22,7 @@ const ViewHistory = () => {
   const [status, setStatus] = useState("ALL");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const today = new Date().toISOString().split("T")[0];
 
   // Server-side Pagination States
   const [pageSize, setPageSize] = useState(10);
@@ -35,11 +34,6 @@ const ViewHistory = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedVoucher, setSelectedVoucher] = useState(null);
 
-  const showToast = (message, type = "success") => {
-    setToast(message);
-    setToastType(type);
-    setTimeout(() => setToast(""), 2500);
-  };
 
   useEffect(() => {
     const fetchPaymentMethods = async () => {
@@ -79,10 +73,7 @@ const ViewHistory = () => {
         setTotalPages(metaData.last_page || metaData.meta?.last_page || 1);
         setTotalRecords(metaData.total || metaData.meta?.total || 0);
       } catch (err) {
-        showToast(
-          err.response?.data?.message || "Failed to load sales history",
-          "error"
-        );
+        toast.error("Failed to load sales history");
       } finally {
         setIsLoading(false);
       }
@@ -111,7 +102,6 @@ const ViewHistory = () => {
 
   return (
     <div className="min-h-screen">
-      <Toast message={toast} type={toastType} />
 
       {/* Filter Panel */}
       <div className="bg-white rounded-2xl border shadow-sm p-6">
@@ -165,28 +155,44 @@ const ViewHistory = () => {
           {/* Date Range */}
           <div className="flex items-center gap-2">
             <label className="text-sm font-semibold text-slate-600">FROM:</label>
-            <input
-              type="date"
-              value={fromDate}
-              onChange={(e) => {
-                setFromDate(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="border rounded-lg px-3 py-2 cursor-text focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15"
-            />
+            <input type="date" value={fromDate} max={today}
+                onChange={(e) => {
+                  const value = e.target.value;
+
+                  if (new Date(value) > new Date(today)) {
+                    toast.error("From date cannot be greater than today.");
+                    return;
+                  }
+
+                  if (toDate && new Date(toDate) < new Date(value)) {
+                    toast.error("From date cannot be greater than To date. Please select again!");
+                    return;
+                  }
+
+                  setFromDate(value);
+                }}
+                className="border rounded-lg px-3 py-2 cursor-text focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15"/>
           </div>
 
           <div className="flex items-center gap-2">
             <label className="text-sm font-semibold text-slate-600">TO:</label>
-            <input
-              type="date"
-              value={toDate}
+            <input type="date" value={toDate} min={fromDate || undefined} max={today}
               onChange={(e) => {
-                setToDate(e.target.value);
-                setCurrentPage(1);
+                const value = e.target.value;
+
+                if (fromDate && new Date(value) < new Date(fromDate)) {
+                  toast.error("To date cannot be earlier than From date.");
+                  return;
+                }
+
+                if (new Date(value) > new Date(today)) {
+                  toast.error("To date cannot be greater than today.");
+                  return;
+                }
+
+                setToDate(value);
               }}
-              className="border rounded-lg px-3 py-2 cursor-text focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15"
-            />
+              className="border rounded-lg px-3 py-2 cursor-text focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15" />
           </div>
 
           <button
@@ -194,7 +200,7 @@ const ViewHistory = () => {
             className="flex items-center gap-2 rounded-lg bg-red-600 text-white hover:bg-red-700 px-4 py-2 text-sm font-semibold shadow-sm whitespace-nowrap cursor-pointer lg:ml-auto"
           >
             <RotateCcw size={18} />
-            Reset Filter
+            Reset
           </button>
         </div>
       </div>
@@ -227,7 +233,6 @@ const ViewHistory = () => {
           <table className="w-full text-left border-collapse min-w-[1000px]">
             <thead>
               <tr className="bg-emerald-700 border-b border-emerald-800 text-white text-xs font-semibold uppercase">
-                <th className="p-4 w-16 text-center">No.</th>
                 <th className="p-4">Sale ID</th>
                 <th className="p-4">Date &amp; Time</th>
                 <th className="p-4 text-right">Total Grand</th>
@@ -260,32 +265,20 @@ const ViewHistory = () => {
                   return (
                     <tr
                       key={`${tx.id}-${idx}`}
-                      className={`hover:bg-slate-50 transition ${
-                        isVoided ? "bg-rose-50/40" : ""
-                      }`}
-                    >
-                      <td className="p-4 font-bold text-center text-slate-400">
-                        {(currentPage - 1) * pageSize + idx + 1}.
+                      className={`hover:bg-slate-50 transition`}>
+                      <td className="p-4 font-semibold text-slate-800">
+                        {tx.id}
                       </td>
-                      <td className="p-4 font-mono font-semibold text-slate-800">
-                        #{tx.id}
-                      </td>
-                      <td className="p-4 font-mono text-xs text-slate-500 whitespace-nowrap">
+                      <td className="p-4 font-semibold text-xs text-slate-800 whitespace-nowrap">
                         {tx.dateTime}
                       </td>
-                      <td className="p-4 text-right font-mono font-semibold text-slate-800 whitespace-nowrap">
-                        <span className={isVoided ? "line-through text-slate-400" : ""}>
+                      <td className="p-4 text-right text-xs font-semibold text-slate-800 whitespace-nowrap">
+                        
                           {(tx.finalAmount || 0).toLocaleString()} Ks
-                        </span>
+                        
                       </td>
-                      <td className="p-4 text-right font-mono font-semibold text-amber-600 whitespace-nowrap">
-                        {isVoided ? (
-                          <span className="text-slate-400 line-through">
-                            {(tx.changeAmount || 0).toLocaleString()} Ks
-                          </span>
-                        ) : (
-                          <span>{(tx.changeAmount || 0).toLocaleString()} Ks</span>
-                        )}
+                      <td className="p-4 text-right text-xs font-semibold text-slate-800 whitespace-nowrap">
+                        <span>{(tx.changeAmount || 0).toLocaleString()} Ks</span>
                       </td>
                       <td className="p-4 text-center whitespace-nowrap">
                         <span
@@ -296,7 +289,7 @@ const ViewHistory = () => {
                           }`}
                         >
                           
-                          {tx.paymentMethod}: {(tx.paidAmount || tx.finalAmount || 0).toLocaleString()} Ks
+                          {tx.paymentMethod}
                         </span>
                       </td>
                       <td className="p-4 text-center whitespace-nowrap">
@@ -307,7 +300,7 @@ const ViewHistory = () => {
                         ) : (
                           <div className="flex flex-col items-center gap-0.5">
                             <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-rose-100 text-rose-700 font-bold text-[10px] uppercase tracking-wide">
-                              Voideddddddddddddddddddddddddddddddddddddd
+                              Voided
                             </span>
                             {tx.voidReason && (
                               <span

@@ -3,30 +3,7 @@ import { Search } from "lucide-react";
 import api from '../../api/axios';
 import Voucher from './Voucher'; // voucher import for right column
 import { io } from 'socket.io-client';
-import { CheckCircle, XCircle } from "lucide-react";
-
-// --- Inline Custom Toast Component ---
-const Toast = ({ message, type = "success" }) => {
-    if (!message) return null;
-    const isError = type === "error";
-
-    return (
-        <div
-            className={`fixed top-6 left-1/2 -translate-x-1/2 z-[60] flex items-center p-4 text-sm rounded-lg border shadow-lg transition-all duration-300 ${
-                isError
-                    ? "text-rose-800 bg-rose-100 border-rose-300"
-                    : "text-emerald-800 bg-emerald-100 border-emerald-300"
-            }`}
-        >
-            {isError ? (
-                <XCircle className="w-5 h-5 mr-2 text-rose-600" />
-            ) : (
-                <CheckCircle className="w-5 h-5 mr-2 text-emerald-600" />
-            )}
-            <span className="font-medium">{message}</span>
-        </div>
-    );
-};
+import toast from 'react-hot-toast';
 
 const SaleWorkspace = () => {
     // --- States for Backend API Integration ---
@@ -42,26 +19,6 @@ const SaleWorkspace = () => {
 
     // To save Payment Methods from the Database
     const [dbPaymentMethods, setDbPaymentMethods] = useState([]);
-
-    // Custom Toast Notification States
-    const [toastMessage, setToastMessage] = useState("");
-    const [toastType, setToastType] = useState("success");
-
-    // Helper function to trigger our custom toast with an auto-hide timeout
-    const showNotification = (message, type = "success") => {
-        setToastMessage(message);
-        setToastType(type);
-    };
-
-    // Auto-clear notification after 4 seconds
-    useEffect(() => {
-        if (toastMessage) {
-            const timer = setTimeout(() => {
-                setToastMessage("");
-            }, 4000);
-            return () => clearTimeout(timer);
-        }
-    }, [toastMessage]);
 
     // For real-time barcode
     const productRef = useRef(availableProducts);
@@ -147,7 +104,7 @@ const SaleWorkspace = () => {
 
             if (matchedProduct) {
                 if (matchedProduct.status === 'inactive') {
-                    showNotification(`"${matchedProduct.name}" cannot be added.`, "error");
+                    toast.error(`"${matchedProduct.name}" cannot be added.`);
                     return;
                 }
 
@@ -167,9 +124,9 @@ const SaleWorkspace = () => {
                     return [...prev, { ...matchedProduct, quantity: 1 }];
                 });
 
-                showNotification(`Scanned: ${matchedProduct.name} added to cart.`, "success");
+                toast.success(`Scanned: ${matchedProduct.name} added to cart.`);
             } else {
-                showNotification(`Product Code [${cleanBarcode}] Not Found in Database!`, "error");
+                toast.error(`Product Code [${cleanBarcode}] Not Found in Database!`);
             }
         });
 
@@ -225,6 +182,14 @@ const SaleWorkspace = () => {
             return;
         }
 
+        const existItem = cartItems.find(item => item.id === product.id);
+        const currentQty = existItem ? existItem.quantity : 0;
+
+        if (currentQty + 1 > product.stock_quantity) {
+            toast.error(`"${product.name}" exceeds the available stock ${product.stock_quantity} `);
+            return;
+        }
+
         setRecentProductId(product.id);
         setCartItems(prev => {
             const exist = prev.find(item => item.id === product.id);
@@ -241,67 +206,8 @@ const SaleWorkspace = () => {
         setRecentProductId(null);
     };
 
-    // Process Sale with Laravel API Integration ---
-    const handleProcessSale = async () => {
-        if (cartItems.length === 0) {
-            showNotification('No products in the cart to process sale.', "error");
-            return;
-        }
-
-        // Validation check only if you cash
-        if (isCashSelected) {
-            if (!payAmount || parseFloat(payAmount) <= 0) {
-                showNotification('Please enter a valid payment amount.', "error");
-                return;
-            }
-
-            if (parseFloat(payAmount) < finalTotal) {
-                showNotification('Payment amount is less than the total amount due.', "error");
-                return;
-            }
-        }
-
-        const matchedPaymentObj = dbPaymentMethods.find(
-            method => method.payment_name.toLowerCase() === paymentMethod.toLowerCase()
-        );
-
-        if (!matchedPaymentObj) {
-            showNotification(`The selected payment method [${paymentMethod}] was not found in the database.`, "error");
-            return;
-        }
-
-        const salePayload = {
-            payment_id: matchedPaymentObj.payment_id,
-            status: 'completed',
-            payment_received: isCashSelected ? parseFloat(payAmount) : finalTotal,
-
-            items: cartItems.map(item => ({
-                product_id: Number(item.id),
-                quantity: parseInt(item.quantity, 10),
-            }))
-        };
-
-        try {
-            const response = await api.post('/vouchers', salePayload);
-
-            if (response.status === 200 || response.status === 201 || response.data.success) {
-                showNotification(`Transaction is successfully completed!`, "success");
-                fetchNextVoucherId();
-                handleClearCart();
-            }
-        } catch (error) {
-            console.error("Sale Process Backend Error:", error);
-            const serverError = error.response?.data?.message || error.response?.data?.error || "Failed to process sale. Please try again.";
-            showNotification(serverError, "error");
-            throw error; 
-        }
-    };
-
     return (
         <div className="w-full min-h-screen bg-[#F8FAFC] font-sans flex text-slate-800 antialiased px-4 pt-0 pb-4 relative">
-            {/* Custom App Toast Notification Panel */}
-            <Toast message={toastMessage} type={toastType} />
-
             <div className="flex-1 flex flex-col overflow-y-auto">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start flex-1 mt-2">
 

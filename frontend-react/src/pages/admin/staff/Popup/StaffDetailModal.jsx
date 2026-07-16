@@ -81,11 +81,11 @@ const StaffDetailModal = ({ isOpen, onClose, staff }) => {
                     <div className="pt-4 border-t border-slate-100">
                         <span className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Total Errors</span>
                         <div className="flex flex-col gap-1.5">
-                            <span className="font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded w-max text-xs">
+                            <span className="font-semibold text-rose-600 bg-rose-100 px-2 py-0.5 rounded w-max text-xs">
                                 {staff.total_errors?.count || "0 times"}
                             </span>
                             {staff.total_errors?.details && staff.total_errors.details.length > 0 && (
-                                <ul className="text-xs font-medium text-slate-600 list-disc list-inside bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-1">
+                                <ul className="text-xs font-medium list-inside bg-rose-50 p-3 rounded-lg border border-slate-200 space-y-1">
                                     {staff.total_errors.details.map((error, idx) => (
                                         <li key={idx}>{error}</li>
                                     ))}

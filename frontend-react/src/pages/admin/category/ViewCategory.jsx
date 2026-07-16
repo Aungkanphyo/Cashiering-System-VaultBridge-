@@ -9,7 +9,7 @@ import {
   XCircle,
 } from "lucide-react";
 import api from "../../../api/axios";
-import Toast from "../../../components/common/Toast";
+import toast from "react-hot-toast";
 import Modal from "../../../components/common/Modal";
 import ConfirmDialog from "../../../components/common/ConfirmDialog";
 import Pagination from "../../../components/common/Pagination";
@@ -19,8 +19,6 @@ import EditCategory from "./EditCategory";
 const ViewCategory = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState("");
-  const [toastType, setToastType] = useState("success");
   const [showAddModal, setShowAddModal] = useState(false);
   const [editCategoryId, setEditCategoryId] = useState(null);
   const [discountError, setDiscountError] = useState({});
@@ -31,11 +29,6 @@ const ViewCategory = () => {
   const [pageSize, setPageSize] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const showToast = (message, type = "success") => {
-    setToast(message);
-    setToastType(type);
-    setTimeout(() => setToast(""), 2500);
-  };
 
   const fetchCategories = async () => {
     setLoading(true);
@@ -43,10 +36,7 @@ const ViewCategory = () => {
       const res = await api.get("/categories");
       setCategories(res.data);
     } catch (err) {
-      showToast(
-        err.response?.data?.message || "Failed to load categories",
-        "error"
-      );
+      toast.error("Failed to load categories");
     } finally {
       setLoading(false);
     }
@@ -103,12 +93,9 @@ const ViewCategory = () => {
       setCategories((prev) =>
         prev.map((c) => (c.category_id === categoryId ? res.data : c))
       );
-      showToast("Tax updated");
+      toast.success("Tax updated");
     } catch (err) {
-      showToast(
-        err.response?.data?.message || "Failed to update tax",
-        "error"
-      );
+      toast.error("Failed to update tax");
     }
   };
 
@@ -132,12 +119,9 @@ const ViewCategory = () => {
       setCategories((prev) =>
         prev.map((c) => (c.category_id === categoryId ? res.data : c))
       );
-      showToast("Discount updated");
+      toast.success("Discount updated");
     } catch (err) {
-      showToast(
-        err.response?.data?.message || "Failed to update discount",
-        "error"
-      );
+      toast.error("Failed to update discount");
     }
   };
 
@@ -150,14 +134,9 @@ const ViewCategory = () => {
     try {
       const res = await api.put(`/categories/${id}`, { status: newStatus });
       setCategories((prev) => prev.map((c) => (c.category_id === id ? res.data : c)));
-      showToast(
-        type === "delete" ? `"${name}" set to inactive` : `"${name}" restored`
-      );
+      toast.success(type === "delete" ? `"${name}" set to inactive` : `"${name}" restored`)
     } catch (err) {
-      showToast(
-        err.response?.data?.message || "Failed to update category",
-        "error"
-      );
+      toast.error("Failed to update category");
     } finally {
       setConfirmState(null);
     }
@@ -197,7 +176,6 @@ const ViewCategory = () => {
 
   return (
     <div className="min-h-screen">
-      <Toast message={toast} type={toastType} />
 
       {/* Interactive Stat Cards Section */}
       <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
@@ -282,7 +260,7 @@ const ViewCategory = () => {
                 <th className="p-4 w-100">Category Name</th>
                 <th className="p-4 w-100">Tax</th>
                 <th className="p-4 w-100">Discount</th>
-                <th className="p-4 w-30">Status</th>
+                <th className="p-4 w-20 text-center">Status</th>
                 <th className="p-4 w-50 text-center">Actions</th>
               </tr>
             </thead>
@@ -425,7 +403,7 @@ const ViewCategory = () => {
           onSuccess={() => {
             setShowAddModal(false);
             fetchCategories();
-            showToast("Category added successfully");
+            toast.success("Category added successfully");
           }}
         />
       </Modal>
@@ -440,7 +418,7 @@ const ViewCategory = () => {
           onSuccess={() => {
             setEditCategoryId(null);
             fetchCategories();
-            showToast("Category updated successfully");
+            toast.success("Category updated successfully");
           }}
         />
       </Modal>

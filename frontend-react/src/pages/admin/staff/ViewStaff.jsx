@@ -101,7 +101,7 @@ const ViewStaff = () => {
         setConfirmState({
             id: staff.user_id,
             name: staff.username,
-            nextStatus: staff.status === 'Active' ? 'Inactive' : 'Active',
+            nextStatus: staff.status.toLowercase() === 'active' ? 'Inactive' : 'Active',
         });
     }
 
@@ -268,12 +268,11 @@ const ViewStaff = () => {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-emerald-700 border-b border-emerald-800 text-white text-xs font-semibold uppercase">
-                                <th className="p-4 w-16 text-center">No</th>
-                                <th className="p-4">Name</th>
-                                <th className="p-4">Gender</th>
-                                <th className="p-4">Join Date</th>
-                                <th className="p-4 w-28">Status</th>
-                                <th className="p-4 text-center">Actions</th>
+                                <th className="p-4 w-50">Name</th>
+                                <th className="p-4 w-50">Gender</th>
+                                <th className="p-4 w-50">Join Date</th>
+                                <th className="p-4 w-50">Status</th>
+                                <th className="p-4 w-50 text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 text-sm">
@@ -302,14 +301,11 @@ const ViewStaff = () => {
                                                 isInactive ? "bg-slate-100/50 opacity-75" : ""
                                             }`}
                                         >
-                                            <td className="p-4 text-center font-bold text-slate-500">
-                                                {(currentPage - 1) * pageSize + index + 1}
-                                            </td>
                                             <td className="p-4 font-semibold text-slate-800">
                                                 {staff.username}
                                             </td>
-                                            <td className="p-4 text-slate-700">{staff.gender}</td>
-                                            <td className="p-4 text-slate-700">{formatDate(staff.join_date)}</td>
+                                            <td className="p-4 font-semibold text-slate-800">{staff.gender}</td>
+                                            <td className="p-4 font-semibold text-slate-800">{formatDate(staff.join_date)}</td>
                                             <td className="p-4">
                                                 <span
                                                     className={`px-2.5 py-1 rounded-full text-xs font-semibold ${

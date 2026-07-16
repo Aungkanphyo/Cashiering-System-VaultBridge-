@@ -10,7 +10,7 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import api from "../../../api/axios";
-import Toast from "../../../components/common/Toast";
+import toast from "react-hot-toast"
 import Modal from "../../../components/common/Modal";
 import ConfirmDialog from "../../../components/common/ConfirmDialog";
 import Pagination from "../../../components/common/Pagination";
@@ -21,8 +21,6 @@ const ProductsView = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState("");
-  const [toastType, setToastType] = useState("success");
   const [showAddModal, setShowAddModal] = useState(false);
   const [editProductId, setEditProductId] = useState(null);
   const [discountError, setDiscountError] = useState({});
@@ -31,12 +29,6 @@ const ProductsView = () => {
   const [confirmState, setConfirmState] = useState(null); // { type: 'delete'|'restore', id, name }
   const [pageSize, setPageSize] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
-
-    const showToast = (message, type = "success") => {
-        setToast(message);
-        setToastType(type);
-        setTimeout(() => setToast(""), 2500);
-    };
 
   const fetchData = async () => {
     setLoading(true);
@@ -48,10 +40,7 @@ const ProductsView = () => {
       setProducts(productsRes.data);
       setCategories(categoriesRes.data);
     } catch (err) {
-      showToast(
-        err.response?.data?.message || "Failed to load products",
-        "error"
-      );
+      toast.error("Failed to load products");
     } finally {
       setLoading(false);
     }
@@ -148,12 +137,9 @@ const ProductsView = () => {
             setProducts((prev) =>
                 prev.map((p) => (p.product_id === productId ? res.data : p))
             );
-            showToast("Discount updated");
+            toast.success("Discount updated");
         } catch (err) {
-            showToast(
-                err.response?.data?.message || "Failed to update discount",
-                "error"
-            );
+          toast.error("Failed to update discount");
         }
     };
 
@@ -166,14 +152,9 @@ const ProductsView = () => {
         try {
             const res = await api.put(`/products/${id}`, { status: newStatus });
             setProducts((prev) => prev.map((p) => (p.product_id === id ? res.data : p)));
-            showToast(
-                type === "delete" ? `"${name}" set to inactive` : `"${name}" restored`
-            );
+            toast.success(type === "delete" ? `"${name}" set to inactive` : `"${name}" restored`);
         } catch (err) {
-            showToast(
-                err.response?.data?.message || "Failed to update product",
-                "error"
-            );
+          toast.error("Failed to update product");
         } finally {
             setConfirmState(null);
         }
@@ -224,8 +205,6 @@ const ProductsView = () => {
 
   return (
     <div className="min-h-screen">
-      <Toast message={toast} type={toastType} />
-
       {/* Interactive Stat Cards Section */}
       <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-5">
         {summaryStats.map((item) => {
@@ -311,9 +290,9 @@ const ProductsView = () => {
                 <th className="p-4">Sale Price</th>
                 <th className="p-4">Stock Qty</th>
                 <th className="p-4">Min Stock Level</th>
-                <th className="p-4 w-32">Discount (%)</th>
-                <th className="p-4 w-32">Discount Amount</th>
-                <th className="p-4 w-28">Status</th>
+                <th className="p-4 w-30">Discount (%)</th>
+                <th className="p-4 w-30">Discount Price</th>
+                <th className="p-4 w-15 text-center">Status</th>
                 <th className="p-4 text-center">Actions</th>
               </tr>
             </thead>
@@ -346,7 +325,7 @@ const ProductsView = () => {
                         isInactive ? "bg-slate-100/50 opacity-75" : ""
                       }`}
                     >
-                      <td className="p-4 font-mono text-xs text-slate-500">
+                      <td className="p-4 font-semibold text-slate-800 text-xs">
                         {prod.barcode}
                       </td>
                       <td className="p-4">
@@ -360,7 +339,7 @@ const ProductsView = () => {
                       <td className="p-4 font-semibold text-slate-800">
                         {Number(prod.price).toLocaleString()}Ks
                       </td>
-                      <td className="p-4 font-semibold text-emerald-700">
+                      <td className="p-4 font-semibold text-emerald-600">
                         {salePrice.toLocaleString(undefined, {
                           maximumFractionDigits: 2,
                         })}Ks
@@ -368,13 +347,13 @@ const ProductsView = () => {
                       <td className="p-4">
                         <span
                           className={`font-bold ${
-                            isLowStock ? "text-rose-600" : "text-slate-700"
+                            isLowStock ? "text-rose-600" : "text-slate-800"
                           }`}
                         >
                           {prod.stock_quantity}
                         </span>
                       </td>
-                      <td className="p-4 text-slate-500 font-semibold">
+                      <td className="p-4 text-slate-800 font-semibold">
                         {prod.min_stock_level}
                       </td>
                       <td className="p-4">
@@ -391,7 +370,7 @@ const ProductsView = () => {
                                 e.target.value
                               )
                             }
-                            className="w-16 p-1 text-center border border-slate-200 rounded text-xs font-bold text-slate-700 focus:ring-1 focus:ring-emerald-500 focus:outline-none bg-white"
+                            className="w-16 p-1 text-center border border-slate-200 rounded text-xs font-bold text-slate-800 focus:ring-1 focus:ring-emerald-500 focus:outline-none bg-white"
                           />
                           <span className="text-xs text-slate-400">%</span>
                         </div>
@@ -470,7 +449,7 @@ const ProductsView = () => {
           onSuccess={() => {
             setShowAddModal(false);
             fetchData();
-            showToast("Product added successfully");
+            toast.success("Product added successfully");
           }}
         />
       </Modal>
@@ -485,7 +464,7 @@ const ProductsView = () => {
                     onSuccess={() => {
                         setEditProductId(null);
                         fetchData();
-                        showToast("Product updated successfully");
+                        toast.success("Product updated successfully");
                     }}
                 />
             </Modal>

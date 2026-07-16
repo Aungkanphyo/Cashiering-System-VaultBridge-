@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../../../api/axios";
-import Toast from "../../../components/common/Toast";
+import toast from "react-hot-toast";
 import Pagination from "../../../components/common/Pagination";
 import { Search, RotateCcw, User, FileText, Loader2 } from "lucide-react";
 
@@ -8,13 +8,12 @@ const ViewSession = () => {
   // Server-side State Management
   const [sessions, setSessions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [toast, setToast] = useState("");
-  const [toastType, setToastType] = useState("success");
 
   // Filter Controller States
   const [searchTerm, setSearchTerm] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const today = new Date().toISOString().split("T")[0];
 
   // Server-side Pagination States
   const [pageSize, setPageSize] = useState(10);
@@ -22,11 +21,6 @@ const ViewSession = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
 
-  const showToast = (message, type = "success") => {
-    setToast(message);
-    setToastType(type);
-    setTimeout(() => setToast(""), 2500);
-  };
 
   useEffect(() => {
     const fetchSessions = async () => {
@@ -49,10 +43,7 @@ const ViewSession = () => {
         setTotalPages(metaData.last_page || metaData.meta?.last_page || 1);
         setTotalRecords(metaData.total || metaData.meta?.total || 0);
       } catch (err) {
-        showToast(
-          err.response?.data?.message || "Failed to load register sessions",
-          "error"
-        );
+        toast.error("Failed to load register sessions");
       } finally {
         setIsLoading(false);
       }
@@ -85,66 +76,81 @@ const ViewSession = () => {
 
   return (
     <div className="min-h-screen">
-      <Toast message={toast} type={toastType} />
-{/* Filter Panel */}
-<div className="bg-white rounded-2xl border shadow-sm p-6">
-  <div className="flex flex-col md:flex-row md:items-center gap-4">
-    {/* Search */}
-    <div className="relative w-full sm:w-84">
-      <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-      <input
-        type="text"
-        placeholder="Search cashier by name..."
-        value={searchTerm}
-        onChange={(e) => {
-          setSearchTerm(e.target.value);
-          setCurrentPage(1);
-        }}
-        className="w-full pl-9 pr-3 py-2 border rounded-lg text-sm bg-transparent cursor-text focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15 transition"
-      />
-    </div>
+      {/* Filter Panel */}
+      <div className="bg-white rounded-2xl border shadow-sm p-6">
+        <div className="flex flex-col md:flex-row md:items-center gap-4">
+          {/* Search */}
+          <div className="relative w-full sm:w-84">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search cashier by name..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full pl-9 pr-3 py-2 border rounded-lg text-sm bg-transparent cursor-text focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15 transition"
+            />
+          </div>
 
-    {/* Right Side */}
-    <div className="flex items-center gap-3 md:ml-auto">
-      {/* From */}
-      <div className="flex items-center gap-2">
-        <label className="text-sm font-semibold text-slate-600">FROM:</label>
-        <input
-          type="date"
-          value={fromDate}
-          onChange={(e) => {
-            setFromDate(e.target.value);
-            setCurrentPage(1);
-          }}
-          className="border rounded-lg px-3 py-2 cursor-text focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15"
-        />
+          {/* Right Side */}
+          <div className="flex items-center gap-3 md:ml-auto">
+            {/* From */}
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-semibold text-slate-600">FROM:</label>
+              <input type="date" value={fromDate} max={today}
+                onChange={(e) => {
+                  const value = e.target.value;
+
+                  if (new Date(value) > new Date(today)) {
+                    toast.error("From date cannot be greater than today.");
+                    return;
+                  }
+
+                  if (toDate && new Date(toDate) < new Date(value)) {
+                    toast.error("From date cannot be greater than To date. Please select again!");
+                    return;
+                  }
+
+                  setFromDate(value);
+                }}
+                className="border rounded-lg px-3 py-2 cursor-text focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15"/>
+            </div>
+
+            {/* To */}
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-semibold text-slate-600">TO:</label>
+              <input type="date" value={toDate} min={fromDate || undefined} max={today}
+              onChange={(e) => {
+                const value = e.target.value;
+
+                if (fromDate && new Date(value) < new Date(fromDate)) {
+                  toast.error("To date cannot be earlier than From date.");
+                  return;
+                }
+
+                if (new Date(value) > new Date(today)) {
+                  toast.error("To date cannot be greater than today.");
+                  return;
+                }
+
+                setToDate(value);
+              }}
+              className="border rounded-lg px-3 py-2 cursor-text focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15" />
+            </div>
+
+            {/* Reset */}
+            <button
+              onClick={handleReset}
+              className="flex items-center gap-2 rounded-lg bg-red-600 text-white hover:bg-red-700 px-4 py-2 text-sm font-semibold shadow-sm whitespace-nowrap cursor-pointer"
+            >
+              <RotateCcw size={18} />
+              Reset
+            </button>
+          </div>
+        </div>
       </div>
-
-      {/* To */}
-      <div className="flex items-center gap-2">
-        <label className="text-sm font-semibold text-slate-600">TO:</label>
-        <input
-          type="date"
-          value={toDate}
-          onChange={(e) => {
-            setToDate(e.target.value);
-            setCurrentPage(1);
-          }}
-          className="border rounded-lg px-3 py-2 cursor-text focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15"
-        />
-      </div>
-
-      {/* Reset */}
-      <button
-        onClick={handleReset}
-        className="flex items-center gap-2 rounded-lg bg-red-600 text-white hover:bg-red-700 px-4 py-2 text-sm font-semibold shadow-sm whitespace-nowrap cursor-pointer"
-      >
-        <RotateCcw size={18} />
-        Reset
-      </button>
-    </div>
-  </div>
-</div>
 
       {/* Table Section */}
       <div className="bg-white rounded-2xl border shadow-sm overflow-hidden mt-8">
@@ -174,12 +180,11 @@ const ViewSession = () => {
           <table className="w-full text-left border-collapse min-w-[1000px]">
             <thead>
               <tr className="bg-emerald-700 border-b border-emerald-800 text-white text-xs font-semibold uppercase">
-                <th className="p-4 w-16 text-center">No.</th>
-                <th className="p-4">Staff Member</th>
+                <th className="p-4">Staff Name</th>
                 <th className="p-4">Opening Time</th>
                 <th className="p-4">Closing Time</th>
-                <th className="p-4 text-right">Expected Cash</th>
-                <th className="p-4 text-right">Actual Cash</th>
+                <th className="p-4">Expected Cash</th>
+                <th className="p-4">Actual Cash</th>
                 <th className="p-4 text-center">Discrepancy</th>
                 <th className="p-4">Report / Notes</th>
               </tr>
@@ -207,50 +212,43 @@ const ViewSession = () => {
 
                   return (
                     <tr key={`${session.session_id}-${idx}`} className="hover:bg-slate-50 transition">
-                      <td className="p-4 font-bold text-center text-slate-400">
-                        {(currentPage - 1) * pageSize + idx + 1}.
-                      </td>
-
                       <td className="p-4">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center text-emerald-700">
-                            <User className="w-4 h-4" />
-                          </div>
                           <span className="font-semibold text-slate-800 whitespace-nowrap">
                             {session.user?.username || "Unknown Staff"}
                           </span>
                         </div>
                       </td>
 
-                      <td className="p-4 font-mono text-xs text-slate-500 whitespace-nowrap">
+                      <td className="p-4 font-semibold text-xs text-slate-800 whitespace-nowrap">
                         {formatRawDatabaseTime(session.opening_time)}
                       </td>
 
-                      <td className="p-4 font-mono text-xs whitespace-nowrap">
+                      <td className="p-4 font-semibold text-xs whitespace-nowrap">
                         {isRunning ? (
                           <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 font-bold text-[10px] uppercase tracking-wide">
                             Running
                           </span>
                         ) : (
-                          <span className="text-slate-500">{formatRawDatabaseTime(session.closing_time)}</span>
+                          <span className="text-slate-800">{formatRawDatabaseTime(session.closing_time)}</span>
                         )}
                       </td>
 
-                      <td className="p-4 text-right font-mono text-slate-800 whitespace-nowrap">
+                      <td className="p-4 text-right font-semibold text-xs text-slate-800 whitespace-nowrap">
                         {Number(session.expected_closing_cash || 0).toLocaleString()} Ks
                       </td>
 
-                      <td className="p-4 text-right font-mono text-slate-800 whitespace-nowrap">
+                      <td className="p-4 text-right font-semibold text-xs text-slate-800 whitespace-nowrap">
                         {!isRunning && session.actual_closing_cash !== null ? (
                           `${Number(session.actual_closing_cash).toLocaleString()} Ks`
                         ) : (
-                          <span className="text-slate-300">-</span>
+                          <span className="text-slate-800">-</span>
                         )}
                       </td>
 
-                      <td className="p-4 text-center font-bold font-mono whitespace-nowrap">
+                      <td className="p-4 text-center text-xs font-semibold whitespace-nowrap">
                         {isRunning || discrepancy === null ? (
-                          <span className="text-slate-300">-</span>
+                          <span className="text-slate-800">-</span>
                         ) : Number(discrepancy) === 0 ? (
                           <span className="text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg text-xs">0</span>
                         ) : (
@@ -260,10 +258,10 @@ const ViewSession = () => {
                         )}
                       </td>
 
-                      <td className="p-4 max-w-xs text-xs text-slate-500">
+                      <td className="p-4 max-w-xs text-xs font-semibold text-slate-800">
                         <div className="flex items-center gap-1.5">
                           {session.report_text && (
-                            <FileText className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+                            <FileText className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
                           )}
                           <span className="truncate block max-w-[180px]" title={session.report_text}>
                             {session.report_text || "-"}

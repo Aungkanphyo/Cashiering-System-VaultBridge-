@@ -9,7 +9,7 @@ import {
   XCircle,
 } from "lucide-react";
 import api from "../../../api/axios";
-import Toast from "../../../components/common/Toast";
+import toast from "react-hot-toast";
 import Modal from "../../../components/common/Modal";
 import ConfirmDialog from "../../../components/common/ConfirmDialog";
 import Pagination from "../../../components/common/Pagination";
@@ -19,8 +19,6 @@ import EditPayment from "./EditPayment";
 const ViewPayment = () => {
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState("");
-  const [toastType, setToastType] = useState("success");
   const [showAddModal, setShowAddModal] = useState(false);
   const [editPaymentId, setEditPaymentId] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all"); // all | active | inactive
@@ -29,22 +27,13 @@ const ViewPayment = () => {
   const [pageSize, setPageSize] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const showToast = (message, type = "success") => {
-    setToast(message);
-    setToastType(type);
-    setTimeout(() => setToast(""), 2500);
-  };
-
   const fetchPaymentMethods = async () => {
     setLoading(true);
     try {
       const res = await api.get("/payment-methods");
       setPaymentMethods(res.data);
     } catch (err) {
-      showToast(
-        err.response?.data?.message || "Failed to load payment methods",
-        "error"
-      );
+      toast.error("Failed to load payment methods");
     } finally {
       setLoading(false);
     }
@@ -93,14 +82,9 @@ const ViewPayment = () => {
       setPaymentMethods((prev) =>
         prev.map((m) => (m.payment_id === id ? res.data : m))
       );
-      showToast(
-        type === "delete" ? `"${name}" set to inactive` : `"${name}" restored`
-      );
+      toast.success(type === "delete" ? `"${name}" set to inactive` : `"${name}" restored`);
     } catch (err) {
-      showToast(
-        err.response?.data?.message || "Failed to update payment method",
-        "error"
-      );
+      toast.error("Failed to update payment method");
     } finally {
       setConfirmState(null);
     }
@@ -140,8 +124,6 @@ const ViewPayment = () => {
 
   return (
     <div className="min-h-screen">
-      <Toast message={toast} type={toastType} />
-
       {/* Interactive Stat Cards Section */}
       <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
         {summaryStats.map((item) => {
@@ -221,9 +203,9 @@ const ViewPayment = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-emerald-700 border-b border-emerald-800 text-white text-xs font-semibold uppercase">
-                <th className="p-4">Payment Method Name</th>
-                <th className="p-4 w-28">Status</th>
-                <th className="p-4 text-right">Actions</th>
+                <th className="p-4 w-100">Payment Method Name</th>
+                <th className="p-4 w-80">Status</th>
+                <th className="p-4 w-10 text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm">
@@ -245,7 +227,7 @@ const ViewPayment = () => {
               {!loading &&
                 paginatedPaymentMethods.map((method) => {
                   const isInactive = method.status === "inactive";
-                  const isProtected = method.payment_id <= 2;
+                  
                   return (
                     <tr
                       key={method.payment_id}
@@ -256,10 +238,7 @@ const ViewPayment = () => {
                       <td className="p-4">
                         <div className="font-semibold text-slate-800 flex items-center">
                           <span
-                            className={`w-2.5 h-2.5 rounded-full ${
-                              isInactive ? "bg-slate-400" : "bg-emerald-500"
-                            } mr-2`}
-                          ></span>
+                            className="w-2.5 h-2.5 rounded-full"></span>
                           {method.payment_name}
                         </div>
                       </td>
@@ -285,15 +264,8 @@ const ViewPayment = () => {
                               onClick={() =>
                                 askConfirm("restore", method.payment_id, method.payment_name)
                               }
-                              disabled={isProtected}
-                              title={
-                                isProtected
-                                  ? "Default payment methods can't be changed"
-                                  : "Restore"
-                              }
-                              className={`px-2 py-1.5 rounded-lg text-xs font-semibold text-white bg-emerald-700 border border-emerald-200 hover:bg-emerald-900 transition flex items-center gap-1 cursor-pointer ${
-                                isProtected ? "opacity-30 cursor-not-allowed" : ""
-                              }`}
+                              title={"Restore"}
+                              className={`px-2 py-1.5 rounded-lg text-xs font-semibold text-white bg-emerald-700 border border-emerald-200 hover:bg-emerald-900 transition flex items-center gap-1 cursor-pointer`}
                             >
                               
                               Restore
@@ -303,15 +275,9 @@ const ViewPayment = () => {
                               onClick={() =>
                                 askConfirm("delete", method.payment_id, method.payment_name)
                               }
-                              disabled={isProtected}
-                              title={
-                                isProtected
-                                  ? "Default payment methods can't be deleted"
-                                  : "Delete"
-                              }
-                              className={`px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-red-500 hover:bg-red-600 transition cursor-pointer ${
-                                isProtected ? "opacity-30 cursor-not-allowed" : ""
-                              }`}
+                              
+                              title={ "Delete"}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-red-500 hover:bg-red-600 transition cursor-pointer`}
                             >
                               Delete
                             </button>
@@ -342,7 +308,7 @@ const ViewPayment = () => {
           onSuccess={() => {
             setShowAddModal(false);
             fetchPaymentMethods();
-            showToast("Payment method added successfully");
+            toast.success("Payment method added successfully");
           }}
         />
       </Modal>
@@ -357,7 +323,7 @@ const ViewPayment = () => {
           onSuccess={() => {
             setEditPaymentId(null);
             fetchPaymentMethods();
-            showToast("Payment method updated successfully");
+            toast.success("Payment method updated successfully");
           }}
         />
       </Modal>

@@ -84,7 +84,7 @@ class SessionController extends Controller
             });
 
         $paymentSummary = [];
-        $payments = SalePayment::where('status', 'active')->get();
+        $payments = SalePayment::get();
 
         foreach ($payments as $payment) {
             $paymentSummary[strtolower($payment->payment_name)] =
