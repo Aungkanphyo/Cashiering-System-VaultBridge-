@@ -23,14 +23,15 @@ class UpdateStaffRequest extends FormRequest
     public function rules(): array
     {
         $staffId = $this->route('id');
+        $eighteenYearsAgo = now()->subYears(18)->format('Y-m-d');
+
         return [
             'username' => 'required|string|max:255',
             // to exclude the email of the currently edited user_id when checking for unique
             'email' => 'required|email|unique:users,email,' . $staffId . ',user_id',
             'phone_number' => 'required|string',
             'gender' => 'required|string',
-            'date_of_birth' => 'required|date',
-            'role' => 'required|string',
+            'date_of_birth' => 'required|date|before_or_equal:' . $eighteenYearsAgo,
             'nrc' => 'required|string',
             'address' => 'required|string',
         ];

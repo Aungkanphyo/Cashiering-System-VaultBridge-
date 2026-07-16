@@ -6,6 +6,12 @@ import toast from 'react-hot-toast';
 
 
 const EditStaffModal = ({ onClose, staff, onSuccess }) => {
+    const maxDate = useMemo(() => {
+        const today = new Date();
+        const eighteenYearsAgo = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+        return eighteenYearsAgo.toISOString().split('T')[0];
+    }, []);
+
     const initialNrc = useMemo(() => {
         if (!staff || !staff.nrc) return { state: "", township: "", type: "(N)", number: "" };
 
@@ -29,7 +35,6 @@ const EditStaffModal = ({ onClose, staff, onSuccess }) => {
         address: staff.address || '',
         gender: staff.gender || 'Male',
         email: staff.email || '',
-        role: staff.role || 'Cashier',
         join_date: staff.join_date || ''
     });
 
@@ -134,6 +139,13 @@ const EditStaffModal = ({ onClose, staff, onSuccess }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        const selectedDob = new Date(formData.date_of_birth);
+        const limitDate = new Date(maxDate);
+        if (selectedDob > limitDate) {
+            toast.error("Staff must be at least 18 years old.");
+            return;
+        }
 
         const errs = validate();
         setFieldErrors(errs);
@@ -260,31 +272,17 @@ const EditStaffModal = ({ onClose, staff, onSuccess }) => {
                     </div>
 
                     {/* Row 3: Date of Birth & System Role */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-600 mb-1">Date of Birth</label>
-                            <input
-                                type="date"
-                                name="date_of_birth"
-                                max={new Date().toISOString().split('T')[0]}
-                                value={formData.date_of_birth}
-                                onChange={handleChange}
-                                className={inputClass("date_of_birth")}
-                            />
-                            {fieldErrors.date_of_birth && <p className="text-xs text-rose-600 mt-1">{fieldErrors.date_of_birth}</p>}
-                        </div>
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-600 mb-1">System Role</label>
-                            <select
-                                name="role"
-                                value={formData.role}
-                                onChange={handleChange}
-                                className="w-full p-2.5 border border-slate-300 bg-white rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none text-slate-800"
-                            >
-                                <option value="staff">Cashier</option>
-                                <option value="admin">Admin</option>
-                            </select>
-                        </div>
+                    <div>
+                        <label className="block text-sm font-semibold text-slate-600 mb-1">Date of Birth</label>
+                        <input
+                            type="date"
+                            name="date_of_birth"
+                            max={maxDate}
+                            value={formData.date_of_birth}
+                            onChange={handleChange}
+                            className={inputClass("date_of_birth")}
+                        />
+                        {fieldErrors.date_of_birth && <p className="text-xs text-rose-600 mt-1">{fieldErrors.date_of_birth}</p>}
                     </div>
 
                     {/* Row 4: Passport Style NRC Input Block (Full Width) */}

@@ -22,14 +22,15 @@ class StoreStaffRequest extends FormRequest
      */
     public function rules(): array
     {
+        $eighteenYearsAgo = now()->subYears(18)->format('Y-m-d');
+
         return [
             'username' => 'required|string|max:255',
             'password' => 'required|string|min:8',
             'email' => 'required|email|unique:users,email',
             'phone_number' => 'required|string',
             'gender' => 'required|string',
-            'date_of_birth' => 'required|date',
-            'role' => 'required|string',
+            'date_of_birth' => 'required|date|before_or_equal:' . $eighteenYearsAgo,
             'nrc' => 'required|string',
             'address' => 'required|string',
             'join_date' => 'required|date',
