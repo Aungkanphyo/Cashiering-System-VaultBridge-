@@ -188,7 +188,7 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
                 const newErrors = {};
                 if (backendErrors) {
                     Object.keys(backendErrors).forEach((key) => {
-                        newErrors[key] = backendErrors[key][0]; // ပထမဆုံး error message ကို ယူသုံးပါမယ်
+                        newErrors[key] = backendErrors[key][0];
                     });
                     setErrors(newErrors);
                     toast.error("The information provided is incorrect.");
@@ -215,16 +215,15 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
 
                 {/* Form Body */}
                 <form onSubmit={handleSubmit} noValidate className="p-6 space-y-4 text-sm overflow-y-auto flex-1">
-                    {Object.keys(errors).length > 0 && (
-                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-xs font-semibold tracking-wide animate-fade-in">
-                            Please fix the highlighted fields.
-                        </div>
-                    )}
-
                     {/* Row 1: Name & Password */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Full Name</label>
+                            <div className="flex justify-between items-center mb-1">
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Full Name</label>
+                                <span className="text-[11px] text-gray-400 font-semibold">
+                                    {formData.username.length} / 20
+                                </span>
+                            </div>
                             <input
                                 type="text"
                                 name="username"
@@ -328,7 +327,6 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
                         <input
                             type="date"
                             name="join_date"
-                            max={new Date().toISOString().split('T')[0]}
                             value={formData.join_date}
                             onChange={handleChange}
                             className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-1 transition text-gray-800 ${errors.join_date
@@ -376,7 +374,7 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
                                 <option value=""></option>
                                 {availableTownships.map((township, idx) => (
                                     <option key={idx} value={township.name_en}>
-                                        {township.name_mm}
+                                        {township.name_en}
                                     </option>
                                 ))}
                             </select>

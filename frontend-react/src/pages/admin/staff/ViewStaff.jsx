@@ -14,7 +14,6 @@ import StaffDetailModal from "./Popup/StaffDetailModal";
 import AddStaffModal from "./Popup/AddStaffModal";
 import EditStaffModal from "./Popup/EditStaffModal";
 import toast from 'react-hot-toast';
-import { AlertTriangle } from "lucide-react";
 
 const ViewStaff = () => {
     const formatDate = (dateStr) => {
@@ -26,6 +25,7 @@ const ViewStaff = () => {
     }
 
     const [staffs, setStaffs] = useState([]);
+    const [summary, setSummary] = useState({ total: 0, active: 0, inactive: 0 });
     const [searchTerm, setSearchTerm] = useState('');
     const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('All'); // All | Active | Inactive
@@ -63,6 +63,7 @@ const ViewStaff = () => {
 
                 if (response.data.status === 'success') {
                     setStaffs(response.data.data);
+                    setSummary(response.data.summary);
                 }
             } catch (error) {
                 console.error("Error fetching staff data:", error);
@@ -101,7 +102,7 @@ const ViewStaff = () => {
         setConfirmState({
             id: staff.user_id,
             name: staff.username,
-            nextStatus: staff.status.toLowercase() === 'active' ? 'Inactive' : 'Active',
+            nextStatus: staff.status?.toLowerCase() === 'active' ? 'Inactive' : 'Active',
         });
     }
 
@@ -156,13 +157,11 @@ const ViewStaff = () => {
     }, [filteredStaffs, currentPage, pageSize]);
 
     const summaryStats = useMemo(() => {
-        const activeCount = staffs.filter((s) => s.status === 'Active').length;
-        const inactiveCount = staffs.filter((s) => s.status === 'Inactive').length;
 
         return [
             {
                 title: "TOTAL STAFF",
-                value: staffs.length,
+                value: summary.total,
                 filterKey: "All",
                 icon: Users,
                 colorClass: "text-slate-500 bg-slate-50 border-slate-200",
@@ -170,7 +169,7 @@ const ViewStaff = () => {
             },
             {
                 title: "ACTIVE STAFF",
-                value: activeCount,
+                value: summary.active,
                 filterKey: "Active",
                 icon: CheckCircle2,
                 colorClass: "text-emerald-600 bg-emerald-50 border-emerald-100",
@@ -178,14 +177,14 @@ const ViewStaff = () => {
             },
             {
                 title: "INACTIVE STAFF",
-                value: inactiveCount,
+                value: summary.inactive,
                 filterKey: "Inactive",
                 icon: XCircle,
                 colorClass: "text-rose-600 bg-rose-50 border-rose-100",
                 activeClass: "ring-2 ring-emerald-500 border-emerald-400 bg-rose-50/50",
             },
         ];
-    }, [staffs]);
+    }, [summary]);
 
     return (
         <div className="min-h-screen">
