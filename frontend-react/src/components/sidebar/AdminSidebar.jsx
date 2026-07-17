@@ -1,22 +1,21 @@
-import { ChevronDown, ChevronUp, CreditCard, DollarSign, History, Layers, LayoutDashboard, PlusCircle, ShoppingBag, Users, ShoppingBasket, ClipboardList  } from "lucide-react";
+import { ChevronDown, ChevronUp, CreditCard, DollarSign, History, Layers, LayoutDashboard, PlusCircle, ShoppingBag, Users, ShoppingBasket, ClipboardList } from "lucide-react";
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 
 const AdminSidebar = () => {
     // Dropdown states
-    const [isCategoryOpen, setIsCategoryOpen] = useState(true);
+    const [isCategoryOpen, setIsCategoryOpen] = useState(false);
     const [isProductOpen, setIsProductOpen] = useState(false);
     const [isStaffOpen, setIsStaffOpen] = useState(false);
     const [isPaymentOpen, setIsPaymentOpen] = useState(false);
     const [isAuditsOpen, setIsAuditsOpen] = useState(false);
 
-    const activeClass =
-        "flex items-center px-4 py-3 bg-[#07a876] text-white rounded-xl text-sm font-medium shadow-md transition-all";
-
+   const activeClass = "flex items-center px-4 py-3 bg-[#07a876] text-white rounded-xl text-sm font-medium shadow-md transition-all";
     const inactiveClass =
         "flex items-center px-4 py-3 text-gray-50 hover:bg-white/10 hover:text-white rounded-xl text-sm font-medium transition-all";
 
 
+        
     return (
         <div className="w-64 h-screen bg-[#08694b] text-white flex flex-col justify-between p-4">
             {/* Top Section */}
@@ -38,7 +37,7 @@ const AdminSidebar = () => {
 
                 {/* Navigation Items */}
                 {/* Navigation Items */}
-<nav className="space-y-1.5 overflow-y-auto max-h-[calc(100vh-180px)] pr-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                <nav className="space-y-1.5 overflow-y-auto max-h-[calc(100vh-180px)] pr-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                     {/* Dashboard Section*/}
                     <NavLink to="/admin/dashboard" className={({ isActive }) => isActive ? activeClass : inactiveClass}>
                         <LayoutDashboard className="w-4 h-4 mr-4" /> Dashboard
@@ -64,7 +63,7 @@ const AdminSidebar = () => {
                                     <Layers className="w-4 h-4 mr-3" /> View Category
                                 </NavLink>
 
-                                
+
                             </div>
                         )}
                     </div>
@@ -89,7 +88,7 @@ const AdminSidebar = () => {
                                     <ShoppingBag className="w-4 h-4 mr-3" />View Product
                                 </NavLink>
 
-                                
+
                             </div>
                         )}
                     </div>
@@ -142,7 +141,7 @@ const AdminSidebar = () => {
                                     <CreditCard className="w-4 h-4 mr-3" /> View Payment
                                 </NavLink>
 
-                                
+
                             </div>
                         )}
                     </div>

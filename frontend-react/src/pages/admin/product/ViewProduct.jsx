@@ -23,12 +23,35 @@ const ProductsView = () => {
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editProductId, setEditProductId] = useState(null);
-  const [discountError, setDiscountError] = useState({});
   const [statusFilter, setStatusFilter] = useState("all"); // all | active | inactive | low_stock
   const [search, setSearch] = useState("");
   const [confirmState, setConfirmState] = useState(null); // { type: 'delete'|'restore', id, name }
   const [pageSize, setPageSize] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
+
+   useEffect(() => {
+        if (window.Echo) {
+            window.Echo.private('admin.dashboard')
+                .listen('.SaleProcessed', (data) => {
+                    // data.updatedProducts will contain the reduced product_id and stock_quantity
+                    setProducts((prevProducts) => {
+                        return prevProducts.map((p) => {
+                            const match = data.updatedProducts.find(
+                                (up) => Number(up.product_id) === Number(p.product_id)
+                            );
+                            // Real-time update of stock quantity if a matching product is available
+                            return match ? { ...p, stock_quantity: match.stock_quantity } : p;
+                        });
+                    });
+                });
+        }
+
+        return () => {
+            if (window.Echo) {
+                window.Echo.leaveChannel('admin.dashboard');
+            }
+        };
+    }, []);
 
   const fetchData = async () => {
     setLoading(true);
@@ -108,40 +131,6 @@ const ProductsView = () => {
         const start = (currentPage - 1) * pageSize;
         return filteredProducts.slice(start, start + pageSize);
     }, [filteredProducts, currentPage, pageSize]);
-
-  const handleDiscountChange = async (productId, value) => {
-    const discount_rate = parseFloat(value);
-    const product = products.find((p) => p.product_id === productId);
-    const floor = product ? getDiscountFloor(product) : 0;
-
-        if (Number.isNaN(discount_rate) || discount_rate < 0 || discount_rate > 100) {
-            setDiscountError((prev) => ({
-                ...prev,
-                [productId]: "Discount rate must be between 0 and 100.",
-            }));
-            return;
-        }
-
-        if (discount_rate < floor) {
-            setDiscountError((prev) => ({
-                ...prev,
-                [productId]: `Discount rate cannot be lower than ${floor}% for this category.`,
-            }));
-            return;
-        }
-
-        setDiscountError((prev) => ({ ...prev, [productId]: "" }));
-
-        try {
-            const res = await api.put(`/products/${productId}`, { discount_rate });
-            setProducts((prev) =>
-                prev.map((p) => (p.product_id === productId ? res.data : p))
-            );
-            toast.success("Discount updated");
-        } catch (err) {
-          toast.error("Failed to update discount");
-        }
-    };
 
   const askConfirm = (type, id, name) => setConfirmState({ type, id, name });
 
@@ -353,33 +342,16 @@ const ProductsView = () => {
                       <td className="p-4 text-slate-800 font-semibold">
                         {prod.min_stock_level}
                       </td>
+
                       <td className="p-4">
-                        <div className="flex items-center space-x-1">
-                          <input
-                            type="number"
-                            step="1"
-                            min={discountFloor}
-                            max="100"
-                            defaultValue={prod.discount_rate}
-                            onBlur={(e) =>
-                              handleDiscountChange(
-                                prod.product_id,
-                                e.target.value
-                              )
-                            }
-                            className="w-16 p-1 text-center border border-slate-200 rounded text-xs font-bold text-slate-800 focus:ring-1 focus:ring-emerald-500 focus:outline-none bg-white"
-                          />
-                          <span className="text-xs text-slate-400">%</span>
-                        </div>
+                        <span className="font-bold text-xs text-slate-800">
+                          {Number(prod.discount_rate || 0)}%
+                        </span>
                         <p className="text-[10px] text-slate-400 mt-1">
                           Min {discountFloor}%
                         </p>
-                        {discountError[prod.product_id] && (
-                          <p className="text-[10px] text-rose-600 mt-1">
-                            {discountError[prod.product_id]}
-                          </p>
-                        )}
                       </td>
+
                       <td className="p-4 font-semibold text-slate-700">
                         {Number(prod.discount_price || 0).toLocaleString()} Ks
                       </td>

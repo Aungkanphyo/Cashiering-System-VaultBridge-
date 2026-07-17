@@ -88,11 +88,7 @@ const AddPayment = ({ onClose, onSuccess, existingPaymentNames = [] }) => {
       </div>
 
       <form onSubmit={handleSubmit} noValidate className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
-        {error && (
-          <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-sm font-medium">
-            {error}
-          </div>
-        )}
+       
 
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2">

@@ -18,7 +18,6 @@ const AddProduct = ({ onClose, onSuccess, existingProductNames = [] }) => {
     const [stock, setStock] = useState("");
     const [minStock, setMinStock] = useState("");
     const [discount, setDiscount] = useState("0");
-    const [discountTouched, setDiscountTouched] = useState(false);
     const [error, setError] = useState("");
     const [fieldErrors, setFieldErrors] = useState({});
     const [submitting, setSubmitting] = useState(false);
@@ -27,6 +26,7 @@ const AddProduct = ({ onClose, onSuccess, existingProductNames = [] }) => {
         (c) => String(c.category_id) === String(categoryId)
     );
     const categoryTax = selectedCategory ? Number(selectedCategory.tax || 0) : 0;
+    const discountFloor = selectedCategory ? Number(selectedCategory.discount_category || 0) : 0;
     const previewPrice = Number(price) || 0;
     const previewSalePrice = previewPrice + (previewPrice * categoryTax) / 100;
 
@@ -43,7 +43,7 @@ const AddProduct = ({ onClose, onSuccess, existingProductNames = [] }) => {
                 setCategoryId(String(res.data[0].category_id));
                 chosen = res.data[0];
             }
-            if (chosen && !discountTouched) {
+            if (chosen) {
                 setDiscount(String(Math.floor(Number(chosen.discount_category || 0))));
             }
         } catch (err) {
@@ -123,6 +123,8 @@ const AddProduct = ({ onClose, onSuccess, existingProductNames = [] }) => {
             errs.discount = "Discount cannot exceed 5 digits.";
         } else if (Number(discount) < 0 || Number(discount) > 100) {
             errs.discount = "Discount rate must be between 0 and 100.";
+        } else if (Number(discount) < discountFloor) {
+            errs.discount = `Discount rate cannot be lower than ${discountFloor}% for this category.`;
         }
 
         return errs;
@@ -167,9 +169,22 @@ const AddProduct = ({ onClose, onSuccess, existingProductNames = [] }) => {
     const handleDiscountChange = (e) => {
         const digitsOnly = e.target.value.slice(0, 5);
         setDiscount(digitsOnly);
-        setDiscountTouched(true);
         clearFieldError("discount");
         if (error) setError("");
+    };
+
+    const handleCategoryChange = (e) => {
+        const newCategoryId = e.target.value;
+        setCategoryId(newCategoryId);
+        clearFieldError("categoryId");
+        const newCategory = categories.find(
+            (c) => String(c.category_id) === String(newCategoryId)
+        );
+        if (newCategory) {
+            // Always snap the default discount to the newly selected category's rate.
+            setDiscount(String(Math.floor(Number(newCategory.discount_category || 0))));
+            clearFieldError("discount");
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -246,11 +261,7 @@ const AddProduct = ({ onClose, onSuccess, existingProductNames = [] }) => {
                 </div>
 
                 <form onSubmit={handleSubmit} noValidate className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
-                    {error && (
-                        <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-sm font-medium">
-                            {error}
-                        </div>
-                    )}
+                   
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="col-span-2">
@@ -346,21 +357,7 @@ const AddProduct = ({ onClose, onSuccess, existingProductNames = [] }) => {
                             </div>
                             <select
                                 value={categoryId}
-                                onChange={(e) => {
-                                    const newCategoryId = e.target.value;
-                                    setCategoryId(newCategoryId);
-                                    clearFieldError("categoryId");
-                                    const newCategory = categories.find(
-                                        (c) => String(c.category_id) === String(newCategoryId)
-                                    );
-                                    if (newCategory) {
-                                        const floor = Number(newCategory.discount_category || 0);
-                                        if (!discountTouched || Number(discount) < floor) {
-                                            setDiscount(String(Math.floor(floor)));
-                                        }
-                                        clearFieldError("discount");
-                                    }
-                                }}
+                                onChange={handleCategoryChange}
                                 disabled={categoriesLoading}
                                 className={`w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:outline-none bg-white disabled:opacity-60 ${fieldErrors.categoryId
                                     ? "border-rose-400 focus:ring-rose-400"
@@ -433,17 +430,17 @@ const AddProduct = ({ onClose, onSuccess, existingProductNames = [] }) => {
                             )}
                         </div>
 
-                        {/* CHAR-LENGTH LIMITED INPUT FOR DISCOUNT */}
+                        {/* Default discount: snaps to the selected category's rate, editable only upward */}
                         <div className="col-span-2">
                             <div className="flex justify-between items-center mb-1">
                                 <label className="block text-sm font-semibold text-slate-600">
                                     Default Discount (%)
                                 </label>
-                              
                             </div>
                             <input
                                 type="number"
-                               
+                                min={discountFloor}
+                                max={100}
                                 maxLength={5}
                                 value={discount}
                                 onChange={handleDiscountChange}
@@ -456,7 +453,7 @@ const AddProduct = ({ onClose, onSuccess, existingProductNames = [] }) => {
                                 <p className="text-xs text-rose-600 mt-1">{fieldErrors.discount}</p>
                             ) : (
                                 <p className="text-xs text-slate-400 mt-1">
-                                    Must be between 0% and 100% (max 3 digits).
+                                    Min {discountFloor}% for this category. Can be set equal or higher.
                                 </p>
                             )}
                         </div>

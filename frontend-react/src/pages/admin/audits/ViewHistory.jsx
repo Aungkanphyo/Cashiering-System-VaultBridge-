@@ -34,6 +34,30 @@ const ViewHistory = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedVoucher, setSelectedVoucher] = useState(null);
 
+   // Real-time Listening feature added
+    useEffect(() => {
+        if (window.Echo) {
+            window.Echo.private('admin.dashboard')
+                .listen('.SaleProcessed', (data) => {
+                    setTransactions((prev) => {
+                        const isDuplicate = prev.some(tx => String(tx.id) === String(data.voucher.id));
+                        if (isDuplicate) return prev;
+                        setTotalRecords((prevTotal) => prevTotal + 1);
+                        
+                        const updated = [data.voucher, ...prev];
+                        if (updated.length > 8) updated.pop();
+                        return updated;
+                    });
+                    setTotalRecords((prev) => prev + 1);
+                })
+        }
+
+        return () => {
+            if (window.Echo) {
+                window.Echo.leaveChannel('admin.dashboard');
+            }
+        };
+    }, []);
 
   useEffect(() => {
     const fetchPaymentMethods = async () => {
