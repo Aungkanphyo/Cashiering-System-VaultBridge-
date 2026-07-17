@@ -17,19 +17,18 @@ import AddProduct from "./AddProduct";
 import EditProduct from "./EditProduct";
 
 const ProductsView = () => {
-    const [products, setProducts] = useState([]);
-    const [categories, setCategories] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [showAddModal, setShowAddModal] = useState(false);
-    const [editProductId, setEditProductId] = useState(null);
-    const [discountError, setDiscountError] = useState({});
-    const [statusFilter, setStatusFilter] = useState("all"); // all | active | inactive | low_stock
-    const [search, setSearch] = useState("");
-    const [confirmState, setConfirmState] = useState(null); // { type: 'delete'|'restore', id, name }
-    const [pageSize, setPageSize] = useState(5);
-    const [currentPage, setCurrentPage] = useState(1);
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [editProductId, setEditProductId] = useState(null);
+  const [statusFilter, setStatusFilter] = useState("all"); // all | active | inactive | low_stock
+  const [search, setSearch] = useState("");
+  const [confirmState, setConfirmState] = useState(null); // { type: 'delete'|'restore', id, name }
+  const [pageSize, setPageSize] = useState(5);
+  const [currentPage, setCurrentPage] = useState(1);
 
-    useEffect(() => {
+useEffect(() => {
         if (window.Echo) {
             window.Echo.private('admin.dashboard')
                 .listen('.SaleProcessed', (data) => {
@@ -53,23 +52,25 @@ const ProductsView = () => {
         };
     }, []);
 
-    const fetchData = async () => {
-        setLoading(true);
-        try {
-            const [productsRes, categoriesRes] = await Promise.all([
-                api.get("/products"),
-                api.get("/categories"),
-            ]);
-            setProducts(productsRes.data);
-            setCategories(categoriesRes.data);
-        } catch (err) {
-            toast.error("Failed to load products");
-        } finally {
-            setLoading(false);
-        }
-    };
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [productsRes, categoriesRes] = await Promise.all([
+        api.get("/products"),
+        api.get("/categories"),
+      ]);
+      setProducts(productsRes.data);
+      setCategories(categoriesRes.data);
+    // eslint-disable-next-line no-unused-vars
+    } catch (err) {
+      toast.error("Failed to load products");
+    } finally {
+      setLoading(false);
+    }
+  };
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchData();
     }, []);
 
@@ -117,6 +118,7 @@ const ProductsView = () => {
     }, [products, categories, statusFilter, search]);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setCurrentPage(1);
     }, [statusFilter, search, pageSize]);
 
@@ -124,6 +126,7 @@ const ProductsView = () => {
     const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         if (currentPage > totalPages) setCurrentPage(totalPages);
     }, [totalPages, currentPage]);
 
@@ -132,41 +135,7 @@ const ProductsView = () => {
         return filteredProducts.slice(start, start + pageSize);
     }, [filteredProducts, currentPage, pageSize]);
 
-    const handleDiscountChange = async (productId, value) => {
-        const discount_rate = parseFloat(value);
-        const product = products.find((p) => p.product_id === productId);
-        const floor = product ? getDiscountFloor(product) : 0;
-
-        if (Number.isNaN(discount_rate) || discount_rate < 0 || discount_rate > 100) {
-            setDiscountError((prev) => ({
-                ...prev,
-                [productId]: "Discount rate must be between 0 and 100.",
-            }));
-            return;
-        }
-
-        if (discount_rate < floor) {
-            setDiscountError((prev) => ({
-                ...prev,
-                [productId]: `Discount rate cannot be lower than ${floor}% for this category.`,
-            }));
-            return;
-        }
-
-        setDiscountError((prev) => ({ ...prev, [productId]: "" }));
-
-        try {
-            const res = await api.put(`/products/${productId}`, { discount_rate });
-            setProducts((prev) =>
-                prev.map((p) => (p.product_id === productId ? res.data : p))
-            );
-            toast.success("Discount updated");
-        } catch (err) {
-            toast.error("Failed to update discount");
-        }
-    };
-
-    const askConfirm = (type, id, name) => setConfirmState({ type, id, name });
+  const askConfirm = (type, id, name) => setConfirmState({ type, id, name });
 
     const handleConfirm = async () => {
         if (!confirmState) return;
@@ -176,6 +145,7 @@ const ProductsView = () => {
             const res = await api.put(`/products/${id}`, { status: newStatus });
             setProducts((prev) => prev.map((p) => (p.product_id === id ? res.data : p)));
             toast.success(type === "delete" ? `"${name}" set to inactive` : `"${name}" restored`);
+        // eslint-disable-next-line no-unused-vars
         } catch (err) {
             toast.error("Failed to update product");
         } finally {
@@ -302,134 +272,118 @@ const ProductsView = () => {
                     </div>
                 </div>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-emerald-700 border-b border-emerald-800 text-white text-xs font-semibold uppercase">
-                                <th className="p-4">Barcode</th>
-                                <th className="p-4">Name</th>
-                                <th className="p-4">Price</th>
-                                <th className="p-4">Sale Price</th>
-                                <th className="p-4">Stock Qty</th>
-                                <th className="p-4">Min Stock Level</th>
-                                <th className="p-4 w-30">Discount (%)</th>
-                                <th className="p-4 w-30">Discount Price</th>
-                                <th className="p-4 w-15 text-center">Status</th>
-                                <th className="p-4 text-center">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 text-sm">
-                            {loading && (
-                                <tr>
-                                    <td colSpan={10} className="p-8 text-center text-slate-400">
-                                        <Loader2 className="w-5 h-5 animate-spin inline mr-2" />
-                                        Loading products...
-                                    </td>
-                                </tr>
-                            )}
-                            {!loading && filteredProducts.length === 0 && (
-                                <tr>
-                                    <td colSpan={10} className="p-8 text-center text-slate-400">
-                                        No products found under this view.
-                                    </td>
-                                </tr>
-                            )}
-                            {!loading &&
-                                paginatedProducts.map((prod) => {
-                                    const isInactive = prod.status === "inactive";
-                                    const isLowStock = prod.stock_quantity <= prod.min_stock_level;
-                                    const salePrice = getSalePrice(prod);
-                                    const discountFloor = getDiscountFloor(prod);
-                                    return (
-                                        <tr
-                                            key={prod.product_id}
-                                            className={`hover:bg-slate-50 transition`}
-                                        >
-                                            <td className="p-4 font-semibold text-slate-800 text-xs">
-                                                {prod.barcode}
-                                            </td>
-                                            <td className="p-4">
-                                                <div className="font-semibold text-slate-880">
-                                                    {prod.product_name}
-                                                </div>
-                                                <div className="text-xs text-slate-400">
-                                                    {getCategoryName(prod.category_id)}
-                                                </div>
-                                            </td>
-                                            <td className="p-4 font-semibold text-slate-800">
-                                                {Number(prod.price).toLocaleString()}Ks
-                                            </td>
-                                            <td className="p-4 font-semibold text-emerald-600">
-                                                {salePrice.toLocaleString(undefined, {
-                                                    maximumFractionDigits: 2,
-                                                })}Ks
-                                            </td>
-                                            <td className="p-4">
-                                                <span
-                                                    className={`font-bold ${isLowStock ? "text-rose-600" : "text-slate-800"
-                                                        }`}
-                                                >
-                                                    {prod.stock_quantity}
-                                                </span>
-                                            </td>
-                                            <td className="p-4 text-slate-800 font-semibold">
-                                                {prod.min_stock_level}
-                                            </td>
-                                            <td className="p-4">
-                                                <div className="flex items-center space-x-1">
-                                                    <input
-                                                        type="number"
-                                                        step="1"
-                                                        min={discountFloor}
-                                                        max="100"
-                                                        defaultValue={prod.discount_rate}
-                                                        onBlur={(e) =>
-                                                            handleDiscountChange(
-                                                                prod.product_id,
-                                                                e.target.value
-                                                            )
-                                                        }
-                                                        className="w-16 p-1 text-center border border-slate-200 rounded text-xs font-bold text-slate-800 focus:ring-1 focus:ring-emerald-500 focus:outline-none bg-white"
-                                                    />
-                                                    <span className="text-xs text-slate-400">%</span>
-                                                </div>
-                                                <p className="text-[10px] text-slate-400 mt-1">
-                                                    Min {discountFloor}%
-                                                </p>
-                                                {discountError[prod.product_id] && (
-                                                    <p className="text-[10px] text-rose-600 mt-1">
-                                                        {discountError[prod.product_id]}
-                                                    </p>
-                                                )}
-                                            </td>
-                                            <td className="p-4 font-semibold text-slate-700">
-                                                {Number(prod.discount_price || 0).toLocaleString()} Ks
-                                            </td>
-                                            <td className="p-4">
-                                                <span
-                                                    className={`inline-block w-[70px] text-center py-1 rounded-lg text-xs font-semibold ${isInactive
-                                                        ? "bg-red-50 text-red-500 border border-red-200"
-                                                        : "bg-green-50 text-green-600 border border-green-200"
-                                                        }`}
-                                                >
-                                                    {isInactive ? "Inactive" : "Active"}
-                                                </span>
-                                            </td>
-                                            <td className="p-4 text-right">
-                                                <div className="flex justify-end items-center gap-2">
-                                                    <button
-                                                        onClick={() => setEditProductId(prod.product_id)}
-                                                        className="px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-sky-500 hover:bg-sky-600 transition cursor-pointer"
-                                                    >
-                                                        Edit
-                                                    </button>
-                                                    {isInactive ? (
-                                                        <button
-                                                            onClick={() =>
-                                                                askConfirm("restore", prod.product_id, prod.product_name)
-                                                            }
-                                                            className="px-2 py-1.5 rounded-lg text-xs font-semibold text-white bg-emerald-500 border border-emerald-200 hover:bg-emerald-600 transition flex items-center gap-1 cursor-pointer"
-                                                        >
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-emerald-700 border-b border-emerald-800 text-white text-xs font-semibold uppercase">
+                <th className="p-4">Barcode</th>
+                <th className="p-4">Name</th>
+                <th className="p-4">Price</th>
+                <th className="p-4">Sale Price</th>
+                <th className="p-4">Stock Qty</th>
+                <th className="p-4">Min Stock Level</th>
+                <th className="p-4 w-30">Discount (%)</th>
+                <th className="p-4 w-30">Discount Price</th>
+                <th className="p-4 w-15 text-center">Status</th>
+                <th className="p-4 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-sm">
+              {loading && (
+                <tr>
+                  <td colSpan={10} className="p-8 text-center text-slate-400">
+                    <Loader2 className="w-5 h-5 animate-spin inline mr-2" />
+                    Loading products...
+                  </td>
+                </tr>
+              )}
+              {!loading && filteredProducts.length === 0 && (
+                <tr>
+                  <td colSpan={10} className="p-8 text-center text-slate-400">
+                    No products found under this view.
+                  </td>
+                </tr>
+              )}
+              {!loading &&
+                paginatedProducts.map((prod) => {
+                  const isInactive = prod.status === "inactive";
+                  const isLowStock = prod.stock_quantity <= prod.min_stock_level;
+                  const salePrice = getSalePrice(prod);
+                  const discountFloor = getDiscountFloor(prod);
+                  return (
+                    <tr
+                      key={prod.product_id}
+                      className={`hover:bg-slate-50 transition`}
+                    >
+                      <td className="p-4 font-semibold text-slate-800 text-xs">
+                        {prod.barcode}
+                      </td>
+                      <td className="p-4">
+                        <div className="font-semibold text-slate-880">
+                          {prod.product_name}
+                        </div>
+                        <div className="text-xs text-slate-400">
+                          {getCategoryName(prod.category_id)}
+                        </div>
+                      </td>
+                      <td className="p-4 font-semibold text-slate-800">
+                        {Number(prod.price).toLocaleString()}Ks
+                      </td>
+                      <td className="p-4 font-semibold text-emerald-600">
+                        {salePrice.toLocaleString(undefined, {
+                          maximumFractionDigits: 2,
+                        })}Ks
+                      </td>
+                      <td className="p-4">
+                        <span
+                          className={`font-bold ${
+                            isLowStock ? "text-rose-600" : "text-slate-800"
+                          }`}
+                        >
+                          {prod.stock_quantity}
+                        </span>
+                      </td>
+                      <td className="p-4 text-slate-800 font-semibold">
+                        {prod.min_stock_level}
+                      </td>
+
+                      <td className="p-4">
+                        <span className="font-bold text-xs text-slate-800">
+                          {Number(prod.discount_rate || 0)}%
+                        </span>
+                        <p className="text-[10px] text-slate-400 mt-1">
+                          Min {discountFloor}%
+                        </p>
+                      </td>
+
+                      <td className="p-4 font-semibold text-slate-700">
+                        {Number(prod.discount_price || 0).toLocaleString()} Ks
+                      </td>
+                      <td className="p-4">
+                        <span
+                          className={`inline-block w-[70px] text-center py-1 rounded-lg text-xs font-semibold ${isInactive
+                              ? "bg-red-50 text-red-500 border border-red-200"
+                              : "bg-green-50 text-green-600 border border-green-200"
+                            }`}
+                        >
+                          {isInactive ? "Inactive" : "Active"}
+                        </span>
+                      </td>
+                      <td className="p-4 text-right">
+                        <div className="flex justify-end items-center gap-2">
+                          <button
+                            onClick={() => setEditProductId(prod.product_id)}
+                            className="px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-sky-500 hover:bg-sky-600 transition cursor-pointer"
+                          >
+                            Edit
+                          </button>
+                          {isInactive ? (
+                            <button
+                              onClick={() =>
+                                askConfirm("restore", prod.product_id, prod.product_name)
+                              }
+                              className="px-2 py-1.5 rounded-lg text-xs font-semibold text-white bg-emerald-500 border border-emerald-200 hover:bg-emerald-600 transition flex items-center gap-1 cursor-pointer"
+                            >
 
                                                             Restore
                                                         </button>

@@ -194,6 +194,21 @@ const EditProduct = ({ productId, onClose, onSuccess, existingProductNames = [] 
     if (error) setError("");
   };
 
+  const handleCategoryChange = (e) => {
+    const newCategoryId = e.target.value;
+    setCategoryId(newCategoryId);
+    clearFieldError("categoryId");
+    const newCategory = categories.find(
+      (c) => String(c.category_id) === String(newCategoryId)
+    );
+    if (newCategory) {
+      // Always snap the discount to the newly selected category's rate.
+      const floor = Number(newCategory.discount_category || 0);
+      setDiscount(String(floor).slice(0, 5));
+      clearFieldError("discount");
+    }
+  };
+
   // PUT /api/products/:id
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -276,11 +291,7 @@ const EditProduct = ({ productId, onClose, onSuccess, existingProductNames = [] 
           </div>
         ) : (
           <form onSubmit={handleSubmit} noValidate className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
-            {error && (
-              <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-sm font-medium">
-                {error}
-              </div>
-            )}
+           
 
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2">
@@ -380,21 +391,7 @@ const EditProduct = ({ productId, onClose, onSuccess, existingProductNames = [] 
                 </div>
                 <select
                   value={categoryId}
-                  onChange={(e) => {
-                    const newCategoryId = e.target.value;
-                    setCategoryId(newCategoryId);
-                    clearFieldError("categoryId");
-                    const newCategory = categories.find(
-                      (c) => String(c.category_id) === String(newCategoryId)
-                    );
-                    if (newCategory) {
-                      const floor = Number(newCategory.discount_category || 0);
-                      if (Number(discount) < floor) {
-                        setDiscount(String(floor).slice(0, 3));
-                      }
-                      clearFieldError("discount");
-                    }
-                  }}
+                  onChange={handleCategoryChange}
                   disabled={categoriesLoading}
                   className={`w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:outline-none bg-white disabled:opacity-60 ${
                     fieldErrors.categoryId
@@ -497,7 +494,7 @@ const EditProduct = ({ productId, onClose, onSuccess, existingProductNames = [] 
                   <p className="text-xs text-rose-600 mt-1">{fieldErrors.discount}</p>
                 ) : (
                   <p className="text-xs text-slate-400 mt-1">
-                    Must be between {categoryDiscountFloor}% (category minimum) and 100%. 
+                    Min {categoryDiscountFloor}% for this category. Can be set equal or higher.
                   </p>
                 )}
               </div>

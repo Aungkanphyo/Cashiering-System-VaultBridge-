@@ -96,6 +96,7 @@ const ViewHistory = () => {
                 setTransactions(responseData || []);
                 setTotalPages(metaData.last_page || metaData.meta?.last_page || 1);
                 setTotalRecords(metaData.total || metaData.meta?.total || 0);
+            // eslint-disable-next-line no-unused-vars
             } catch (err) {
                 toast.error("Failed to load sales history");
             } finally {

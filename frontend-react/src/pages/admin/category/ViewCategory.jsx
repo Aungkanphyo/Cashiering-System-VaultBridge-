@@ -21,7 +21,6 @@ const ViewCategory = () => {
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editCategoryId, setEditCategoryId] = useState(null);
-  const [discountError, setDiscountError] = useState({});
   const [taxError, setTaxError] = useState({});
   const [statusFilter, setStatusFilter] = useState("all"); // all | active | inactive
   const [search, setSearch] = useState("");
@@ -96,32 +95,6 @@ const ViewCategory = () => {
       toast.success("Tax updated");
     } catch (err) {
       toast.error("Failed to update tax");
-    }
-  };
-
-  // PUT /api/categories/:id — inline discount edit, mirrors ProductsView's
-  // handleDiscountChange pattern (onBlur save with per-row error state).
-  const handleDiscountChange = async (categoryId, value) => {
-    const discount_category = parseFloat(value);
-
-    if (Number.isNaN(discount_category) || discount_category < 0 || discount_category > 100) {
-      setDiscountError((prev) => ({
-        ...prev,
-        [categoryId]: "Discount rate must be between 0 and 100.",
-      }));
-      return;
-    }
-
-    setDiscountError((prev) => ({ ...prev, [categoryId]: "" }));
-
-    try {
-      const res = await api.put(`/categories/${categoryId}`, { discount_category });
-      setCategories((prev) =>
-        prev.map((c) => (c.category_id === categoryId ? res.data : c))
-      );
-      toast.success("Discount updated");
-    } catch (err) {
-      toast.error("Failed to update discount");
     }
   };
 
@@ -291,49 +264,15 @@ const ViewCategory = () => {
                       <td className="p-4 font-semibold text-slate-800">
                         {cat.category_name}
                       </td>
-                      <td className="p-4">
-                        <div className="flex items-center space-x-1">
-                          <input
-                            type="number"
-                            step="1"
-                            min={0}
-                            max="100"
-                            defaultValue={cat.tax}
-                         
-                            onBlur={(e) =>
-                              handleTaxChange(cat.category_id, e.target.value)
-                            }
-                            className="w-16 p-1 text-center border border-slate-200 rounded text-xs font-bold text-slate-700 focus:ring-1 focus:ring-emerald-500 focus:outline-none bg-white disabled:bg-slate-50 disabled:text-slate-400"
-                          />
-                          <span className="text-xs text-slate-400">%</span>
-                        </div>
-                        {taxError[cat.category_id] && (
-                          <p className="text-[10px] text-rose-600 mt-1">
-                            {taxError[cat.category_id]}
-                          </p>
-                        )}
+                       <td className="p-4">
+                        <span className="font-bold text-xs text-slate-700">
+                          {Number(cat.tax || 0)}%
+                        </span>
                       </td>
                       <td className="p-4">
-                        <div className="flex items-center space-x-1">
-                          <input
-                            type="number"
-                            step="1"
-                            min={0}
-                            max="100"
-                            defaultValue={cat.discount_category}
-                            
-                            onBlur={(e) =>
-                              handleDiscountChange(cat.category_id, e.target.value)
-                            }
-                            className="w-16 p-1 text-center border border-slate-200 rounded text-xs font-bold text-slate-700 focus:ring-1 focus:ring-emerald-500 focus:outline-none bg-white disabled:bg-slate-50 disabled:text-slate-400"
-                          />
-                          <span className="text-xs text-slate-400">%</span>
-                        </div>
-                        {discountError[cat.category_id] && (
-                          <p className="text-[10px] text-rose-600 mt-1">
-                            {discountError[cat.category_id]}
-                          </p>
-                        )}
+                        <span className="font-bold text-xs text-slate-700">
+                          {Number(cat.discount_category || 0)}%
+                        </span>
                       </td>
                       <td className="p-4">
                         <span
