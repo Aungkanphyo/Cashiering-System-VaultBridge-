@@ -115,29 +115,29 @@ const ViewSession = () => {
 
                   setFromDate(value);
                 }}
-                className="border rounded-lg px-3 py-2 cursor-text focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15"/>
+                className="border rounded-lg px-3 py-2 cursor-text focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15" />
             </div>
 
             {/* To */}
             <div className="flex items-center gap-2">
               <label className="text-sm font-semibold text-slate-600">TO:</label>
               <input type="date" value={toDate} min={fromDate || undefined} max={today}
-              onChange={(e) => {
-                const value = e.target.value;
+                onChange={(e) => {
+                  const value = e.target.value;
 
-                if (fromDate && new Date(value) < new Date(fromDate)) {
-                  toast.error("To date cannot be earlier than From date.");
-                  return;
-                }
+                  if (fromDate && new Date(value) < new Date(fromDate)) {
+                    toast.error("To date cannot be earlier than From date.");
+                    return;
+                  }
 
-                if (new Date(value) > new Date(today)) {
-                  toast.error("To date cannot be greater than today.");
-                  return;
-                }
+                  if (new Date(value) > new Date(today)) {
+                    toast.error("To date cannot be greater than today.");
+                    return;
+                  }
 
-                setToDate(value);
-              }}
-              className="border rounded-lg px-3 py-2 cursor-text focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15" />
+                  setToDate(value);
+                }}
+                className="border rounded-lg px-3 py-2 cursor-text focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15" />
             </div>
 
             {/* Reset */}
@@ -226,7 +226,7 @@ const ViewSession = () => {
 
                       <td className="p-4 font-semibold text-xs whitespace-nowrap">
                         {isRunning ? (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 font-bold text-[10px] uppercase tracking-wide">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full bg-emerald-100 text-emerald-600 font-bold text-[10px] uppercase tracking-wide">
                             Running
                           </span>
                         ) : (
@@ -234,11 +234,11 @@ const ViewSession = () => {
                         )}
                       </td>
 
-                      <td className="p-4 text-right font-semibold text-xs text-slate-800 whitespace-nowrap">
+                      <td className="p-4 text-start font-semibold text-xs text-slate-800 whitespace-nowrap">
                         {Number(session.expected_closing_cash || 0).toLocaleString()} Ks
                       </td>
 
-                      <td className="p-4 text-right font-semibold text-xs text-slate-800 whitespace-nowrap">
+                      <td className="p-4 text-start font-semibold text-xs text-slate-800 whitespace-nowrap">
                         {!isRunning && session.actual_closing_cash !== null ? (
                           `${Number(session.actual_closing_cash).toLocaleString()} Ks`
                         ) : (
@@ -246,27 +246,43 @@ const ViewSession = () => {
                         )}
                       </td>
 
-                      <td className="p-4 text-center text-xs font-semibold whitespace-nowrap">
+                      <td className="p-4 text-start text-xs font-semibold whitespace-nowrap">
                         {isRunning || discrepancy === null ? (
                           <span className="text-slate-800">-</span>
                         ) : Number(discrepancy) === 0 ? (
                           <span className="text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg text-xs">0</span>
-                        ) : (
-                          <span className="text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg text-xs">
-                            {Number(discrepancy).toLocaleString()} Ks
-                          </span>
-                        )}
+                        ) : Number(discrepancy) > 0 ? (
+                          <span className="text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg text-xs">+{Number(discrepancy).toLocaleString()} Ks</span>) :
+                          (
+                            <span className="text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg text-xs">
+                              {Number(discrepancy).toLocaleString()} Ks
+                            </span>
+                          )}
                       </td>
 
-                      <td className="p-4 max-w-xs text-xs font-semibold text-slate-800">
-                        <div className="flex items-center gap-1.5">
-                          {session.report_text && (
-                            <FileText className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
-                          )}
-                          <span className="truncate block max-w-[180px]" title={session.report_text}>
-                            {session.report_text || "-"}
+                      <td className="p-4 max-w-xs text-start text-xs font-semibold">
+                        {session.report_text ? (
+                          <span
+                            className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 ${Number(discrepancy) > 0
+                                ? "bg-blue-50 text-blue-600"
+                                : Number(discrepancy) === 0
+                                  ? "bg-emerald-50 text-emerald-600"
+                                  : "bg-rose-50 text-rose-600"
+                              }`}
+                          >
+                            <FileText className="w-3.5 h-3.5" />
+                            <span
+                              className="truncate max-w-[180px]"
+                              title={session.report_text}
+                            >
+                              {session.report_text}
+                            </span>
                           </span>
-                        </div>
+                        ) : (
+                          <span className="inline-flex rounded-lg px-2.5 py-1 text-slate-500">
+                            -
+                          </span>
+                        )}
                       </td>
                     </tr>
                   );

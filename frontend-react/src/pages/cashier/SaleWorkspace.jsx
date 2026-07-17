@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Search } from "lucide-react";
+import { Search, ShoppingBag } from "lucide-react";
 import api from '../../api/axios';
 import Voucher from './Voucher'; // voucher import for right column
 import { io } from 'socket.io-client';
@@ -230,7 +230,7 @@ const SaleWorkspace = () => {
                                 {searchQuery.trim() ? "SEARCH RESULTS" : "QUICK CLICK ITEMS"}
                             </h3>
                             {!loading && !error && (
-                                <span className="text-xs font-semibold bg-green-200 text-slate-700 px-2 py-0.5 rounded-full">
+                                <span className="text-xs font-semibold bg-emerald-200 text-slate-700 px-2 py-1 rounded-full">
                                     {filteredProducts.length} Items
                                 </span>
                             )}
@@ -294,11 +294,11 @@ const SaleWorkspace = () => {
                                             })}
                                         </div>
                                     ) : (
-                                        <div className="text-center py-16 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
-                                            <span className="text-2xl block mb-2">📦</span>
-                                            <div className="text-sm text-slate-400 font-medium">
-                                                No products found matching "{searchQuery}"
-                                            </div>
+
+                                        <div className="flex flex-col items-center justify-center py-16 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                                            <ShoppingBag className="w-7 h-7 text-emerald-600 mb-2" />
+                                            <p className="text-sm font-medium text-slate-800">No products found matching</p>
+                                            <p className="mt-1 text-sm font-bold text-emerald-600">"{searchQuery}"</p>
                                         </div>
                                     )}
                                 </>

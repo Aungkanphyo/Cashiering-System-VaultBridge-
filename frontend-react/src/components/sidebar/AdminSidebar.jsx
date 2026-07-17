@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp, CreditCard, DollarSign, History, Layers, LayoutDashboard, PlusCircle, ShoppingBag, Users, ShoppingBasket, ClipboardList  } from "lucide-react";
+import { ChevronDown, ChevronUp, CreditCard, DollarSign, History, Layers, LayoutDashboard, PlusCircle, ShoppingBag, Users, ShoppingBasket, ClipboardList } from "lucide-react";
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 
@@ -37,8 +37,7 @@ const AdminSidebar = () => {
                 <div className="border-b border-white/10 mb-4" />
 
                 {/* Navigation Items */}
-                {/* Navigation Items */}
-<nav className="space-y-1.5 overflow-y-auto max-h-[calc(100vh-180px)] pr-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                <nav className="space-y-1.5 overflow-y-auto max-h-[calc(100vh-180px)] pr-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                     {/* Dashboard Section*/}
                     <NavLink to="/admin/dashboard" className={({ isActive }) => isActive ? activeClass : inactiveClass}>
                         <LayoutDashboard className="w-4 h-4 mr-4" /> Dashboard
@@ -64,7 +63,7 @@ const AdminSidebar = () => {
                                     <Layers className="w-4 h-4 mr-3" /> View Category
                                 </NavLink>
 
-                                
+
                             </div>
                         )}
                     </div>
@@ -89,7 +88,7 @@ const AdminSidebar = () => {
                                     <ShoppingBag className="w-4 h-4 mr-3" />View Product
                                 </NavLink>
 
-                                
+
                             </div>
                         )}
                     </div>
@@ -142,7 +141,7 @@ const AdminSidebar = () => {
                                     <CreditCard className="w-4 h-4 mr-3" /> View Payment
                                 </NavLink>
 
-                                
+
                             </div>
                         )}
                     </div>

@@ -20,7 +20,8 @@ const Voucher = ({
     // --- Local States for Payments ---
     const [paymentMethod, setPaymentMethod] = useState('Cash');
     const [payAmount, setPayAmount] = useState('');
-    
+
+
     // Default payment method setup when dbPaymentMethods are loaded
     useEffect(() => {
         if (dbPaymentMethods && dbPaymentMethods.length > 0) {
@@ -75,14 +76,18 @@ const Voucher = ({
 
         if (isCashSelected) {
             const parsedPayAmount = parseFloat(payAmount);
-            if (!payAmount || isNaN(parsedPayAmount) || parsedPayAmount <= 0) {
+            if (!payAmount || parsedPayAmount <= 0) {
                 toast.error('Please enter a received payment amount!');
-                return; 
+                return;
+            }
+
+            if(isNaN(parsedPayAmount)){
+                toast.error("Please enter number only!");
             }
 
             if (parsedPayAmount < finalTotal) {
                 toast.error(`Insufficient amount! Received amount is less than ${finalTotal.toLocaleString()} Ks.`);
-                return; 
+                return;
             }
         }
 
@@ -121,9 +126,9 @@ const Voucher = ({
                     status: p.status ? p.status.toLowerCase() : 'active',
                     stock_quantity: p.stock_quantity !== undefined ? parseInt(p.stock_quantity, 10) : 0
                 }));
-                
+
                 setAvailableProducts(updatedProducts);
-                
+
                 // 3. Next Voucher Pre-fetch
                 fetchNextVoucherId();
 
@@ -153,7 +158,7 @@ const Voucher = ({
     // Manual input box controller with fallback auto-corrector
     const checkAndDirectQtyChange = (item, rawValue) => {
         const stockLimit = item.stock_quantity ?? 0;
-        
+
         if (rawValue === '') {
             handleDirectQtyChange(item.id, '');
             return;
@@ -170,10 +175,10 @@ const Voucher = ({
     };
 
     return (
-        <div className="lg:col-span-5 bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between max-h-[calc(90vh-40px)] h-auto sticky top-4">
-            
+        <div className="lg:col-span-5 bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col justify-between max-h-screen h-auto sticky">
+
             {/* Hidden Printer Element Node Target */}
-            <VoucherPrinter 
+            <VoucherPrinter
                 ref={printComponentRef}
                 voucherId={voucherId}
                 cartItems={cartItems}
@@ -185,7 +190,7 @@ const Voucher = ({
                 changeDue={changeDue}
             />
 
-            <div className="flex flex-col flex-1 min-h-0">
+            <div className="flex flex-col flex-1 min-h-0 ">
                 <div className="flex justify-between items-center pb-2 border-b border-slate-100 mb-3">
                     <h3 className="text-xs font-black text-slate-900 tracking-wide uppercase flex items-center gap-1.5">
                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-600"></span>
@@ -208,7 +213,7 @@ const Voucher = ({
                                 className={`flex items-center justify-between p-2 rounded-lg border transition-all duration-300 ${(recentProductId && item.id && recentProductId === item.id)
                                     ? 'bg-emerald-50/70 border-emerald-400 ring-2 ring-emerald-100'
                                     : 'bg-white border-2 border-green-100'
-                                }`}
+                                    }`}
                             >
                                 <div className="w-[45%]">
                                     <p className={`text-xs font-bold line-clamp-1 ${(recentProductId && item.id && recentProductId === item.id) ? 'text-emerald-800 font-extrabold' : 'text-slate-800'}`}>
@@ -253,24 +258,24 @@ const Voucher = ({
                 </div>
             </div>
 
-            <div className="border-t border-slate-100 pt-3 mt-3 space-y-1.5 text-xs font-medium bg-white">
-                <div className="flex justify-between text-xs">
+            <div className="border-t-2 border-dashed border-slate-100 pt-3 mt-3 space-y-1.5 text-sm font-medium bg-white">
+                <div className="flex justify-between text-xs my-2">
                     <span>Subtotal</span>
                     <span>{subtotal.toLocaleString()} Ks</span>
                 </div>
-                <div className="flex justify-between text-xs text-red-500 font-bold">
+                <div className="flex justify-between text-xs text-red-500 font-bold my-2">
                     <span>Discount</span>
                     <span>-{totalDiscount.toLocaleString()} Ks</span>
                 </div>
-                <div className="flex justify-between items-center pt-2 border-t border-dashed border-slate-200 text-sm font-black text-slate-900">
+                <div className="flex justify-between items-center my-2 pt-2 border-t-2 border-dashed border-slate-200 text-sm font-black text-slate-900">
                     <span>Total (Inclusive Tax):</span>
                     <span className="font-sans text-base text-emerald-600">{finalTotal.toLocaleString()} Ks</span>
                 </div>
             </div>
 
-            <div className="mt-3 pt-2 border-t border-slate-100 grid grid-cols-12 gap-2.5 items-center bg-white">
-                <div className="col-span-4">
-                    <label className="block text-xs font-black text-slate-900 mb-1">Method</label>
+            <div className="mt-1 pt-1.5 border-t-2 border-dashed border-slate-100 grid grid-cols-12 gap-2.5 flex items-center bg-white my-2">
+                <div className="col-span-4 mt-2">
+                    <label className="block text-xs font-black text-slate-900 mb-2">Method</label>
                     <select
                         value={paymentMethod}
                         onChange={(e) => {
@@ -287,11 +292,13 @@ const Voucher = ({
                     </select>
                 </div>
 
-                <div className="col-span-8 grid grid-cols-2 gap-2">
+                <div className="col-span-8 grid grid-cols-2 gap-2 mt-2">
                     <div>
-                        <label className="block text-xs font-black text-slate-900 mb-1">Pay Amount</label>
+                        <label className="block text-xs font-black text-slate-900 mb-2">Pay Amount</label>
                         <input
-                            type="number"
+                            type="text"
+                            inputMode="decimal"
+                            pattern="[0-9]*"
                             placeholder={isCashSelected ? "Enter Cash" : "0"}
                             className={`w-full px-2 py-0.5 h-7 text-xs font-sans font-bold border rounded-md focus:outline-none bg-white text-slate-800 border-slate-200 focus:border-emerald-500 ${!isCashSelected ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' : ''}`}
                             value={isCashSelected ? payAmount : finalTotal}
@@ -300,7 +307,7 @@ const Voucher = ({
                         />
                     </div>
                     <div>
-                        <label className="block text-[9px] font-black text-slate-900 mb-1">Change Due</label>
+                        <label className="block text-xs font-black text-slate-900 mb-2">Change Due</label>
                         <div className="w-full px-2 py-0.5 h-7 flex items-center text-xs font-sans font-black text-emerald-600 bg-emerald-50 rounded-md border border-emerald-100">
                             {changeDue.toLocaleString()}
                         </div>
@@ -310,13 +317,12 @@ const Voucher = ({
 
             <div className="pt-3 bg-white">
                 <button
-                    disabled={cartItems.length === 0} 
-                    onClick={handlePayAndPrint} 
-                    className={`w-full py-2 px-4 rounded-lg font-bold text-xs border shadow-xs transition-all flex items-center justify-center gap-1.5 ${
-                        cartItems.length === 0 
-                            ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-60' 
+                    disabled={cartItems.length === 0}
+                    onClick={handlePayAndPrint}
+                    className={`w-full py-2 px-4 rounded-lg font-bold text-xs border shadow-xs transition-all flex items-center justify-center gap-1.5 ${cartItems.length === 0
+                            ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-60'
                             : 'bg-emerald-600 hover:bg-emerald-700 border-emerald-700 text-white active:scale-[0.99]'
-                    }`}
+                        }`}
                 >
                     <BanknoteArrowDown className="w-5 h-5 me-1" />Pay & Print
                 </button>

@@ -150,9 +150,7 @@ class SalesSeeder extends Seeder
             }
 
             $actualClosingCash = $sessionCompletedTotal + $discrepancy;
-            $reportText = $discrepancy == 0
-                ? "Daily counter sales balance tallied perfectly. Cash handed over to manager."
-                : "Discrepancy of " . $discrepancy . " MMK found due to cashier cash handling. Verified journal logs.";
+            $reportText = $discrepancy == 0 ? "Cash balanced" : ($discrepancy > 0 ? "Extra cash" : "Cash shortage");
 
             // Save actual calculated cash data back to session
             $session->update([

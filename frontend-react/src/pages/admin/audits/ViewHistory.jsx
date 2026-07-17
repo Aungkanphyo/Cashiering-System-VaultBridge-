@@ -121,7 +121,7 @@ const ViewHistory = () => {
             />
           </div>
 
-          {/* Payment Method */}
+          {/* Payment Filter */}
           <select
             value={paymentMethod}
             onChange={(e) => {
@@ -130,7 +130,7 @@ const ViewHistory = () => {
             }}
             className="border rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 bg-white focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15 cursor-pointer"
           >
-            <option value="ALL">All Methods</option>
+            <option value="">All Payments</option>
             {dbPaymentMethods.map((method) => (
               <option key={method.payment_id} value={method.payment_name}>
                 {method.payment_name}
@@ -138,7 +138,7 @@ const ViewHistory = () => {
             ))}
           </select>
 
-          {/* Status */}
+          {/* Status Filter */}
           <select
             value={status}
             onChange={(e) => {
@@ -147,31 +147,34 @@ const ViewHistory = () => {
             }}
             className="border rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 bg-white focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15 cursor-pointer"
           >
-            <option value="ALL">All Status</option>
+            <option value="">All Statuses</option>
             <option value="completed">Completed</option>
             <option value="voided">Voided</option>
           </select>
+          {/* <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" /> */}
+
+
 
           {/* Date Range */}
           <div className="flex items-center gap-2">
             <label className="text-sm font-semibold text-slate-600">FROM:</label>
             <input type="date" value={fromDate} max={today}
-                onChange={(e) => {
-                  const value = e.target.value;
+              onChange={(e) => {
+                const value = e.target.value;
 
-                  if (new Date(value) > new Date(today)) {
-                    toast.error("From date cannot be greater than today.");
-                    return;
-                  }
+                if (new Date(value) > new Date(today)) {
+                  toast.error("From date cannot be greater than today.");
+                  return;
+                }
 
-                  if (toDate && new Date(toDate) < new Date(value)) {
-                    toast.error("From date cannot be greater than To date. Please select again!");
-                    return;
-                  }
+                if (toDate && new Date(toDate) < new Date(value)) {
+                  toast.error("From date cannot be greater than To date. Please select again!");
+                  return;
+                }
 
-                  setFromDate(value);
-                }}
-                className="border rounded-lg px-3 py-2 cursor-text focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15"/>
+                setFromDate(value);
+              }}
+              className="border rounded-lg px-3 py-2 cursor-text focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15" />
           </div>
 
           <div className="flex items-center gap-2">
@@ -273,22 +276,21 @@ const ViewHistory = () => {
                         {tx.dateTime}
                       </td>
                       <td className="p-4 text-right text-xs font-semibold text-slate-800 whitespace-nowrap">
-                        
-                          {(tx.finalAmount || 0).toLocaleString()} Ks
-                        
+
+                        {(tx.finalAmount || 0).toLocaleString()} Ks
+
                       </td>
                       <td className="p-4 text-right text-xs font-semibold text-slate-800 whitespace-nowrap">
                         <span>{(tx.changeAmount || 0).toLocaleString()} Ks</span>
                       </td>
                       <td className="p-4 text-center whitespace-nowrap">
                         <span
-                          className={`inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-bold border ${
-                            isCash
-                              ? "bg-yellow-50 text-yellow-700 border-yellow-100"
-                              : "bg-blue-50 text-blue-600 border-blue-100"
-                          }`}
+                          className={`inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-bold border ${isCash
+                            ? "bg-yellow-50 text-yellow-700 border-yellow-100"
+                            : "bg-blue-50 text-blue-600 border-blue-100"
+                            }`}
                         >
-                          
+
                           {tx.paymentMethod}
                         </span>
                       </td>
