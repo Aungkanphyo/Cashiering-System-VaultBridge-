@@ -60,17 +60,17 @@ class AdminVoucherController extends Controller
         $vouchers->getCollection()->transform(function ($voucher) {
             $finalAmount = $voucher->details ? $voucher->details->sum('total') : 0;
             return [
-                'id' => $voucher->voucher_id,
-                'session_id' => $voucher->session_id,
-                'payment_id' => $voucher->payment_id,
+                'id'               => $voucher->voucher_id,
+                'session_id'       => $voucher->session_id,
+                'payment_id'       => $voucher->payment_id,
                 // date time formatting using Carbon
-                'dateTime' => $voucher->sale_date ? Carbon::parse($voucher->sale_date)->format('Y-m-d H:i:s') : null,
-                'status' => $voucher->status,
-                'finalAmount' => (float) $finalAmount,
-                'changeAmount' => (float) $voucher->change,
+                'dateTime'         => $voucher->sale_date ? Carbon::parse($voucher->sale_date)->format('Y-m-d H:i:s') : null,
+                'status'           => $voucher->status,
+                'finalAmount'      => (float) $finalAmount,
+                'changeAmount'     => (float) $voucher->change,
                 'payment_received' => (float) $voucher->payment_received,
-                'void_reason' => $voucher->void_reason,
-                'voided_at' => $voucher->voided_at ? Carbon::parse($voucher->voided_at)->format('Y-m-d H:i:s') : null,
+                'void_reason'      => $voucher->void_reason,
+                'voided_at'        => $voucher->voided_at ? Carbon::parse($voucher->voided_at)->format('Y-m-d H:i:s') : null,
 
                 // Cashier Name
                 'cashierName'      => $voucher->cashRegisterSession && $voucher->cashRegisterSession->user
@@ -98,15 +98,25 @@ class AdminVoucherController extends Controller
 
     public function export(Request $request)
     {
-        $filters = [
+        $fromDate = $request->input('from_date');
+        $toDate   = $request->input('to_date');
+        $today    = now()->format('Y-m-d');
+
+        if($fromDate && $toDate && $fromDate !== $toDate) {
+            $fileName = "Voucher_History_{$fromDate}_to_{$toDate}.xlsx";
+        } elseif ($fromDate && $toDate && $fromDate === $toDate) {
+            $fileName = "Voucher_History_{$fromDate}.xlsx";
+        } else {
+            $fileName = "Voucher_History_Until_{$today}.xlsx";
+        }
+
+        $filters  = [
             'search_id'      => $request->input('search_id'),
             'payment_method' => $request->input('payment_method'),
             'status'         => $request->input('status'),
             'from_date'      => $request->input('from_date'),
             'to_date'        => $request->input('to_date'),
         ];
-
-        $fileName = 'Voucher_History_' . now()->format('Y-m-d_His') . '.xlsx';
 
         return Excel::download(new VoucherExport($filters), $fileName);
     }

@@ -125,12 +125,22 @@ const ViewHistory = () => {
                 responseType: "blob",
             });
 
+            const contentDisposition = response.headers['content-disposition'];
+            let fileName = `Voucher_History_${today}.xlsx`; // Fallback Name to use if the server side header is not available
+
+            if (contentDisposition) {
+                const fileNameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+                if (fileNameMatch && fileNameMatch[1]) {
+                    fileName = fileNameMatch[1];
+                }
+            }
+
             const blob = new Blob([response.data], {
                 type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             });
             const link = document.createElement("a");
             link.href = window.URL.createObjectURL(blob);
-            link.download = `Voucher_History_${new Date().toISOString().slice(0, 10)}.xlsx`;
+            link.download = fileName;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);

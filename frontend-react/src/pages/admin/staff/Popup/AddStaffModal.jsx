@@ -214,7 +214,7 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
                 </div>
 
                 {/* Form Body */}
-                <form onSubmit={handleSubmit} noValidate className="p-6 space-y-4 text-sm overflow-y-auto flex-1">
+                <form onSubmit={handleSubmit} autoComplete="off" noValidate className="p-6 space-y-4 text-sm overflow-y-auto flex-1">
                     {/* Row 1: Name & Password */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
