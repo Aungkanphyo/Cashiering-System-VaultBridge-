@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\ProductSaved;
 use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Http\Request;
@@ -68,6 +69,9 @@ class ProductController extends Controller
         $data['discount_price'] = round($data['sale_price'] * $discountRate / 100, 2);
 
         $product = Product::create($data);
+
+        // real-time event trigger
+        event(new ProductSaved($product));
 
         return response()->json($product, 201);
     }
@@ -140,6 +144,9 @@ class ProductController extends Controller
         $product->discount_price = round($product->sale_price * $rate / 100, 2);
 
         $product->save();
+
+        // real-time event trigger
+        event(new ProductSaved($product));
 
         return response()->json($product);
     }

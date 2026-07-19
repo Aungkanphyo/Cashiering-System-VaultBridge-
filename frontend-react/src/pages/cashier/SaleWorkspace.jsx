@@ -31,6 +31,46 @@ const SaleWorkspace = () => {
     // For real-time barcode
     const productRef = useRef(availableProducts);
 
+    // Real-time listening for new product launches or changes
+    useEffect(() => {
+        if (window.Echo) {
+            const channel = window.Echo.private('cashier.products')
+                .listen('.ProductSaved', (data) => {
+                    const incomingProduct = data.product;
+
+                    const formattedProduct = {
+                        id: Number(incomingProduct.product_id),
+                        code: String(incomingProduct.barcode),
+                        name: incomingProduct.product_name,
+                        price: parseFloat(incomingProduct.price || 0),
+                        discountPercent: parseFloat(incomingProduct.discount_rate || 0),
+                        status: incomingProduct.status ? incomingProduct.status.toLowerCase() : 'active',
+                        stock_quantity: incomingProduct.stock_quantity !== undefined ? parseInt(incomingProduct.stock_quantity, 10) : 0
+                    };
+
+                    setAvailableProducts((prevProducts) => {
+                        // If it's an existing product, it will be updated, if it's a new product, it will be appended.
+                        const isExisting = prevProducts.some(p => p.id === formattedProduct.id);
+
+                        if (isExisting) {
+                            return prevProducts.map(p => p.id === formattedProduct.id ? formattedProduct : p);
+                        } else {
+                            // Real-time instant appearance at the top of the product list
+                            return [formattedProduct, ...prevProducts];
+                        }
+                    });
+
+                    // Notification via Toast so that the cashier can know
+                    toast.success(`"${formattedProduct.name}" has been updated in real-time!`);
+                });
+
+            // Disable channel listening when component is unmounted
+            return () => {
+                channel.stopListening('.ProductSaved');
+            };
+        }
+    }, []);
+
     useEffect(() => {
         productRef.current = availableProducts;
     }, [availableProducts]);
@@ -123,7 +163,7 @@ const SaleWorkspace = () => {
         };
 
         fetchProducts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // Socket.io integration for barcode scanner
