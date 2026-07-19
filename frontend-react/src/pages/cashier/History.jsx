@@ -143,37 +143,18 @@ export default function History() {
                     <h2 className="text-xl font-bold text-slate-800">Sales History</h2>
 
                     {/* Controls & Dropdowns Wrapper */}
-                    <div className="flex flex-wrap items-center gap-2.5 text-xs text-slate-400">
+                    <div className="flex flex-wrap items-center gap-2.5 text-xs text-slate-800">
                         {/* Voucher ID Search */}
-                        <div className="relative">
-                            <Search className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                        <div className="relative w-full sm:w-84">
+                            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                             <input
                                 type="text"
                                 value={voucherIdInput}
                                 onChange={(e) => setVoucherIdInput(e.target.value)}
-                                placeholder="Voucher ID"
-                                className={`w-60 pl-8 pr-3 py-2 rounded-lg border text-xs font-semibold transition-colors focus:outline-none focus:ring-4 focus:ring-emerald-500/15 ${voucherIdFilter
-                                    ? "border-emerald-500 bg-emerald-50 text-emerald-700"
-                                    : " bg-white text-slate-600 hover:border-emerald-300"
-                                    }`}
+                                placeholder="Voucher ID..."
+                                className="w-full pl-9 pr-3 py-2 border rounded-lg text-sm bg-transparent cursor-text focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15 transition"
                             />
                         </div>
-
-                        {/* Status Filter */}
-                        <select
-                            value={statusFilter}
-                            onChange={(e) => {
-                                setStatusFilter(e.target.value);
-                                setPage(1);
-                            }}
-                            className="border rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 bg-white focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15 cursor-pointer"
-                        >
-                            <option value="">All Statuses</option>
-                            <option value="completed">Completed</option>
-                            <option value="voided">Voided</option>
-                        </select>
-                        <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-
 
                         {/* Payment Filter */}
                         <select
@@ -191,8 +172,21 @@ export default function History() {
                                 </option>
                             ))}
                         </select>
-                        <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
 
+                        {/* Status Filter */}
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => {
+                                setStatusFilter(e.target.value);
+                                setPage(1);
+                            }}
+                            className="border rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 bg-white focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15 cursor-pointer"
+                        >
+                            <option value="">All Statuses</option>
+                            <option value="completed">Completed</option>
+                            <option value="voided">Voided</option>
+                        </select>
+            
                         {/* Reset Button  */}
                         <button
                             onClick={clearFilters}

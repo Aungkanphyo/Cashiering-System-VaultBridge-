@@ -96,7 +96,7 @@ const ViewHistory = () => {
                 setTransactions(responseData || []);
                 setTotalPages(metaData.last_page || metaData.meta?.last_page || 1);
                 setTotalRecords(metaData.total || metaData.meta?.total || 0);
-            // eslint-disable-next-line no-unused-vars
+                // eslint-disable-next-line no-unused-vars
             } catch (err) {
                 toast.error("Failed to load sales history");
             } finally {
@@ -306,7 +306,7 @@ const ViewHistory = () => {
                 </div>
 
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse min-w-[1000px]">
+                    <table className="w-full text-left border-collapse min-w-250">
                         <thead>
                             <tr className="bg-emerald-700 border-b border-emerald-800 text-white text-xs font-semibold uppercase">
                                 <th className="p-4">Sale ID</th>
@@ -369,12 +369,12 @@ const ViewHistory = () => {
                                             </td>
                                             <td className="p-4 text-center whitespace-nowrap">
                                                 {!isVoided ? (
-                                                    <span className="inline-block w-[70px] text-center py-1 rounded-lg text-xs font-semibold bg-green-50 text-green-600 border border-green-200">
+                                                    <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 font-bold text-[10px] uppercase tracking-wide">
                                                         Completed
                                                     </span>
                                                 ) : (
                                                     <div className="flex flex-col items-center gap-0.5">
-                                                        <span className="inline-block w-[70px] text-center py-1 rounded-lg text-xs font-semibold bg-rose-50 text-red-600 border border-green-200">
+                                                        <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-rose-100 text-rose-700 font-bold text-[10px] uppercase tracking-wide">
                                                             Voided
                                                         </span>
                                                         {tx.voidReason && (
@@ -382,11 +382,10 @@ const ViewHistory = () => {
                                                                 className="text-[10px] text-rose-400 italic max-w-[140px] truncate"
                                                                 title={tx.voidReason}
                                                             >
-
+                                                                {tx.voidReason}
                                                             </span>
                                                         )}
                                                     </div>
-
                                                 )}
                                             </td>
                                             <td className="p-4 text-center">

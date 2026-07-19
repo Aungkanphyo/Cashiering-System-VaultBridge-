@@ -1,4 +1,4 @@
-import { CalendarDays, Banknote, Wallet, QrCode, ChartColumn, TriangleAlert, RotateCcw, } from "lucide-react";
+import { CalendarDays, Banknote, Wallet, QrCode, ChartColumn, TriangleAlert, RotateCcw, ShoppingBag } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast"
 import api from "../../api/axios";
@@ -48,8 +48,6 @@ export default function Dashboard() {
         fetchDashboard();
     }, [from, to]);
 
-    const totalQty = (dashboard.bestSeller || []).reduce((sum, item) => sum + Number(item.qty), 0);
-
     return (
         <div className="min-h-screen">
             {/* Header Section*/}
@@ -78,7 +76,7 @@ export default function Dashboard() {
                                     toast.error("From date cannot be greater than today.");
                                     return;
                                 }
-                                
+
                                 if (to && new Date(to) < new Date(value)) {
                                     toast.error("From date cannot be greater than to date. Please select again!");
                                     return;
@@ -89,11 +87,11 @@ export default function Dashboard() {
                             className="border rounded-lg px-3 py-2 cursor-text focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15"
                         />
                     </div>
-                    
+
                     {/* TO Date */}
                     <div className="flex items-center gap-2">
                         <label className="text-sm font-semibold">TO</label>
-                        <input type="date" value={to} min={from || undefined}  max={today}
+                        <input type="date" value={to} min={from || undefined} max={today}
                             onChange={(e) => {
                                 const value = e.target.value;
 
@@ -115,7 +113,7 @@ export default function Dashboard() {
 
                     <button onClick={() => { setFrom(""); setTo(""); }} className="flex items-center gap-2 rounded-lg bg-red-600 hover:bg-red-700 text-white px-4 py-2 cursor-pointer">
                         <RotateCcw size={18} />
-                        Reset 
+                        Reset
                     </button>
                 </div>
             </div>
@@ -130,7 +128,7 @@ export default function Dashboard() {
                         <div key={item.title} className="bg-white rounded-2xl border shadow-sm p-6 flex justify-between items-center">
                             <div>
                                 <p className="text-lg uppercase tracking-wider font-bold">{item.title}</p>
-                                <h2 className="text-sm text-slate-500 font-semibold mt-2">{item.amount.toLocaleString()} MMK</h2>
+                                <h2 className="text-sm text-slate-800 font-semibold mt-2">{item.amount.toLocaleString()} Ks</h2>
                             </div>
 
                             <div className={`w-14 h-14 rounded-xl ${item.bg} flex items-center justify-center`}>
@@ -221,14 +219,12 @@ export default function Dashboard() {
                     {(dashboard.lowStock || []).length > 0 ?
                         (<div className="space-y-4">
                             {(dashboard.lowStock || []).map((product, index) => (
-                                <div key={index} className="flex items-center justify-between rounded-xl border border-red-100 bg-red-50 p-4">
-                                    <div>
-                                        <h3 className="font-semibold text-slate-800">{product.product_name}</h3>
-                                        <p className="text-sm text-slate-500">Remaining Stock</p>
-                                    </div>
+                                <div key={index}
+                                    className="flex items-center justify-between rounded-xl border-l-4 border-red-500 bg-red-50 p-3 shadow-sm">
+                                    <h3 className="text-sm font-bold text-slate-800 me-1">{product.product_name}</h3>
 
-                                    <span className="rounded-full bg-red-100 px-3 py-1 text-sm font-bold text-red-600">
-                                        {product.stock_quantity} Left
+                                    <span className="rounded-lg bg-white px-3 py-1 text-sm font-bold text-red-600 shadow-sm">
+                                        {product.stock_quantity}
                                     </span>
                                 </div>
                             ))}
