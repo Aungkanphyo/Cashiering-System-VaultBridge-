@@ -12,7 +12,15 @@ const SaleWorkspace = () => {
     const [error, setError] = useState(null);
 
     // Current Cart Setup
-    const [cartItems, setCartItems] = useState([]);
+    const [cartItems, setCartItems] = useState(() => {
+        try {
+            const savedCart = localStorage.getItem('mart4u_active_cart');
+            return savedCart ? JSON.parse(savedCart) : [];
+        } catch (error) {
+            console.error("Error parsing cart from localStorage:", error);
+            return [];
+        }
+    });
     const [searchQuery, setSearchQuery] = useState('');
     const [recentProductId, setRecentProductId] = useState(null);
     const [voucherId, setVoucherId] = useState();
@@ -26,6 +34,10 @@ const SaleWorkspace = () => {
     useEffect(() => {
         productRef.current = availableProducts;
     }, [availableProducts]);
+
+    useEffect(() => {
+        localStorage.setItem('mart4u_active_cart', JSON.stringify(cartItems));
+    }, [cartItems]);
 
     const fetchNextVoucherId = useCallback(async () => {
         try {
@@ -78,6 +90,28 @@ const SaleWorkspace = () => {
                 });
 
                 setAvailableProducts(formattedProducts);
+
+                setCartItems(prevItems => {
+                    let isStale = false;
+                    const updatedItems = prevItems.map(item => {
+                        const freshProduct = availableProducts.find(product => product.id === item.id);
+                        if (freshProduct) {
+                            // Check if critical POS values have changed in DB while cashier was away
+                            if (item.price !== freshProduct.price || item.discountPercent !== freshProduct.discountPercent || item.stock_quantity !== freshProduct.stock_quantity) {
+                                isStale = true;
+                                // Keep the cashier's chosen quantity, but update backend constraints
+                                return {
+                                    ...item,
+                                    price: freshProduct.price,
+                                    discountPercent: freshProduct.discountPercent,
+                                    stock_quantity: freshProduct.stock_quantity
+                                };
+                            }
+                        }
+                        return item;
+                    });
+                    return isStale ? updatedItems : prevItems;
+                });
                 setError(null);
             } catch (err) {
                 console.error("API Error via Axios:", err);
@@ -89,6 +123,7 @@ const SaleWorkspace = () => {
         };
 
         fetchProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // Socket.io integration for barcode scanner
@@ -114,7 +149,7 @@ const SaleWorkspace = () => {
                     const currentQty = exist ? exist.quantity : 0;
 
                     if (currentQty + 1 > matchedProduct.stock_quantity) {
-                        toast.error(`"${product.name}" exceeds the available stock ${product.stock_quantity} `);
+                        toast.error(`"${matchedProduct.name}" exceeds the available stock ${matchedProduct.stock_quantity} `);
                         return prev;
                     }
 
@@ -205,64 +240,6 @@ const SaleWorkspace = () => {
         setCartItems([]);
         setRecentProductId(null);
     };
-
-
-    // Process Sale with Laravel API Integration ---
-    const handleProcessSale = async () => {
-        if (cartItems.length === 0) {
-            showNotification('No products in the cart to process sale.', "error");
-            return;
-        }
-
-        // Validation check only if you cash
-        if (isCashSelected) {
-            if (!payAmount || parseFloat(payAmount) <= 0) {
-                showNotification('Please enter a valid payment amount.', "error");
-                return;
-            }
-
-            if (parseFloat(payAmount) < finalTotal) {
-                showNotification('Payment amount is less than the total amount due.', "error");
-                return;
-            }
-        }
-
-        const matchedPaymentObj = dbPaymentMethods.find(
-            method => method.payment_name.toLowerCase() === paymentMethod.toLowerCase()
-        );
-
-        if (!matchedPaymentObj) {
-            showNotification(`The selected payment method [${paymentMethod}] was not found in the database.`, "error");
-            return;
-        }
-
-        const salePayload = {
-            payment_id: matchedPaymentObj.payment_id,
-            status: 'completed',
-            payment_received: isCashSelected ? parseFloat(payAmount) : finalTotal,
-
-            items: cartItems.map(item => ({
-                product_id: Number(item.id),
-                quantity: parseInt(item.quantity, 10),
-            }))
-        };
-
-        try {
-            const response = await api.post('/vouchers', salePayload);
-
-            if (response.status === 200 || response.status === 201 || response.data.success) {
-                showNotification(`Transaction is successfully completed!`, "success");
-                fetchNextVoucherId();
-                handleClearCart();
-            }
-        } catch (error) {
-            console.error("Sale Process Backend Error:", error);
-            const serverError = error.response?.data?.message || error.response?.data?.error || "Failed to process sale. Please try again.";
-            showNotification(serverError, "error");
-            throw error; 
-        }
-    };
-
 
     return (
         <div className="w-full min-h-screen bg-[#F8FAFC] font-sans flex text-slate-800 antialiased px-4 pt-0 pb-4 relative">

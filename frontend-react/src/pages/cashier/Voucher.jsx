@@ -21,9 +21,9 @@ const Voucher = ({
     const [paymentMethod, setPaymentMethod] = useState('Cash');
     const [payAmount, setPayAmount] = useState('');
 
+
     // Default payment method setup when dbPaymentMethods are loaded
     useEffect(() => {
-        // active default select
         if (dbPaymentMethods && dbPaymentMethods.length > 0) {
             // eslint-disable-next-line react-hooks/set-state-in-effect
             setPaymentMethod(dbPaymentMethods[0].payment_name);
@@ -45,6 +45,7 @@ const Voucher = ({
     // Print trigger execution (resets cart on success)
     const handlePrintFn = useReactToPrint({
         contentRef: printComponentRef,
+        // chang documentTitle to function expression 
         documentTitle: () => `Mark4U_Voucher_${voucherId || '0000'}`,
         onAfterPrint: () => {
             onClearAll();
@@ -81,8 +82,9 @@ const Voucher = ({
                 return;
             }
 
-            if (isNaN(parsedPayAmount)) {
+            if(isNaN(parsedPayAmount)){
                 toast.error("Please enter number only!");
+                return;
             }
 
             if (parsedPayAmount < finalTotal) {
@@ -91,13 +93,12 @@ const Voucher = ({
             }
         }
 
-        // activePaymentMethods
         const matchedPaymentObj = dbPaymentMethods.find(
             method => method.payment_name.toLowerCase() === paymentMethod.toLowerCase()
         );
 
         if (!matchedPaymentObj) {
-            toast.error(`The selected payment method [${paymentMethod}] is currently inactive or not found.`);
+            toast.error(`The selected payment method [${paymentMethod}] was not found in the database.`);
             return;
         }
 
@@ -274,7 +275,7 @@ const Voucher = ({
                 </div>
             </div>
 
-            <div className="mt-1 pt-1.5 border-t-2 border-dashed border-slate-100 grid-cols-12 gap-2.5 flex items-center bg-white my-2">
+            <div className="mt-1 pt-1.5 border-t-2 border-dashed border-slate-100 grid grid-cols-12 gap-2.5 flex items-center bg-white my-2">
                 <div className="col-span-4 mt-2">
                     <label className="block text-xs font-black text-slate-900 mb-2">Method</label>
                     <select
@@ -303,7 +304,12 @@ const Voucher = ({
                             placeholder={isCashSelected ? "Enter Cash" : "0"}
                             className={`w-full px-2 py-0.5 h-7 text-xs font-sans font-bold border rounded-md focus:outline-none bg-white text-slate-800 border-slate-200 focus:border-emerald-500 ${!isCashSelected ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' : ''}`}
                             value={isCashSelected ? payAmount : finalTotal}
-                            onChange={(e) => setPayAmount(e.target.value)}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                if(value === '' || /^\d*\.?\d*$/.test(value)) {
+                                    setPayAmount(value);
+                                }
+                            }}
                             disabled={!isCashSelected}
                         />
                     </div>
@@ -321,8 +327,8 @@ const Voucher = ({
                     disabled={cartItems.length === 0}
                     onClick={handlePayAndPrint}
                     className={`w-full py-2 px-4 rounded-lg font-bold text-xs border shadow-xs transition-all flex items-center justify-center gap-1.5 ${cartItems.length === 0
-                        ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-60'
-                        : 'bg-emerald-600 hover:bg-emerald-700 border-emerald-700 text-white active:scale-[0.99]'
+                            ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-60'
+                            : 'bg-emerald-600 hover:bg-emerald-700 border-emerald-700 text-white active:scale-[0.99]'
                         }`}
                 >
                     <BanknoteArrowDown className="w-5 h-5 me-1" />Pay & Print
