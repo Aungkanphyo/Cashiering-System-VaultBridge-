@@ -141,6 +141,7 @@ const ViewStaff = () => {
     }, [staffs, statusFilter]);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setCurrentPage(1);
     }, [statusFilter, debouncedSearchTerm, pageSize]);
 
@@ -148,6 +149,7 @@ const ViewStaff = () => {
     const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         if (currentPage > totalPages) setCurrentPage(totalPages);
     }, [totalPages, currentPage]);
 
@@ -290,7 +292,7 @@ const ViewStaff = () => {
                                 </tr>
                             )}
                             {!loading &&
-                                paginatedStaffs.map((staff, index) => {
+                                paginatedStaffs.map((staff) => {
                                     const isInactive = staff.status === 'Inactive';
                                     return (
                                         <tr

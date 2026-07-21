@@ -13,7 +13,7 @@ const StaffDetailModal = ({ isOpen, onClose, staff }) => {
     }
 
     return (
-        <div className="fixed inset-0 bg-slate-900/30 bg-white/2 backdrop-blur-[7px] flex justify-center items-center z-50 p-4">
+        <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-[7px] flex justify-center items-center z-50 p-4">
             <div className="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-md w-full flex flex-col">
                 {/* Header */}
                 <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-emerald-700 rounded-t-2xl">
@@ -21,9 +21,6 @@ const StaffDetailModal = ({ isOpen, onClose, staff }) => {
                         <User className="text-white" size={28} />
                         <div>
                             <h3 className="font-bold text-white text-lg leading-tight">{staff.username}</h3>
-                            <p className="text-xs text-white/70 font-medium mt-0.5">
-                                Work Experience: {staff.working_duration || 'Staff Profile'}
-                            </p>
                         </div>
                     </div>
                     <button
