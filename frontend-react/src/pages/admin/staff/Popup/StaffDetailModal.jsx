@@ -87,7 +87,7 @@ const StaffDetailModal = ({ isOpen, onClose, staff }) => {
                                 {staff.total_errors?.count || "0 times"}
                             </span>
                             {staff.total_errors?.details && staff.total_errors.details.length > 0 && (
-                                <ul className="text-xs font-medium list-inside bg-rose-50 p-3 rounded-lg border border-slate-200 space-y-1">
+                                <ul className="text-xs font-medium list-disc list-inside bg-rose-50 p-3 rounded-lg border border-slate-200 space-y-1">
                                     {staff.total_errors.details.map((error, idx) => (
                                         <li key={idx}>{error}</li>
                                     ))}

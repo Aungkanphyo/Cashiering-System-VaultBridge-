@@ -89,7 +89,7 @@ class StaffController extends Controller
         $totalErrorsCount = $voidedVouchers->sum('total');
 
         $errorDetails = $voidedVouchers->map(function ($voucher) {
-            return "- " . $voucher->void_reason . " (" . $voucher->total . ") times";
+            return $voucher->void_reason . " (" . $voucher->total . ") times";
         })->toArray();
 
         $staff->total_errors = [
