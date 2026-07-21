@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from "react";
 import {
   Plus,
   Loader2,
-  RotateCcw,
   Search,
   Tag,
   CheckCircle2,
