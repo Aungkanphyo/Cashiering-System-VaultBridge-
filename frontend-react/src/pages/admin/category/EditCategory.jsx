@@ -47,10 +47,7 @@ const EditCategory = ({ categoryId, onClose, onSuccess, existingCategoryNames = 
     } else if (isDuplicateName(name)) {
       errs.name = "A category with this name already exists.";
     }
-    if (tax === "" || Number.isNaN(Number(tax))) {
-      errs.tax = "Tax rate is required.";
-    }
-   else if (tax !== "" && (Number.isNaN(Number(tax)) || Number(tax) < 0 || Number(tax) > 30)) {
+    if (tax !== "" && (Number.isNaN(Number(tax)) || Number(tax) < 0 || Number(tax) > 30)) {
       errs.tax = "Tax rate must be between 0 and 30.";
     }
 

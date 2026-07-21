@@ -21,14 +21,12 @@ const AddCategory = ({ onClose, onSuccess, existingCategoryNames = [] }) => {
 
   const validate = () => {
     const errs = {};
-    if (!name.trim()) {
+   if (!name.trim()) {
       errs.name = "Category name is required.";
     } else if (isDuplicateName(name)) {
       errs.name = "A category with this name already exists.";
     }
-    if (tax === "" || Number.isNaN(Number(tax))) {
-      errs.tax = "Tax rate is required.";
-    } else if (tax !== "" && (Number.isNaN(Number(tax)) || Number(tax) < 0 || Number(tax) > 30)) {
+    if (tax !== "" && (Number.isNaN(Number(tax)) || Number(tax) < 0 || Number(tax) > 30)) {
       errs.tax = "Tax rate must be between 0 and 30.";
     }
 
@@ -43,6 +41,13 @@ const AddCategory = ({ onClose, onSuccess, existingCategoryNames = [] }) => {
   // POST /api/categories
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    const errs = validate();
+    setFieldErrors(errs);
+    if (Object.keys(errs).length > 0) {
+      
+      return;
+    }
 
     setSubmitting(true);
     setError("");
@@ -115,6 +120,7 @@ const AddCategory = ({ onClose, onSuccess, existingCategoryNames = [] }) => {
                 clearFieldError("name");
                 if (error) setError("");
               }}
+              
               placeholder="e.g. Beverages, Snacks"
               className={`w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:outline-none ${fieldErrors.name
                 ? "border-rose-400 focus:ring-rose-400"
@@ -165,7 +171,7 @@ const AddCategory = ({ onClose, onSuccess, existingCategoryNames = [] }) => {
               type="number"
               step="0.1"
               min="0"
-              max="100"
+              max="30"
               value={discount}
               onChange={(e) => {
                 // Restrict input length to max 5 characters (e.g. "100.0")
