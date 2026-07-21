@@ -189,7 +189,7 @@ const EditStaffModal = ({ onClose, staff, onSuccess }) => {
         }`;
 
     return (
-        <div className="fixed inset-0 bg-slate-900/30 bg-white/2 backdrop-blur-[7px] flex justify-center items-center z-50 p-4">
+        <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-[7px] flex justify-center items-center z-50 p-4">
             <div className="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-lg w-full flex flex-col max-h-[90vh]">
                 {/* Header */}
                 <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-emerald-700 rounded-t-2xl">
@@ -325,7 +325,7 @@ const EditStaffModal = ({ onClose, staff, onSuccess }) => {
                                 <option value=""></option>
                                 {availableTownships.map((township, idx) => (
                                     <option key={idx} value={township.name_en}>
-                                        {township.name_mm}
+                                        {township.name_en}
                                     </option>
                                 ))}
                             </select>
