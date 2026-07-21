@@ -25,7 +25,7 @@ class UserSeeder extends Seeder
                 'date_of_birth' => '1995-01-01',
                 'address' => 'Mandalay, Myanmar',
                 'gender' => 'male',
-                'email' => 'admin@gmail.com',
+                'email' => 'aungkanphyo.dev@gmail.com',
                 'join_date' => Carbon::now()->toDateString(), // Today's date will be entered
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
@@ -41,7 +41,7 @@ class UserSeeder extends Seeder
                 'date_of_birth' => '1998-05-10',
                 'address' => 'Mandalay, Myanmar',
                 'gender' => 'female',
-                'email' => 'phoenix798526456@gmail.com',
+                'email' => 'swams1223@gmail.com',
                 'join_date' => Carbon::now()->toDateString(),
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),

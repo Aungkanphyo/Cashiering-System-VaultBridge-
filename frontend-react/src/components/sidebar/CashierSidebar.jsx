@@ -67,14 +67,14 @@ const CashierSidebar = () => {
             </div>
 
             {/* Bottom Section */}
-            <div className="space-y-3">
+            {/* <div className="space-y-3"> */}
                 {/* LOGOUT */}
-                <button onClick={() => setIsConfirmOpen(true)}
-                    className="w-full flex items-center justify-center gap-2 bg-red-700 hover:bg-red-600 text-white font-medium py-2.5 rounded-xl text-sm transition-all"
-                >
-                    <LogOut className="w-3.5 h-3.5" /> Logout
-                </button>
-            </div>
+                {/* <button onClick={() => setIsConfirmOpen(true)} */}
+                    {/* // className="w-full flex items-center justify-center gap-2 bg-red-700 hover:bg-red-600 text-white font-medium py-2.5 rounded-xl text-sm transition-all" */}
+                {/* > */}
+                    {/* <LogOut className="w-3.5 h-3.5" /> Logout */}
+                {/* </button> */}
+            {/* </div> */}
 
             {/* Logout Confirmation Modal Popup */}
             {isConfirmOpen && (

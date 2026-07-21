@@ -49,7 +49,6 @@ const AdminLayout = () => {
         "edit-category": "Edit Category",
         "view-product": "View Product",
         "add-product": "Add Product",
-        "edit-product": "Edit Product",
         "view-staff": "View Staff",
         "add-staff": "Add Staff",
         "view-payment": "View Payment",
@@ -62,46 +61,70 @@ const AdminLayout = () => {
 
     const key = location.pathname.split("/").pop();
     const pageTitle = titleMap[key] || "Admin Panel";
+    const adminName = useAuthStore((state) => state.user?.name || "Admin");
 
     return (
         <div className="flex w-full h-screen overflow-hidden bg-gray-50">
             <AdminSidebar />
 
             <div className="flex-1 flex flex-col h-full overflow-hidden">
-                <header className="h-16 bg-white border-b border-green-400 flex items-center justify-between px-8 shadow-sm">
+                <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 shadow-sm">
                     {/* Nav left side */}
-                    <div className="text-gray-700 font-medium text-lg transition-all duration-300">
-                        {pageTitle}
+                    <div className="flex items-center gap-3">
+                        <span className="w-1.5 h-6 bg-[#07a876] rounded-full" />
+                        <h1 className="text-gray-800 font-semibold text-xl tracking-tight transition-all duration-300">
+                            {pageTitle}
+                        </h1>
                     </div>
 
                     {/* Nav right side */}
-                    <div className="flex items-center gap-4">
-                        <div className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
+                    <div className="flex items-center gap-6">
+                        <div className="text-sm font-medium text-gray-500">
                             {time}
                         </div>
 
                         <div className="relative">
-                            <button onClick={() => setIsAdminMenuOpen(!isAdminMenuOpen)}
-                                className="flex items-center gap-2 bg-[#07a876] text-gray-50 px-5 py-3 text-sm font-semibold rounded-xl border border-emerald-200 shadow-sm hover:bg-[#06956a] transition"
+                            {/* Invisible clickaway backdrop */}
+                            {isAdminMenuOpen && (
+                                <div 
+                                    className="fixed inset-0 z-40 bg-transparent" 
+                                    onClick={() => setIsAdminMenuOpen(false)}
+                                />
+                            )}
+
+                            {/* NEW DESIGNED ADMIN BUTTON */}
+                            <button
+                                onClick={() => setIsAdminMenuOpen(!isAdminMenuOpen)}
+                                className="relative z-50 flex items-center gap-2.5 pl-2 pr-3 py-1.5 rounded-full border border-gray-200 hover:border-gray-300 bg-white hover:bg-gray-50 transition shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#07a876]"
                             >
-                                Admin
-                                {isAdminMenuOpen ? (<ChevronUp className="w-4 h-4" />) : (<ChevronDown className="w-4 h-4" />)}
+                                <div className="w-8 h-8 rounded-full bg-emerald-100 text-slate-800 flex items-center justify-center font-bold text-sm select-none">
+                                    {adminName.trim().charAt(0).toUpperCase()}
+                                </div>
+                                <span className="text-sm font-semibold text-gray-700 hidden sm:inline">
+                                    Admin
+                                </span>
+                                {isAdminMenuOpen ? (
+                                    <ChevronUp className="w-4 h-4 text-gray-400" />
+                                ) : (
+                                    <ChevronDown className="w-4 h-4 text-gray-400" />
+                                )}
                             </button>
 
                             {isAdminMenuOpen && (
-                                <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden z-50">
+                                <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-50 py-1 animate-in fade-in slide-in-from-top-2 duration-150">
                                     <button onClick={() => { setIsAdminMenuOpen(false); setIsChangePasswordOpen(true); }}
-                                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-[#21bf8f] hover:text-white transition"
+                                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition"
                                     >
-                                        <Key className="w-4 h-4" /> Change Password
+                                        <Key className="w-4 h-4 text-gray-400" /> Change Password
                                     </button>
+
+                                    <hr className="border-gray-100 my-1" />
 
                                     <button onClick={() => { setIsAdminMenuOpen(false); setIsConfirmOpen(true); }}
-                                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-[#21bf8f] hover:text-white transition"
+                                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition"
                                     >
-                                        <LogOut className="w-4 h-4" />Logout
+                                        <LogOut className="w-4 h-4 text-red-500" /> Logout
                                     </button>
-
                                 </div>
                             )}
                         </div>
@@ -120,14 +143,12 @@ const AdminLayout = () => {
                                     </p>
 
                                     <div className="flex gap-3 justify-center">
-                                        {/* Cancel Button */}
                                         <button
                                             onClick={() => setIsConfirmOpen(false)}
                                             className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold rounded-xl transition"
                                         >
                                             Cancel
                                         </button>
-                                        {/* Confirm Button */}
                                         <button
                                             onClick={handleLogout}
                                             className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl shadow-sm shadow-red-200 transition"
@@ -140,9 +161,9 @@ const AdminLayout = () => {
                         )}
 
                         {/* Change Password Modal Popup */}
-                        <ChangePassword 
-                            isOpen={isChangePasswordOpen} 
-                            onClose={() => setIsChangePasswordOpen(false)} 
+                        <ChangePassword
+                            isOpen={isChangePasswordOpen}
+                            onClose={() => setIsChangePasswordOpen(false)}
                         />
                     </div>
                 </header>

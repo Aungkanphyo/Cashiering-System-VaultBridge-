@@ -1,7 +1,15 @@
 import { useState, useEffect, useMemo } from "react";
-import { Plus, Loader2, RotateCcw, Search } from "lucide-react";
+import {
+    Plus,
+    Loader2,
+    Search,
+    Package,
+    CheckCircle2,
+    XCircle,
+    TriangleAlert,
+} from "lucide-react";
 import api from "../../../api/axios";
-import Toast from "../../../components/common/Toast";
+import toast from "react-hot-toast"
 import Modal from "../../../components/common/Modal";
 import ConfirmDialog from "../../../components/common/ConfirmDialog";
 import Pagination from "../../../components/common/Pagination";
@@ -9,458 +17,450 @@ import AddProduct from "./AddProduct";
 import EditProduct from "./EditProduct";
 
 const ProductsView = () => {
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState("");
-  const [toastType, setToastType] = useState("success");
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [editProductId, setEditProductId] = useState(null);
-  const [discountError, setDiscountError] = useState({});
-  const [statusFilter, setStatusFilter] = useState("all"); // all | active | inactive
-  const [search, setSearch] = useState("");
-  const [confirmState, setConfirmState] = useState(null); // { type: 'delete'|'restore', id, name }
-  const [pageSize, setPageSize] = useState(5);
-  const [currentPage, setCurrentPage] = useState(1);
+    const [products, setProducts] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [editProductId, setEditProductId] = useState(null);
+    const [statusFilter, setStatusFilter] = useState("all"); // all | active | inactive | low_stock
+    const [search, setSearch] = useState("");
+    const [confirmState, setConfirmState] = useState(null); // { type: 'delete'|'restore', id, name }
+    const [pageSize, setPageSize] = useState(5);
+    const [currentPage, setCurrentPage] = useState(1);
 
-  const showToast = (message, type = "success") => {
-    setToast(message);
-    setToastType(type);
-    setTimeout(() => setToast(""), 2500);
-  };
+    useEffect(() => {
+        if (window.Echo) {
+            window.Echo.private('admin.dashboard')
+                .listen('.SaleProcessed', (data) => {
+                    // data.updatedProducts will contain the reduced product_id and stock_quantity
+                    setProducts((prevProducts) => {
+                        return prevProducts.map((p) => {
+                            const match = data.updatedProducts.find(
+                                (up) => Number(up.product_id) === Number(p.product_id)
+                            );
+                            // Real-time update of stock quantity if a matching product is available
+                            return match ? { ...p, stock_quantity: match.stock_quantity } : p;
+                        });
+                    });
+                });
+        }
 
-  // GET /api/products + GET /api/categories (to resolve category names)
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const [productsRes, categoriesRes] = await Promise.all([
-        api.get("/products"),
-        api.get("/categories"),
-      ]);
-      setProducts(productsRes.data);
-      setCategories(categoriesRes.data);
-    } catch (err) {
-      showToast(
-        err.response?.data?.message || "Failed to load products",
-        "error"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+        return () => {
+            if (window.Echo) {
+                window.Echo.leaveChannel('admin.dashboard');
+            }
+        };
+    }, []);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            const [productsRes, categoriesRes] = await Promise.all([
+                api.get("/products"),
+                api.get("/categories"),
+            ]);
+            setProducts(productsRes.data);
+            setCategories(categoriesRes.data);
+            // eslint-disable-next-line no-unused-vars
+        } catch (err) {
+            toast.error("Failed to load products");
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  const getCategory = (categoryId) =>
-    categories.find((c) => c.category_id === categoryId) || null;
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        fetchData();
+    }, []);
 
-  const getCategoryName = (categoryId) => {
-    const cat = getCategory(categoryId);
-    return cat ? cat.category_name : "General";
-  };
+    const getCategory = (categoryId) =>
+        categories.find((c) => c.category_id === categoryId) || null;
 
-  // sale price = price + category tax (tax applied on top of the base price)
-  const getSalePrice = (product) => {
-    const cat = getCategory(product.category_id);
-    const tax = cat ? Number(cat.tax || 0) : 0;
-    const price = Number(product.price || 0);
-    return price + (price * tax) / 100;
-  };
+    const getCategoryName = (categoryId) => {
+        const cat = getCategory(categoryId);
+        return cat ? cat.category_name : "General";
+    };
 
-  // The discount rate for a product can never go below its category's own
-  // discount (discount_category), but can be raised up to 100%.
-  const getDiscountFloor = (product) => {
-    const cat = getCategory(product.category_id);
-    return cat ? Number(cat.discount_category || 0) : 0;
-  };
+    const getSalePrice = (product) => {
+        const cat = getCategory(product.category_id);
+        const tax = cat ? Number(cat.tax || 0) : 0;
+        const price = Number(product.price || 0);
+        return price + (price * tax) / 100;
+    };
 
-  const filteredProducts = useMemo(() => {
-    let list = products;
-    if (statusFilter !== "all") {
-      list = list.filter((p) => p.status === statusFilter);
-    }
-    const term = search.trim().toLowerCase();
-    if (term) {
-      list = list.filter((p) => {
-        const nameMatch = p.product_name?.toLowerCase().includes(term);
-        const categoryMatch = getCategoryName(p.category_id)
-          .toLowerCase()
-          .includes(term);
-        return nameMatch || categoryMatch;
-      });
-    }
-    return list;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [products, categories, statusFilter, search]);
+    const getDiscountFloor = (product) => {
+        const cat = getCategory(product.category_id);
+        return cat ? Number(cat.discount_category || 0) : 0;
+    };
 
-  // Reset back to page 1 whenever the filter, search term, or page size changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [statusFilter, search, pageSize]);
+    const filteredProducts = useMemo(() => {
+        let list = products;
 
-  const totalItems = filteredProducts.length;
-  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+        // Support the regular status states + the custom low_stock rule
+        if (statusFilter === "active" || statusFilter === "inactive") {
+            list = list.filter((p) => p.status === statusFilter);
+        } else if (statusFilter === "low_stock") {
+            list = list.filter((p) => p.stock_quantity <= p.min_stock_level);
+        }
 
-  // Keep currentPage valid if the list shrinks (e.g. after a delete)
-  useEffect(() => {
-    if (currentPage > totalPages) setCurrentPage(totalPages);
-  }, [totalPages, currentPage]);
+        const term = search.trim().toLowerCase();
+        if (term) {
+            list = list.filter((p) => {
+                const nameMatch = p.product_name?.toLowerCase().includes(term);
+                const categoryMatch = getCategoryName(p.category_id)
+                    .toLowerCase()
+                    .includes(term);
+                return nameMatch || categoryMatch;
+            });
+        }
+        return list;
+    }, [products, categories, statusFilter, search]);
 
-  const paginatedProducts = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    return filteredProducts.slice(start, start + pageSize);
-  }, [filteredProducts, currentPage, pageSize]);
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setCurrentPage(1);
+    }, [statusFilter, search, pageSize]);
 
-  // PUT /api/products/:id (quick-edit discount rate from the table)
-  const handleDiscountChange = async (productId, value) => {
-    const discount_rate = parseFloat(value);
-    const product = products.find((p) => p.product_id === productId);
-    const floor = product ? getDiscountFloor(product) : 0;
+    const totalItems = filteredProducts.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
 
-    if (Number.isNaN(discount_rate) || discount_rate < 0 || discount_rate > 100) {
-      setDiscountError((prev) => ({
-        ...prev,
-        [productId]: "Discount rate must be between 0 and 100.",
-      }));
-      return;
-    }
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        if (currentPage > totalPages) setCurrentPage(totalPages);
+    }, [totalPages, currentPage]);
 
-    if (discount_rate < floor) {
-      setDiscountError((prev) => ({
-        ...prev,
-        [productId]: `Discount rate cannot be lower than ${floor}% for this category.`,
-      }));
-      return;
-    }
+    const paginatedProducts = useMemo(() => {
+        const start = (currentPage - 1) * pageSize;
+        return filteredProducts.slice(start, start + pageSize);
+    }, [filteredProducts, currentPage, pageSize]);
 
-    setDiscountError((prev) => ({ ...prev, [productId]: "" }));
+    const askConfirm = (type, id, name) => setConfirmState({ type, id, name });
 
-    try {
-      const res = await api.put(`/products/${productId}`, { discount_rate });
-      setProducts((prev) =>
-        prev.map((p) => (p.product_id === productId ? res.data : p))
-      );
-      showToast("Discount updated");
-    } catch (err) {
-      showToast(
-        err.response?.data?.message || "Failed to update discount",
-        "error"
-      );
-    }
-  };
+    const handleConfirm = async () => {
+        if (!confirmState) return;
+        const { type, id, name } = confirmState;
+        const newStatus = type === "delete" ? "inactive" : "active";
+        try {
+            const res = await api.put(`/products/${id}`, { status: newStatus });
+            setProducts((prev) => prev.map((p) => (p.product_id === id ? res.data : p)));
+            toast.success(type === "delete" ? `"${name}" set to inactive` : `"${name}" restored`);
+            // eslint-disable-next-line no-unused-vars
+        } catch (err) {
+            toast.error("Failed to update product");
+        } finally {
+            setConfirmState(null);
+        }
+    };
 
-  // Opens the custom confirmation box (used for both Delete and Restore)
-  const askConfirm = (type, id, name) => setConfirmState({ type, id, name });
+    const summaryStats = useMemo(() => {
+        const activeCount = products.filter((p) => p.status === "active").length;
+        const inactiveCount = products.filter((p) => p.status === "inactive").length;
+        const lowStockCount = products.filter(
+            (p) => p.stock_quantity <= p.min_stock_level
+        ).length;
 
-  const handleConfirm = async () => {
-    if (!confirmState) return;
-    const { type, id, name } = confirmState;
-    const newStatus = type === "delete" ? "inactive" : "active";
-    try {
-      const res = await api.put(`/products/${id}`, { status: newStatus });
-      setProducts((prev) => prev.map((p) => (p.product_id === id ? res.data : p)));
-      showToast(
-        type === "delete" ? `"${name}" set to inactive` : `"${name}" restored`
-      );
-    } catch (err) {
-      showToast(
-        err.response?.data?.message || "Failed to update product",
-        "error"
-      );
-    } finally {
-      setConfirmState(null);
-    }
-  };
+        return [
+            {
+                title: "TOTAL PRODUCTS",
+                value: products.length,
+                filterKey: "all",
+                icon: Package,
+                colorClass: "text-slate-500 bg-slate-50 border-slate-200",
+                activeClass: "ring-2 ring-emerald-500 border-emerald-400 bg-slate-50/50",
+            },
+            {
+                title: "ACTIVE PRODUCTS",
+                value: activeCount,
+                filterKey: "active",
+                icon: CheckCircle2,
+                colorClass: "text-emerald-600 bg-emerald-50 border-emerald-100",
+                activeClass: "ring-2 ring-emerald-500 border-emerald-400 bg-emerald-50/50",
+            },
+            {
+                title: "INACTIVE PRODUCTS",
+                value: inactiveCount,
+                filterKey: "inactive",
+                icon: XCircle,
+                colorClass: "text-rose-600 bg-rose-50 border-rose-100",
+                activeClass: "ring-2 ring-emerald-500 border-emerald-400 bg-rose-50/50",
+            },
+            {
+                title: "LOW STOCK ITEMS",
+                value: lowStockCount,
+                filterKey: "low_stock",
+                icon: TriangleAlert,
+                colorClass: "text-amber-600 bg-amber-50 border-amber-100",
+                activeClass: "ring-2 ring-emerald-500 border-emerald-400 bg-amber-50/50",
+            },
+        ];
+    }, [products]);
 
-  const filterTabs = [
-    { key: "all", label: "All" },
-    { key: "active", label: "Active" },
-    { key: "inactive", label: "Inactive" },
-  ];
+    return (
+        <div className="min-h-screen">
+            {/* Interactive Stat Cards Section */}
+            <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-5">
+                {summaryStats.map((item) => {
+                    const IconComponent = item.icon;
+                    const isActive = statusFilter === item.filterKey;
 
-  return (
-    <section className="space-y-6">
-      <Toast message={toast} type={toastType} />
-
-      {/* Unified header + filters card: search + status dropdown on left, page-size + Add button rightmost */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 p-4">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-            <div className="relative w-full sm:w-72">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by category or product name ..."
-                className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent focus:outline-none transition"
-              />
-            </div>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 rounded-lg text-sm font-semibold border border-slate-200 text-slate-600 bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-            >
-              {filterTabs.map((tab) => (
-                <option key={tab.key} value={tab.key}>
-                  {tab.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="flex items-center gap-2 text-xs text-slate-500">
-              <span>Show</span>
-              <select
-                value={pageSize}
-                onChange={(e) => setPageSize(Number(e.target.value))}
-                className="border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-700 bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-              >
-                {[5, 10, 15, 20, 25].map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-              <span>entries</span>
-            </div>
-
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold flex items-center space-x-1.5 shadow-sm shrink-0"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add New Product</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-emerald-700 border-b border-emerald-800 text-white text-xs font-semibold uppercase">
-                <th className="p-4">Barcode</th>
-                <th className="p-4">Name</th>
-                <th className="p-4">Price (MMK)</th>
-                <th className="p-4">
-                  Sale Price (MMK){" "}
-                  <span className="text-[10px] text-emerald-200">
-                    (Price + Tax)
-                  </span>
-                </th>
-                <th className="p-4">Stock Qty</th>
-                <th className="p-4">Min Stock Level</th>
-                <th className="p-4 w-32">
-                  Discount (%){" "}
-                  <span className="text-[10px] text-emerald-200">
-                    (Quick Edit)
-                  </span>
-                </th>
-                <th className="p-4 w-32">Discount Amount (MMK)</th>
-                <th className="p-4 w-28">Status</th>
-                <th className="p-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-sm">
-              {loading && (
-                <tr>
-                  <td colSpan={10} className="p-8 text-center text-slate-400">
-                    <Loader2 className="w-5 h-5 animate-spin inline mr-2" />
-                    Loading products...
-                  </td>
-                </tr>
-              )}
-              {!loading && filteredProducts.length === 0 && (
-                <tr>
-                  <td colSpan={10} className="p-8 text-center text-slate-400">
-                    No products found.
-                  </td>
-                </tr>
-              )}
-              {!loading &&
-                paginatedProducts.map((prod) => {
-                  const isInactive = prod.status === "inactive";
-                  const isLowStock = prod.stock_quantity <= prod.min_stock_level;
-                  const salePrice = getSalePrice(prod);
-                  const discountFloor = getDiscountFloor(prod);
-                  return (
-                    <tr
-                      key={prod.product_id}
-                      className={`hover:bg-slate-50 transition ${
-                        isInactive ? "bg-slate-100/50 opacity-75" : ""
-                      }`}
-                    >
-                      <td className="p-4 font-mono text-xs text-slate-500">
-                        #{prod.barcode}
-                      </td>
-                      <td className="p-4">
-                        <div className="font-semibold text-slate-800">
-                          {prod.product_name}
-                        </div>
-                        <div className="text-xs text-slate-400">
-                          {getCategoryName(prod.category_id)}
-                        </div>
-                      </td>
-                      <td className="p-4 font-semibold text-slate-800">
-                        {Number(prod.price).toLocaleString()}
-                      </td>
-                      <td className="p-4 font-semibold text-emerald-700">
-                        {salePrice.toLocaleString(undefined, {
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td className="p-4">
-                        <span
-                          className={`font-bold ${
-                            isLowStock ? "text-rose-600" : "text-slate-700"
-                          }`}
+                    return (
+                        <button
+                            key={item.title}
+                            onClick={() => setStatusFilter(item.filterKey)}
+                            className={`w-full text-left bg-white rounded-2xl border p-5 flex items-center justify-between gap-3 transition-all duration-200 shadow-sm group hover:shadow-md cursor-pointer ${isActive ? item.activeClass : "hover:border-slate-300"
+                                }`}
                         >
-                          {prod.stock_quantity}
-                        </span>
-                      </td>
-                      <td className="p-4 text-slate-500 font-semibold">
-                        {prod.min_stock_level} (Units)
-                      </td>
-                      <td className="p-4">
-                        <div className="flex items-center space-x-1">
-                          <input
-                            type="number"
-                            step="1"
-                            min={discountFloor}
-                            max="100"
-                            defaultValue={prod.discount_rate}
-                            onBlur={(e) =>
-                              handleDiscountChange(
-                                prod.product_id,
-                                e.target.value
-                              )
-                            }
-                            className="w-16 p-1 text-center border border-slate-200 rounded text-xs font-bold text-slate-700 focus:ring-1 focus:ring-emerald-500 focus:outline-none bg-white"
-                          />
-                          <span className="text-xs text-slate-400">%</span>
-                        </div>
-                        <p className="text-[10px] text-slate-400 mt-1">
-                          Min {discountFloor}%
-                        </p>
-                        {discountError[prod.product_id] && (
-                          <p className="text-[10px] text-rose-600 mt-1">
-                            {discountError[prod.product_id]}
-                          </p>
-                        )}
-                      </td>
-                      <td className="p-4 font-semibold text-slate-700">
-                        {Number(prod.discount_price || 0).toLocaleString()}
-                      </td>
-                      <td className="p-4">
-                        <span
-                          className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                            isInactive
-                              ? "bg-slate-200 text-slate-600"
-                              : "bg-emerald-100 text-emerald-700"
-                          }`}
-                        >
-                          {isInactive ? "Inactive" : "Active"}
-                        </span>
-                      </td>
-                      <td className="p-4 text-right">
-                        <div className="flex justify-end items-center gap-2">
-                          {!isInactive && (
-                            <button
-                              onClick={() => setEditProductId(prod.product_id)}
-                              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 transition"
-                            >
-                              Edit
-                            </button>
-                          )}
-                          {isInactive ? (
-                            <button
-                              onClick={() =>
-                                askConfirm("restore", prod.product_id, prod.product_name)
-                              }
-                              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 transition flex items-center gap-1"
-                            >
-                              <RotateCcw className="w-3.5 h-3.5" />
-                              Restore
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() =>
-                                askConfirm("delete", prod.product_id, prod.product_name)
-                              }
-                              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 hover:bg-rose-200 transition"
-                            >
-                              Delete
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
+                            <div className="space-y-1">
+                                <p className="text-xs uppercase tracking-wider font-bold text-slate-500 group-hover:text-slate-700 transition-colors">
+                                    {item.title}
+                                </p>
+                                <h2 className="text-2xl text-slate-800 font-bold">
+                                    {item.value}
+                                </h2>
+                            </div>
+                            <div className={`p-3 rounded-xl border ${item.colorClass} transition-transform group-hover:scale-105`}>
+                                <IconComponent className="w-5 h-5" />
+                            </div>
+                        </button>
+                    );
                 })}
-            </tbody>
-          </table>
+            </div>
+
+            {/* Table Section */}
+            <div className="bg-white rounded-2xl border shadow-sm overflow-hidden mt-8">
+                <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 p-6 pb-4 w-full">
+
+                    {/* Left Side: Search Bar */}
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <div className="relative w-full sm:w-84">
+                            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                            <input
+                                type="text"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                placeholder="Search by category or product name ..."
+                                className="w-full pl-9 pr-3 py-2 border rounded-lg text-sm bg-transparent cursor-text focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15 transition"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Right Side: Entries Dropdown and Add New Product Button */}
+                    <div className="flex items-center gap-4 w-full sm:w-auto sm:ml-auto justify-between sm:justify-end">
+                        <div className="flex items-center gap-2 text-xs text-slate-500 whitespace-nowrap">
+                            <span>Show</span>
+                            <select
+                                value={pageSize}
+                                onChange={(e) => setPageSize(Number(e.target.value))}
+                                className="border rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15 cursor-pointer"
+                            >
+                                {[5, 10, 15, 20, 25].map((n) => (
+                                    <option key={n} value={n}>
+                                        {n}
+                                    </option>
+                                ))}
+                            </select>
+                            <span>entries</span>
+                        </div>
+
+                        <button
+                            onClick={() => setShowAddModal(true)}
+                            className="flex items-center gap-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 px-4 py-2 text-sm font-semibold shadow-sm whitespace-nowrap cursor-pointer"
+                        >
+                            <Plus size={18} /> Add New Product
+                        </button>
+                    </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-emerald-700 border-b border-emerald-800 text-white text-xs font-semibold uppercase">
+                                <th className="p-4">Barcode</th>
+                                <th className="p-4">Name</th>
+                                <th className="p-4">Price</th>
+                                <th className="p-4">Sale Price</th>
+                                <th className="p-4">Stock Qty</th>
+                                <th className="p-4">Min Stock Level</th>
+                                <th className="p-4 w-30">Discount (%)</th>
+                                <th className="p-4 w-30">Discount Price</th>
+                                <th className="p-4 w-15 text-center">Status</th>
+                                <th className="p-4 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 text-sm">
+                            {loading && (
+                                <tr>
+                                    <td colSpan={10} className="p-8 text-center text-slate-400">
+                                        <Loader2 className="w-5 h-5 animate-spin inline mr-2" />
+                                        Loading products...
+                                    </td>
+                                </tr>
+                            )}
+                            {!loading && filteredProducts.length === 0 && (
+                                <tr>
+                                    <td colSpan={10} className="p-8 text-center text-slate-400">
+                                        No products found under this view.
+                                    </td>
+                                </tr>
+                            )}
+                            {!loading &&
+                                paginatedProducts.map((prod) => {
+                                    const isInactive = prod.status === "inactive";
+                                    const isLowStock = prod.stock_quantity <= prod.min_stock_level;
+                                    const salePrice = getSalePrice(prod);
+                                    const discountFloor = getDiscountFloor(prod);
+                                    return (
+                                        <tr
+                                            key={prod.product_id}
+                                            className={`hover:bg-slate-50 transition`}
+                                        >
+                                            <td className="p-4 font-semibold text-slate-800 text-xs">
+                                                {prod.barcode}
+                                            </td>
+                                            <td className="p-4">
+                                                <div className="font-semibold text-slate-880">
+                                                    {prod.product_name}
+                                                </div>
+                                                <div className="text-xs text-slate-400">
+                                                    {getCategoryName(prod.category_id)}
+                                                </div>
+                                            </td>
+                                            <td className="p-4 font-semibold text-slate-800">
+                                                {Number(prod.price).toLocaleString()}Ks
+                                            </td>
+                                            <td className="p-4 font-semibold text-emerald-600">
+                                                {salePrice.toLocaleString(undefined, {
+                                                    maximumFractionDigits: 2,
+                                                })}Ks
+                                            </td>
+                                            <td className="p-4">
+                                                <span
+                                                    className={`font-bold ${isLowStock ? "text-rose-600" : "text-slate-800"
+                                                        }`}
+                                                >
+                                                    {prod.stock_quantity}
+                                                </span>
+                                            </td>
+                                            <td className="p-4 text-slate-800 font-semibold">
+                                                {prod.min_stock_level}
+                                            </td>
+
+                                            <td className="p-4">
+                                                <span className="font-bold text-xs text-slate-800">
+                                                    {Number(prod.discount_rate || 0)}%
+                                                </span>
+                                                <p className="text-[10px] text-slate-400 mt-1">
+                                                    Min {discountFloor}%
+                                                </p>
+                                            </td>
+
+                                            <td className="p-4 font-semibold text-slate-700">
+                                                {Number(prod.discount_price || 0).toLocaleString()} Ks
+                                            </td>
+                                            <td className="p-4">
+                                                <span
+                                                    className={`inline-block w-[70px] text-center py-1 rounded-lg text-xs font-semibold ${isInactive
+                                                        ? "bg-red-50 text-red-500 border border-red-200"
+                                                        : "bg-green-50 text-green-600 border border-green-200"
+                                                        }`}
+                                                >
+                                                    {isInactive ? "Inactive" : "Active"}
+                                                </span>
+                                            </td>
+                                            <td className="p-4 text-right">
+                                                <div className="flex justify-end items-center gap-2">
+                                                    <button
+                                                        onClick={() => setEditProductId(prod.product_id)}
+                                                        className="px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-sky-500 hover:bg-sky-600 transition cursor-pointer"
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    {isInactive ? (
+                                                        <button
+                                                            onClick={() =>
+                                                                askConfirm("restore", prod.product_id, prod.product_name)
+                                                            }
+                                                            className="px-2 py-1.5 rounded-lg text-xs font-semibold text-white bg-emerald-500 border border-emerald-200 hover:bg-emerald-600 transition flex items-center gap-1 cursor-pointer"
+                                                        >
+
+                                                            Restore
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() =>
+                                                                askConfirm("delete", prod.product_id, prod.product_name)
+                                                            }
+                                                            className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-red-500 hover:bg-red-600 transition cursor-pointer"
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                        </tbody>
+                    </table>
+                </div>
+
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalItems={totalItems}
+                    pageSize={pageSize}
+                    onPageChange={setCurrentPage}
+                />
+            </div>
+
+            {/* Modals & Dialogs */}
+            <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} maxWidth="max-w-lg">
+                <AddProduct
+                    existingProductNames={products.map((p) => p.product_name)}
+                    onClose={() => setShowAddModal(false)}
+                    onSuccess={() => {
+                        setShowAddModal(false);
+                        fetchData();
+                        toast.success("Product added successfully");
+                    }}
+                />
+            </Modal>
+
+            <Modal isOpen={!!editProductId} onClose={() => setEditProductId(null)} maxWidth="max-w-lg">
+                <EditProduct
+                    productId={editProductId}
+                    existingProductNames={products
+                        .filter((p) => p.product_id !== editProductId)
+                        .map((p) => p.product_name)}
+                    onClose={() => setEditProductId(null)}
+                    onSuccess={() => {
+                        setEditProductId(null);
+                        fetchData();
+                        toast.success("Product updated successfully");
+                    }}
+                />
+            </Modal>
+
+            <ConfirmDialog
+                isOpen={!!confirmState}
+                tone={confirmState?.type === "restore" ? "success" : "danger"}
+                title={
+                    confirmState?.type === "restore"
+                        ? `Restore "${confirmState?.name}"?`
+                        : `Set "${confirmState?.name}" to inactive?`
+                }
+                message={
+                    confirmState?.type === "restore"
+                        ? "This product will become active again and visible on the cashier screen."
+                        : "This product will be hidden from the cashier screen. You can restore it anytime."
+                }
+                confirmLabel={confirmState?.type === "restore" ? "Restore" : "Delete"}
+                onConfirm={handleConfirm}
+                onCancel={() => setConfirmState(null)}
+            />
         </div>
-
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={totalItems}
-          pageSize={pageSize}
-          onPageChange={setCurrentPage}
-        />
-      </div>
-
-      <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} maxWidth="max-w-lg">
-        <AddProduct
-          existingProductNames={products.map((p) => p.product_name)}
-          onClose={() => setShowAddModal(false)}
-          onSuccess={() => {
-            setShowAddModal(false);
-            fetchData();
-            showToast("Product added successfully");
-          }}
-        />
-      </Modal>
-
-      <Modal isOpen={!!editProductId} onClose={() => setEditProductId(null)} maxWidth="max-w-lg">
-        <EditProduct
-          productId={editProductId}
-          existingProductNames={products
-            .filter((p) => p.product_id !== editProductId)
-            .map((p) => p.product_name)}
-          onClose={() => setEditProductId(null)}
-          onSuccess={() => {
-            setEditProductId(null);
-            fetchData();
-            showToast("Product updated successfully");
-          }}
-        />
-      </Modal>
-
-      <ConfirmDialog
-        isOpen={!!confirmState}
-        tone={confirmState?.type === "restore" ? "success" : "danger"}
-        title={
-          confirmState?.type === "restore"
-            ? `Restore "${confirmState?.name}"?`
-            : `Set "${confirmState?.name}" to inactive?`
-        }
-        message={
-          confirmState?.type === "restore"
-            ? "This product will become active again and visible on the cashier screen."
-            : "This product will be hidden from the cashier screen. You can restore it anytime."
-        }
-        confirmLabel={confirmState?.type === "restore" ? "Restore" : "Delete"}
-        onConfirm={handleConfirm}
-        onCancel={() => setConfirmState(null)}
-      />
-    </section>
-  );
+    );
 };
 
 export default ProductsView;

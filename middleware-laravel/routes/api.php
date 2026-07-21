@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Sale\SaleController;
 use App\Http\Controllers\SessionController;
 use App\Http\Controllers\VoucherController;
+use Illuminate\Support\Facades\Broadcast;
 
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {return $request->user();});
 Route::post('/logout',[AuthenticatedSessionController::class, 'destroy']);
@@ -31,9 +32,13 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::put('/staff/{id}', [StaffController::class, 'update']);
     Route::get('/staff/{id}', [StaffController::class, 'show']); // View Staff Detail (Popup)
     Route::patch('/staff/{id}/toggle-status', [StaffController::class, 'toggleStatus']);
+    
+    //Session API Endpoint
+    Route::get('/admin/cash-sessions', [SessionController::class, 'getCashSessions']);
 
     // Voucher History API Endpoint
     Route::get('/admin/vouchers', [AdminVoucherController::class, 'index']);
+    Route::get('/admin/vouchers/export', [AdminVoucherController::class, 'export']);
 });
 
 Route::middleware(['auth:sanctum'])->group(function () {
@@ -61,7 +66,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/cash-register/session', [SessionController::class, 'currentSession']);
     Route::post('/cash-register/close',[SessionController::class, 'closeSession']);
     Route::get('/vouchers', [VoucherController::class, 'index']);
+    Route::get('/vouchers/payment-methods', [VoucherController::class, 'paymentMethods']);
     Route::post('/vouchers/{id}/void', [VoucherController::class, 'void']);
+});
+
+Route::middleware(['auth:sanctum'])->post('/broadcasting/auth', function (Request $request) {
+    return Broadcast::auth($request);
 });
 
 require __DIR__.'/auth.php';

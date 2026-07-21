@@ -13,59 +13,61 @@ const StaffDetailModal = ({ isOpen, onClose, staff }) => {
     }
 
     return (
-        <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-md flex justify-center items-center z-50 p-4">
-            <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden border border-gray-100 flex flex-col">
+        <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-[7px] flex justify-center items-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-md w-full flex flex-col">
                 {/* Header */}
-                <div className="bg-white border-b border-gray-100 px-6 py-4 flex justify-between items-center">
-                    <div className="flex items-center gap-2 text-gray-800">
-                        {/* User Icon */}
-                        <User className="w-5 h-5 text-emerald-600" strokeWidth={2.5} />
+                <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-emerald-700 rounded-t-2xl">
+                    <div className="flex items-center gap-3">
+                        <User className="text-white" size={28} />
                         <div>
-                            <h3 className="text-lg font-bold text-gray-800 leading-tight">{staff.username}</h3>
-                            <p className="text-xs text-gray-400 font-medium mt-0.5">
-                                Work Experience: {staff.working_duration || 'Staff Profile'}
-                            </p>
+                            <h3 className="font-bold text-white text-lg leading-tight">{staff.username}</h3>
                         </div>
                     </div>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition">
-                        {/* X Icon */}
-                        <X className="w-5 h-5" strokeWidth={2.5} />
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="text-white/80 hover:text-white transition-colors"
+                    >
+                        <X className="w-5 h-5 cursor-pointer" />
                     </button>
                 </div>
 
                 {/* Body Details */}
-                <div className="p-6 space-y-4 text-sm text-gray-800 overflow-y-auto">
+                <div className="p-5 space-y-4 text-sm text-slate-800 overflow-y-auto">
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <span className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-0.5">Phone Number</span>
+                            <span className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Phone Number</span>
                             <span className="font-semibold">{staff.phone_number || "-"}</span>
                         </div>
                         <div>
-                            <span className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-0.5">NRC Number</span>
+                            <span className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-0.5">NRC Number</span>
                             <span className="font-semibold">{staff.nrc || "-"}</span>
                         </div>
                     </div>
 
+                    <div>
+                        <span className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-0.5">Email Address</span>
+                        <span className="font-semibold text-gray-700 break-all">{staff.email || "-"}</span>
+                    </div>
+
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <span className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-0.5">Date of Birth</span>
+                            <span className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Date of Birth</span>
                             <span className="font-semibold">{formatDate(staff.date_of_birth) || "-"}</span>
                         </div>
                         <div>
-                            <span className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-0.5">Gender</span>
+                            <span className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Gender</span>
                             <span className="font-semibold">{staff.gender || "-"}</span>
                         </div>
                     </div>
 
                     <div>
-                        <span className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-0.5">Joining Date</span>
+                        <span className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Joining Date</span>
                         <div className="flex flex-col gap-1">
-                            {/* Date you started working (e.g. 2026-07-05) */}
-                            <span className="font-semibold text-gray-800">{formatDate(staff.join_date) || "-"}</span>
-                            
-                            {/* Longevity of employment is indicated by a green badge. */}
+                            <span className="font-semibold text-slate-800">{formatDate(staff.join_date) || "-"}</span>
+
                             {staff.working_duration && (
-                                <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded w-max mt-0.5">
+                                <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded w-max mt-0.5">
                                     ({staff.working_duration} of experience)
                                 </span>
                             )}
@@ -73,19 +75,19 @@ const StaffDetailModal = ({ isOpen, onClose, staff }) => {
                     </div>
 
                     <div>
-                        <span className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-0.5">Home Address</span>
-                        <p className="font-medium text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-100 mt-1 leading-relaxed">{staff.address || "-"}</p>
+                        <span className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Home Address</span>
+                        <p className="font-medium text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-200 mt-1 leading-relaxed">{staff.address || "-"}</p>
                     </div>
 
                     {/* Total Errors Section */}
-                    <div className="pt-4 border-t border-gray-100">
-                        <span className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Total Errors</span>
+                    <div className="pt-4 border-t border-slate-100">
+                        <span className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Total Errors</span>
                         <div className="flex flex-col gap-1.5">
-                            <span className="font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded w-max text-xs">
+                            <span className="font-semibold text-rose-600 bg-rose-100 px-2 py-0.5 rounded w-max text-xs">
                                 {staff.total_errors?.count || "0 times"}
                             </span>
                             {staff.total_errors?.details && staff.total_errors.details.length > 0 && (
-                                <ul className="text-xs font-medium text-gray-600 list-disc list-inside bg-gray-50 p-3 rounded-lg border border-gray-100 space-y-1">
+                                <ul className="text-xs font-medium list-disc list-inside bg-rose-50 p-3 rounded-lg border border-slate-200 space-y-1">
                                     {staff.total_errors.details.map((error, idx) => (
                                         <li key={idx}>{error}</li>
                                     ))}
@@ -96,8 +98,12 @@ const StaffDetailModal = ({ isOpen, onClose, staff }) => {
                 </div>
 
                 {/* Footer */}
-                <div className="bg-gray-50 px-6 py-3 flex justify-end border-t border-gray-100">
-                    <button onClick={onClose} className="px-5 py-1.5 bg-white border border-gray-200 text-gray-600 rounded-lg font-semibold hover:bg-gray-50 transition text-xs shadow-sm">
+                <div className="flex justify-end space-x-3 p-5 pt-1">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="px-4 py-2 text-sm font-semibold text-slate-700 hover:text-gray-500 bg-slate-100 rounded-lg cursor-pointer"
+                    >
                         Close Detail
                     </button>
                 </div>

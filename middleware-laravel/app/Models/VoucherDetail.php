@@ -12,7 +12,6 @@ use Illuminate\Database\Eloquent\Model;
     'quantity',
     'sub_total',
     'unit_price',
-    'total_discount',
     'total',
 ])]
 class VoucherDetail extends Model
@@ -37,7 +36,6 @@ class VoucherDetail extends Model
         'quantity' => 'integer',
         'sub_total' => 'decimal:2',
         'unit_price' => 'decimal:2',
-        'total_discount' => 'decimal:2',
         'total' => 'decimal:2',
     ];
 

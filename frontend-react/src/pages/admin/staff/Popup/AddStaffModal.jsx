@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import api from "../../../../api/axios";
 import { Eye, EyeOff, UserPlus, X } from "lucide-react";
 import nrcData from "../../../../data/nrc.json";
@@ -10,8 +10,14 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
 
     useScrollLock(isOpen);
 
+    const maxDate = useMemo(() => {
+        const today = new Date();
+        const eighteenYearsAgo = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+        return eighteenYearsAgo.toISOString().split('T')[0];
+    }, []);
+
     const [formData, setFormData] = useState({
-        username: '', password: '', role: 'staff', status: 'Active',
+        username: '', password: '', status: 'Active',
         phone_number: '', nrc: '', date_of_birth: '', address: '',
         gender: 'Male', email: '', join_date: ''
     });
@@ -24,6 +30,24 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
     const [nrcTownship, setNrcTownship] = useState("");
     const [nrcType, setNrcType] = useState("(N)");
     const [nrcNumber, setNrcNumber] = useState("");
+    const [errors, setErrors] = useState({});
+
+    useEffect(() => {
+        if (!isOpen) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setFormData({
+                username: '', password: '', status: 'Active',
+                phone_number: '', nrc: '', date_of_birth: '', address: '',
+                gender: 'Male', email: '', join_date: ''
+            });
+            setNrcState("");
+            setNrcTownship("");
+            setNrcNumber("");
+
+            setErrors({});
+            setShowPassword(false);
+        }
+    }, [isOpen]);
 
     const uniqueNrcCodes = useMemo(() => {
         if (!nrcData || !nrcData.data) return [];
@@ -42,51 +66,136 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
     if (!isOpen) return null;
 
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        let updatedValue = value;
+
+        if (name === "phone_number") {
+            updatedValue = value.replace(/\D/g, '');
+        }
+
+        if (name === "date_of_birth") {
+            if (value > maxDate) {
+                toast.error("Staff must be at least 18 years old.");
+                return;
+            }
+        }
+
+        setFormData({ ...formData, [name]: updatedValue });
+
+        // As you type, the error message for that field will be immediately cleared
+        if (errors[name]) {
+            setErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors[name];
+                return newErrors;
+            });
+        }
     }
+
+    const handleNrcChange = (setter, value) => {
+        setter(value);
+        if (errors.nrc) {
+            setErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors.nrc;
+                return newErrors;
+            });
+        }
+    }
+
+    const validateForm = () => {
+        let tempErrors = {};
+
+        if (!formData.username.trim()) {
+            tempErrors.username = "Full name is required.";
+        }
+        if (!formData.password.trim()) {
+            tempErrors.password = "Password is required.";
+        } else if (formData.password.length < 8) {
+            tempErrors.password = "Password must be at least 8 characters long.";
+        }
+        if (!formData.email.trim()) {
+            tempErrors.email = "Email address is required.";
+        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+            tempErrors.email = "Please enter a valid email address.";
+        }
+        if (!formData.phone_number.trim()) {
+            tempErrors.phone_number = "Phone number is required.";
+        }
+        if (!formData.date_of_birth) {
+            tempErrors.date_of_birth = "Date of birth is required.";
+        } else if (formData.date_of_birth > maxDate) {
+            tempErrors.date_of_birth = "Staff must be at least 18 years old.";
+        }
+        if (!formData.address.trim()) {
+            tempErrors.address = "Address is required.";
+        }
+        if (!formData.join_date) {
+            tempErrors.join_date = "Join date is required.";
+        }
+
+        // NRC Block Validation
+        if (!nrcState || !nrcTownship || !nrcType || !nrcNumber) {
+            tempErrors.nrc = "NRC profile field must be completed.";
+        } else if (nrcNumber.length !== 6) {
+            tempErrors.nrc = "NRC Number must be exactly 6 digits.";
+        }
+
+        return tempErrors;
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!nrcState || !nrcTownship || !nrcType || !nrcNumber) {
-            toast("Please complete the NRC profile field.", {
-                icon: '⚠️',
-            });
-            // alert("Please complete the NRC profile field.");
-            return;
-        }
-        if (nrcNumber.length !== 6) {
-            toast.error("NRC Number must be exactly 6 digits.");
-            // alert("NRC Number must be exactly 6 digits.");
-            return;
-        }
+        const formErrors = validateForm();
+        if (Object.keys(formErrors).length > 0) {
+            setErrors(formErrors);
 
-        const today = new Date().toISOString().split('T')[0];
+            const formBody = document.getElementById("staff-form-body");
+            if (formBody) formBody.scrollTop = 0;
+            return;
+        }
 
         const combinedNrc = `${nrcState}/${nrcTownship}${nrcType}${nrcNumber}`;
 
         const finalPayload = {
             ...formData,
             nrc: combinedNrc,
-            join_date: today
         };
 
         try {
             const response = await api.post('/staff', finalPayload);
             if (response.data.status === 'success') {
                 toast.success('New employee successfully added.');
-                // alert('New employee successfully added.');
+
+                setFormData({
+                    username: '', password: '', status: 'Active',
+                    phone_number: '', nrc: '', date_of_birth: '', address: '',
+                    gender: 'Male', email: '', join_date: ''
+                });
                 setNrcState("");
                 setNrcTownship("");
                 setNrcNumber("");
                 setShowPassword(false);
+                setErrors({});
                 onSuccess();
                 onClose();
             }
         } catch (error) {
             console.error(error);
-            toast.error('There was an error while entering the data. Please check the data again.');
-            // alert('There was an error while entering the data. Please check the data again.');
+            if (error.response && error.response.status === 422) {
+                const backendErrors = error.response.data.errors;
+                const newErrors = {};
+                if (backendErrors) {
+                    Object.keys(backendErrors).forEach((key) => {
+                        newErrors[key] = backendErrors[key][0];
+                    });
+                    setErrors(newErrors);
+                    toast.error("The information provided is incorrect.");
+                }
+            } else {
+                toast.error('There was an error while entering the data. Please check the data again.');
+            }
         }
     }
 
@@ -105,12 +214,28 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
                 </div>
 
                 {/* Form Body */}
-                <form onSubmit={handleSubmit} className="p-6 space-y-4 text-sm overflow-y-auto flex-1">
+                <form onSubmit={handleSubmit} autoComplete="off" noValidate className="p-6 space-y-4 text-sm overflow-y-auto flex-1">
                     {/* Row 1: Name & Password */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Full Name</label>
-                            <input type="text" name="username" required onChange={handleChange} className="w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition text-gray-800" />
+                            <div className="flex justify-between items-center mb-1">
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Full Name</label>
+                                <span className="text-[11px] text-gray-400 font-semibold">
+                                    {formData.username.length} / 20
+                                </span>
+                            </div>
+                            <input
+                                type="text"
+                                name="username"
+                                maxLength="20"
+                                value={formData.username}
+                                onChange={handleChange}
+                                className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-1 transition text-gray-800 ${errors.username
+                                    ? "border-red-400 focus:border-red-500 focus:ring-red-500 bg-red-50/10"
+                                    : "border-gray-300 focus:border-emerald-600 focus:ring-emerald-600"
+                                    }`}
+                            />
+                            {errors.username && <p className="text-[11px] text-red-500 mt-1 font-semibold">{errors.username}</p>}
                         </div>
                         <div>
                             <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Password</label>
@@ -118,9 +243,13 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
                                 <input
                                     type={showPassword ? "text" : "password"}
                                     name="password"
-                                    required
+                                    minLength="8"
+                                    value={formData.password}
                                     onChange={handleChange}
-                                    className="w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition text-gray-800"
+                                    className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-1 transition text-gray-800 ${errors.password
+                                        ? "border-red-400 focus:border-red-500 focus:ring-red-500 bg-red-50/10"
+                                        : "border-gray-300 focus:border-emerald-600 focus:ring-emerald-600"
+                                        }`}
                                 />
                                 <button
                                     type="button"
@@ -130,7 +259,7 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
                                     {showPassword ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                                 </button>
                             </div>
-
+                            {errors.password && <p className="text-[11px] text-red-500 mt-1 font-semibold">{errors.password}</p>}
                         </div>
                     </div>
 
@@ -138,11 +267,31 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Email Address</label>
-                            <input type="email" name="email" required onChange={handleChange} className="w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition text-gray-800" />
+                            <input
+                                type="email"
+                                name="email"
+                                value={formData.email}
+                                onChange={handleChange}
+                                className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-1 transition text-gray-800 ${errors.email
+                                    ? "border-red-400 focus:border-red-500 focus:ring-red-500 bg-red-50/10"
+                                    : "border-gray-300 focus:border-emerald-600 focus:ring-emerald-600"
+                                    }`}
+                            />
+                            {errors.email && <p className="text-[11px] text-red-500 mt-1 font-semibold">{errors.email}</p>}
                         </div>
                         <div>
                             <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Phone Number</label>
-                            <input type="text" name="phone_number" required onChange={handleChange} className="w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition text-gray-800" />
+                            <input
+                                type="text"
+                                name="phone_number"
+                                value={formData.phone_number}
+                                onChange={handleChange}
+                                className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-1 transition text-gray-800 ${errors.phone_number
+                                    ? "border-red-400 focus:border-red-500 focus:ring-red-500 bg-red-50/10"
+                                    : "border-gray-300 focus:border-emerald-600 focus:ring-emerald-600"
+                                    }`}
+                            />
+                            {errors.phone_number && <p className="text-[11px] text-red-500 mt-1 font-semibold">{errors.phone_number}</p>}
                         </div>
                     </div>
 
@@ -157,17 +306,35 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
                         </div>
                         <div>
                             <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Date of Birth</label>
-                            <input type="date" name="date_of_birth" required onChange={handleChange} className="w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition text-gray-800" />
+                            <input
+                                type="date"
+                                name="date_of_birth"
+                                max={maxDate}
+                                value={formData.date_of_birth}
+                                onChange={handleChange}
+                                className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-1 transition text-gray-800 ${errors.date_of_birth
+                                    ? "border-red-400 focus:border-red-500 focus:ring-red-500 bg-red-50/10"
+                                    : "border-gray-300 focus:border-emerald-600 focus:ring-emerald-600"
+                                    }`}
+                            />
+                            {errors.date_of_birth && <p className="text-[11px] text-red-500 mt-1 font-semibold">{errors.date_of_birth}</p>}
                         </div>
                     </div>
 
-                    {/* Row 4: System Role */}
+                    {/* Row 4: Join Date */}
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">System Role</label>
-                        <select name="role" onChange={handleChange} className="w-full border border-gray-300 px-3 py-2 bg-white rounded-lg focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition text-gray-800">
-                            <option value="staff">Cashier</option>
-                            <option value="admin">Admin</option>
-                        </select>
+                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Join Date</label>
+                        <input
+                            type="date"
+                            name="join_date"
+                            value={formData.join_date}
+                            onChange={handleChange}
+                            className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-1 transition text-gray-800 ${errors.join_date
+                                ? "border-red-400 focus:border-red-500 focus:ring-red-500 bg-red-50/10"
+                                : "border-gray-300 focus:border-emerald-600 focus:ring-emerald-600"
+                                }`}
+                        />
+                        {errors.join_date && <p className="text-[11px] text-red-500 mt-1 font-semibold">{errors.join_date}</p>}
                     </div>
 
                     {/* Row 5: Passport Style NRC Input Block (Full Width) */}
@@ -178,11 +345,13 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
                             <select
                                 value={nrcState}
                                 onChange={(e) => {
-                                    setNrcState(e.target.value);
-                                    setNrcTownship(""); // နိုင်ငံကုဒ်ပြောင်းတာနဲ့ ရွေးထားတဲ့မြို့နယ်ကို reset ချမယ်
+                                    handleNrcChange(setNrcState, e.target.value);
+                                    setNrcTownship("");
                                 }}
-                                required
-                                className="w-20 border border-gray-300 px-2 py-2 bg-white rounded-lg focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition text-gray-800 text-center"
+                                className={`w-20 border px-2 py-2 bg-white rounded-lg focus:outline-none focus:ring-1 transition text-gray-800 text-center ${errors.nrc
+                                    ? "border-red-400 focus:border-red-500 focus:ring-red-500 bg-red-50/10"
+                                    : "border-gray-300 focus:border-emerald-600 focus:ring-emerald-600"
+                                    }`}
                             >
                                 <option value=""></option>
                                 {uniqueNrcCodes.map((code) => (
@@ -195,15 +364,17 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
                             {/* NRC Township Dropdown */}
                             <select
                                 value={nrcTownship}
-                                onChange={(e) => setNrcTownship(e.target.value)}
-                                required
+                                onChange={(e) => handleNrcChange(setNrcTownship, e.target.value)}
                                 disabled={!nrcState}
-                                className="flex-1 min-w-22.5 border border-gray-300 px-2 py-2 bg-white rounded-lg focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition text-gray-800 disabled:bg-gray-50 disabled:text-gray-400"
+                                className={`flex-1 min-w-22.5 border px-2 py-2 bg-white rounded-lg focus:outline-none focus:ring-1 transition text-gray-800 disabled:bg-gray-50 disabled:text-gray-400 ${errors.nrc
+                                    ? "border-red-400 focus:border-red-500 focus:ring-red-500 bg-red-50/10"
+                                    : "border-gray-300 focus:border-emerald-600 focus:ring-emerald-600"
+                                    }`}
                             >
                                 <option value=""></option>
                                 {availableTownships.map((township, idx) => (
                                     <option key={idx} value={township.name_en}>
-                                        {township.name_mm}
+                                        {township.name_en}
                                     </option>
                                 ))}
                             </select>
@@ -211,9 +382,11 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
                             {/* NRC Type Dropdown */}
                             <select
                                 value={nrcType}
-                                onChange={(e) => setNrcType(e.target.value)}
-                                required
-                                className="w-24 border border-gray-300 px-1 py-2 bg-white rounded-lg focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition text-gray-800 text-center"
+                                onChange={(e) => handleNrcChange(setNrcType, e.target.value)}
+                                className={`w-24 border px-1 py-2 bg-white rounded-lg focus:outline-none focus:ring-1 transition text-gray-800 text-center ${errors.nrc
+                                    ? "border-red-400 focus:border-red-500 focus:ring-red-500 bg-red-50/10"
+                                    : "border-gray-300 focus:border-emerald-600 focus:ring-emerald-600"
+                                    }`}
                             >
                                 <option value="N">(N) နိုင်</option>
                                 <option value="A">(A) ပြု</option>
@@ -224,19 +397,38 @@ const AddStaffModal = ({ isOpen, onClose, onSuccess }) => {
                             <input
                                 type="text"
                                 value={nrcNumber}
-                                onChange={(e) => setNrcNumber(e.target.value.replace(/\D/g, ''))} // ကိန်းဂဏန်းသီးသန့်ပဲ လက်ခံရန်
+                                onChange={(e) => handleNrcChange(setNrcNumber, e.target.value.replace(/\D/g, ''))}
                                 maxLength="6"
                                 placeholder="123456"
-                                required
-                                className="w-28 border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition text-gray-800 tracking-wider text-center"
+                                className={`w-28 border px-3 py-2 rounded-lg focus:outline-none focus:ring-1 transition text-gray-800 tracking-wider text-center ${errors.nrc
+                                    ? "border-red-400 focus:border-red-500 focus:ring-red-500 bg-red-50/10"
+                                    : "border-gray-300 focus:border-emerald-600 focus:ring-emerald-600"
+                                    }`}
                             />
                         </div>
+                        {errors.nrc && <p className="text-[11px] text-red-500 mt-1 font-semibold">{errors.nrc}</p>}
                     </div>
 
                     {/* Row 6: Address */}
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Address</label>
-                        <textarea name="address" required onChange={handleChange} rows="2" className="w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition text-gray-800 resize-none"></textarea>
+                        <div className="flex justify-between items-center mb-1">
+                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Address</label>
+                            <span className="text-[11px] text-gray-400 font-semibold">
+                                {formData.address.length} / 100
+                            </span>
+                        </div>
+                        <textarea
+                            name="address"
+                            value={formData.address}
+                            onChange={handleChange}
+                            rows="2"
+                            maxLength="100"
+                            className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-1 transition text-gray-800 resize-none ${errors.address
+                                ? "border-red-400 focus:border-red-500 focus:ring-red-500 bg-red-50/10"
+                                : "border-gray-300 focus:border-emerald-600 focus:ring-emerald-600"
+                                }`}
+                        ></textarea>
+                        {errors.address && <p className="text-[11px] text-red-500 mt-1 font-semibold">{errors.address}</p>}
                     </div>
 
                     {/* Footer Actions */}

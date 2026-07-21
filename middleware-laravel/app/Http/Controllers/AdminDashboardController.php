@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
@@ -16,13 +17,13 @@ class AdminDashboardController extends Controller
     {
         // Validate date filter
         $request->validate([
-            'from' => 'nullable|date',
-            'to'   => 'nullable|date|after_or_equal:from',
+            'from' => 'nullable|date|before_or_equal:today',
+            'to'   => 'nullable|date|after_or_equal:from|before_or_equal:today',
         ]);
 
         // If no dates are provided, default both to today's date
-        $from = $request->from ?? date('Y-m-d');
-        $to   = $request->to ?? date('Y-m-d');
+        $from = $request->from ?? now()->toDateString();
+        $to   = $request->to ?? now()->toDateString();
 
         $vouchers = Voucher::with(['details', 'salePayment'])
             ->where('status', 'completed')
@@ -38,15 +39,13 @@ class AdminDashboardController extends Controller
             });
         })->values()->toArray();
 
-        Log::info('Data sent to COBOL:', $detailsData);
-
         try {
             // Directly sending raw data (details) to COBOL Micro-services
             $response = Http::timeout(10)->post('http://cobol-service:4000/calculate-total', [
                 'details' => $detailsData
             ]);
 
-            if($response->successful()) {
+            if ($response->successful()) {
                 $totalSales = $response->json()['totalSales'] ?? 0;
             } else {
                 $totalSales = 0;
@@ -73,7 +72,9 @@ class AdminDashboardController extends Controller
                 'name'   => $paymentName,
                 'amount' => (float) $paymentTotal,
             ];
-        });
+        })->filter(function ($payment) {
+            return $payment['amount'] > 0;
+        })->values();
 
         // Best Seller Items (Keep this database-driven for performance and ranking)
         $bestSeller = DB::table('voucher_details')

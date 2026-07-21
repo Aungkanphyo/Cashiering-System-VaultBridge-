@@ -1,5 +1,6 @@
-import { CalendarDays, Banknote, Wallet, QrCode, ChartColumn, TriangleAlert, RotateCcw, } from "lucide-react";
+import { CalendarDays, Banknote, Wallet, QrCode, ChartColumn, TriangleAlert, RotateCcw, ShoppingBag } from "lucide-react";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast"
 import api from "../../api/axios";
 
 export default function Dashboard() {
@@ -12,6 +13,7 @@ export default function Dashboard() {
 
     const [from, setFrom] = useState("");
     const [to, setTo] = useState("");
+    const today = new Date().toISOString().split("T")[0];
     const stats = [
         {
             title: "TODAY TOTAL SALES",
@@ -37,7 +39,6 @@ export default function Dashboard() {
         try {
             const res = await api.get("/admin/dashboard", { params: { from, to } });
             setDashboard(res.data);
-            console.log(res.data);
         } catch (error) {
             console.log(error);
         }
@@ -46,8 +47,6 @@ export default function Dashboard() {
     useEffect(() => {
         fetchDashboard();
     }, [from, to]);
-
-    const totalQty = (dashboard.bestSeller || []).reduce((sum, item) => sum + Number(item.qty), 0);
 
     return (
         <div className="min-h-screen">
@@ -65,23 +64,56 @@ export default function Dashboard() {
                 </div>
 
                 {/* Filter Section */}
-                <div className="flex flex-wrap items-center gap-4">
+                <div className="flex flex-wrap items-center gap-3">
+                    {/* FROM Date */}
                     <div className="flex items-center gap-2">
-                        <label className="text-sm font-semibold">FROM:</label>
-                        <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="border rounded-lg px-3 py-2 cursor-text focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15" />
+                        <label className="text-sm font-semibold">FROM</label>
+                        <input type="date" value={from} max={today}
+                            onChange={(e) => {
+                                const value = e.target.value;
+
+                                if (new Date(value) > new Date(today)) {
+                                    toast.error("From date cannot be greater than today.");
+                                    return;
+                                }
+
+                                if (to && new Date(to) < new Date(value)) {
+                                    toast.error("From date cannot be greater than to date. Please select again!");
+                                    return;
+                                }
+
+                                setFrom(value);
+                            }}
+                            className="border rounded-lg px-3 py-2 cursor-text focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15"
+                        />
                     </div>
 
+                    {/* TO Date */}
                     <div className="flex items-center gap-2">
-                        <label className="text-sm font-semibold">TO:</label>
-                        <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="border rounded-lg px-3 py-2 cursor-text focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15" />
+                        <label className="text-sm font-semibold">TO</label>
+                        <input type="date" value={to} min={from || undefined} max={today}
+                            onChange={(e) => {
+                                const value = e.target.value;
+
+                                if (from && new Date(value) < new Date(from)) {
+                                    toast.error("To date cannot be earlier than From date.");
+                                    return;
+                                }
+
+                                if (new Date(value) > new Date(today)) {
+                                    toast.error("To date cannot be greater than today.");
+                                    return;
+                                }
+
+                                setTo(value);
+                            }}
+                            className="border rounded-lg px-3 py-2 cursor-text focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15"
+                        />
                     </div>
 
-                    <button
-                        onClick={() => { setFrom(""); setTo(""); }}
-                        className="flex items-center gap-2 rounded-lg bg-red-600 text-white px-4 py-2"
-                    >
+                    <button onClick={() => { setFrom(""); setTo(""); }} className="flex items-center gap-2 rounded-lg bg-red-600 hover:bg-red-700 text-white px-4 py-2 cursor-pointer">
                         <RotateCcw size={18} />
-                        Reset Filter
+                        Reset
                     </button>
                 </div>
             </div>
@@ -96,7 +128,7 @@ export default function Dashboard() {
                         <div key={item.title} className="bg-white rounded-2xl border shadow-sm p-6 flex justify-between items-center">
                             <div>
                                 <p className="text-lg uppercase tracking-wider font-bold">{item.title}</p>
-                                <h2 className="text-sm text-slate-500 font-semibold mt-2">{item.amount.toLocaleString()} MMK</h2>
+                                <h2 className="text-sm text-slate-800 font-semibold mt-2">{item.amount.toLocaleString()} Ks</h2>
                             </div>
 
                             <div className={`w-14 h-14 rounded-xl ${item.bg} flex items-center justify-center`}>
@@ -187,14 +219,12 @@ export default function Dashboard() {
                     {(dashboard.lowStock || []).length > 0 ?
                         (<div className="space-y-4">
                             {(dashboard.lowStock || []).map((product, index) => (
-                                <div key={index} className="flex items-center justify-between rounded-xl border border-red-100 bg-red-50 p-4">
-                                    <div>
-                                        <h3 className="font-semibold text-slate-800">{product.product_name}</h3>
-                                        <p className="text-sm text-slate-500">Remaining Stock</p>
-                                    </div>
+                                <div key={index}
+                                    className="flex items-center justify-between rounded-xl border-l-4 border-red-500 bg-red-50 p-3 shadow-sm">
+                                    <h3 className="text-sm font-bold text-slate-800 me-1">{product.product_name}</h3>
 
-                                    <span className="rounded-full bg-red-100 px-3 py-1 text-sm font-bold text-red-600">
-                                        {product.stock_quantity} Left
+                                    <span className="rounded-lg bg-white px-3 py-1 text-sm font-bold text-red-600 shadow-sm">
+                                        {product.stock_quantity}
                                     </span>
                                 </div>
                             ))}

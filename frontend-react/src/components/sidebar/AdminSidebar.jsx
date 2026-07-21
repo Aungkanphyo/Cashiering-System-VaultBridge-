@@ -1,21 +1,17 @@
-import { ChevronDown, ChevronUp, CreditCard, DollarSign, History, Layers, LayoutDashboard, PlusCircle, ShoppingBag, Users, ShoppingBasket, ClipboardList  } from "lucide-react";
+import { ChevronDown, ChevronUp, CreditCard, DollarSign, History, Layers, LayoutDashboard, ShoppingBag, Users, ShoppingBasket, ClipboardList } from "lucide-react";
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 
 const AdminSidebar = () => {
     // Dropdown states
-    const [isCategoryOpen, setIsCategoryOpen] = useState(true);
+    const [isCategoryOpen, setIsCategoryOpen] = useState(false);
     const [isProductOpen, setIsProductOpen] = useState(false);
     const [isStaffOpen, setIsStaffOpen] = useState(false);
     const [isPaymentOpen, setIsPaymentOpen] = useState(false);
     const [isAuditsOpen, setIsAuditsOpen] = useState(false);
 
-    const activeClass =
-        "flex items-center px-4 py-3 bg-[#07a876] text-white rounded-xl text-sm font-medium shadow-md transition-all";
-
-    const inactiveClass =
-        "flex items-center px-4 py-3 text-gray-50 hover:bg-white/10 hover:text-white rounded-xl text-sm font-medium transition-all";
-
+    const activeClass = "flex items-center px-4 py-3 bg-[#07a876] text-white rounded-xl text-sm font-medium shadow-md transition-all";
+    const inactiveClass = "flex items-center px-4 py-3 text-gray-50 hover:bg-white/10 hover:text-white rounded-xl text-sm font-medium transition-all";
 
     return (
         <div className="w-64 h-screen bg-[#08694b] text-white flex flex-col justify-between p-4">
@@ -37,19 +33,19 @@ const AdminSidebar = () => {
                 <div className="border-b border-white/10 mb-4" />
 
                 {/* Navigation Items */}
-                <nav className="space-y-1.5 overflow-y-auto max-h-[calc(100vh-180px)] pr-1">
+                <nav className="space-y-3 overflow-y-auto max-h-[calc(100vh-180px)] pr-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] scrollbar-none">
                     {/* Dashboard Section*/}
                     <NavLink to="/admin/dashboard" className={({ isActive }) => isActive ? activeClass : inactiveClass}>
-                        <LayoutDashboard className="w-4 h-4 mr-4" /> Dashboard
+                        <LayoutDashboard className="w-4 h-4 mr-3" /> Dashboard
                     </NavLink>
 
                     {/* Category Section Dropdown*/}
-                    <div className="pt-2">
+                    <div>
                         <button onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-                            className="w-full flex items-center justify-between px-4 py-2 text-xs font-bold text-gray-50 uppercase tracking-wider hover:text-gray-300 mt-4 mb-1"
+                            className="w-full flex items-center justify-between px-4 py-3 text-xs font-bold text-gray-50 uppercase tracking-wider hover:bg-white/5 rounded-xl transition-all"
                         >
                             <div className="flex items-center gap-2">
-                                <Layers className="w-4 h-4 mr-2" />
+                                <Layers className="w-4 h-4" />
                                 <span>Category</span>
                             </div>
                             {isCategoryOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
@@ -57,21 +53,21 @@ const AdminSidebar = () => {
 
                         {/* Category Items Open Section */}
                         {isCategoryOpen && (
-                            <div className="pl-2 space-y-1">
+                            <div className="pl-2 mt-1 space-y-1">
                                 {/* View Category */}
                                 <NavLink to="/admin/view-category" className={({ isActive }) => isActive ? activeClass : inactiveClass}>
                                     <Layers className="w-4 h-4 mr-3" /> View Category
                                 </NavLink>
 
-                                
+
                             </div>
                         )}
                     </div>
 
                     {/* Product Section Dropdown */}
-                    <div className="pt-2">
+                    <div>
                         <button onClick={() => setIsProductOpen(!isProductOpen)}
-                            className="w-full flex items-center justify-between px-4 py-2 text-xs font-bold text-gray-50 uppercase tracking-wider hover:text-gray-300 mt-4 mb-1"
+                            className="w-full flex items-center justify-between px-4 py-3 text-xs font-bold text-gray-50 uppercase tracking-wider hover:bg-white/5 rounded-xl transition-all"
                         >
                             <div className="flex items-center gap-2">
                                 <ShoppingBag className="w-4 h-4 mr-2" />
@@ -82,21 +78,21 @@ const AdminSidebar = () => {
 
                         {/* Product Items Open Section */}
                         {isProductOpen && (
-                            <div className="pl-2 space-y-1">
+                            <div className="pl-2 mt-1 space-y-1">
                                 {/* View Product */}
                                 <NavLink to="/admin/view-product" className={({ isActive }) => isActive ? activeClass : inactiveClass}>
                                     <ShoppingBag className="w-4 h-4 mr-3" />View Product
                                 </NavLink>
 
-                                
+
                             </div>
                         )}
                     </div>
 
                     {/* Staff Section Dropdown */}
-                    <div className="pt-2">
+                    <div>
                         <button onClick={() => setIsStaffOpen(!isStaffOpen)}
-                            className="w-full flex items-center justify-between px-4 py-2 text-xs font-bold text-gray-50 uppercase tracking-wider hover:text-gray-300 mt-4 mb-1"
+                            className="w-full flex items-center justify-between px-4 py-3 text-xs font-bold text-gray-50 uppercase tracking-wider hover:bg-white/5 rounded-xl transition-all"
                         >
                             <div className="flex items-center gap-2">
                                 <Users className="w-4 h-4 mr-2" />
@@ -107,7 +103,7 @@ const AdminSidebar = () => {
 
                         {/* Staff Items Open Section */}
                         {isStaffOpen && (
-                            <div className="pl-2 space-y-1">
+                            <div className="pl-2 mt-1 space-y-1">
                                 {/* View Staff */}
                                 <NavLink to="/admin/view-staff" className={({ isActive }) => isActive ? activeClass : inactiveClass}>
                                     <Users className="w-4 h-4 mr-3" /> View Staff
@@ -122,9 +118,9 @@ const AdminSidebar = () => {
                     </div>
 
                     {/* Payment Section Dropdown */}
-                    <div className="pt-2">
+                    <div>
                         <button onClick={() => setIsPaymentOpen(!isPaymentOpen)}
-                            className="w-full flex items-center justify-between px-4 py-2 text-xs font-bold text-gray-50 uppercase tracking-wider hover:text-gray-300 mt-4 mb-1"
+                            className="w-full flex items-center justify-between px-4 py-3 text-xs font-bold text-gray-50 uppercase tracking-wider hover:bg-white/5 rounded-xl transition-all"
                         >
                             <div className="flex items-center gap-2">
                                 <CreditCard className="w-4 h-4 mr-2" />
@@ -135,21 +131,21 @@ const AdminSidebar = () => {
 
                         {/* Payment Items Open Section */}
                         {isPaymentOpen && (
-                            <div className="pl-2 space-y-1">
+                            <div className="pl-2 mt-1 space-y-1">
                                 {/* View Payment */}
                                 <NavLink to="/admin/view-payment" className={({ isActive }) => isActive ? activeClass : inactiveClass}>
                                     <CreditCard className="w-4 h-4 mr-3" /> View Payment
                                 </NavLink>
 
-                                
+
                             </div>
                         )}
                     </div>
 
                     {/* Audits Section Dropdown*/}
-                    <div className="pt-2">
+                    <div>
                         <button onClick={() => setIsAuditsOpen(!isAuditsOpen)}
-                            className="w-full flex items-center justify-between px-4 py-2 text-xs font-bold text-gray-50 uppercase tracking-wider hover:text-gray-300 mt-4 mb-1"
+                            className="w-full flex items-center justify-between px-4 py-3 text-xs font-bold text-gray-50 uppercase tracking-wider hover:bg-white/5 rounded-xl transition-all"
                         >
                             <div className="flex items-center gap-2">
                                 <ClipboardList className="w-4 h-4 mr-2" />
@@ -160,7 +156,7 @@ const AdminSidebar = () => {
 
                         {/* Audits Items Open Section */}
                         {isAuditsOpen && (
-                            <div className="pl-2 space-y-1">
+                            <div className="pl-2 mt-1 space-y-1">
                                 {/* View Audits */}
                                 <NavLink to="/admin/view-session" className={({ isActive }) => isActive ? activeClass : inactiveClass}>
                                     <History className="w-4 h-4 mr-3" /> Register Sessions

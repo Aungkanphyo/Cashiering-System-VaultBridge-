@@ -1,28 +1,44 @@
 <?php
-
 namespace App\Http\Controllers\Admin;
 
+use App\Exports\VoucherExport;
 use App\Http\Controllers\Controller;
-use App\Http\Resources\Admin\VoucherResource;
 use App\Models\Voucher;
-use Illuminate\Http\Request;
+use Carbon\Carbon;
+use Illuminate\Http\Request; //  Date Handling
+use Maatwebsite\Excel\Facades\Excel;
 
 class AdminVoucherController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Voucher::with(['salePayment', 'details.product']);
+        // 4 Table Relationships: Voucher, SalePayment, CashRegisterSession, User
+        $query = Voucher::with(['salePayment', 'details.product', 'cashRegisterSession.user']);
 
-        // Advanced Search Filter (Sale ID, Status or Payment Method)
-        if ($request->filled('search')) {
-            $search = $request->input('search');
-            $query->where(function ($q) use ($search) {
-                $q->where('voucher_id', 'like', "%{$search}%")
-                ->orWhere('status', 'like', "%{$search}%")
-                ->orWhereHas('salePayment', function ($paymentQuery) use ($search) {
-                    $paymentQuery->where('payment_name', 'like', "%{$search}%");
-                });
+        // id filter
+        if ($request->filled('search_id')) {
+            $searchId = $request->input('search_id');
+            $query->where('voucher_id', 'like', "%{$searchId}%");
+        }
+
+        // Payment method filter
+        if ($request->filled('payment_method') && $request->input('payment_method') !== 'ALL') {
+            $paymentMethod = $request->input('payment_method');
+
+            $query->whereHas('salePayment', function ($paymentQuery) use ($paymentMethod) {
+                $paymentQuery->where('payment_name', 'like', "%{$paymentMethod}%");
             });
+        }
+
+        // Status Select Box Filter (COMPLETED / VOIDED)
+        if ($request->filled('status') && $request->input('status') !== 'ALL') {
+            $status = strtolower($request->input('status'));
+
+            if ($status === 'voided') {
+                $query->where('status', 'VOIDED');
+            } else if ($status === 'completed') {
+                $query->where('status', 'COMPLETED')->whereNull('void_reason');
+            }
         }
 
         // Date Range Filter
@@ -33,12 +49,75 @@ class AdminVoucherController extends Controller
             $query->whereDate('sale_date', '<=', $request->input('to_date'));
         }
 
+        // latest Voucher
         $query->latest('sale_date');
 
-        // Using Server-side Pagination (8 per page)
-        $perPage = $request->input('per_page', 8);
+        // Server-side Pagination
+        $perPage  = $request->input('per_page', 8);
         $vouchers = $query->paginate($perPage);
 
-        return VoucherResource::collection($vouchers);
+        // data transformation for API response
+        $vouchers->getCollection()->transform(function ($voucher) {
+            $finalAmount = $voucher->details ? $voucher->details->sum('total') : 0;
+            return [
+                'id'               => $voucher->voucher_id,
+                'session_id'       => $voucher->session_id,
+                'payment_id'       => $voucher->payment_id,
+                // date time formatting using Carbon
+                'dateTime'         => $voucher->sale_date ? Carbon::parse($voucher->sale_date)->format('Y-m-d H:i:s') : null,
+                'status'           => $voucher->status,
+                'finalAmount'      => (float) $finalAmount,
+                'changeAmount'     => (float) $voucher->change,
+                'payment_received' => (float) $voucher->payment_received,
+                'void_reason'      => $voucher->void_reason,
+                'voided_at'        => $voucher->voided_at ? Carbon::parse($voucher->voided_at)->format('Y-m-d H:i:s') : null,
+
+                // Cashier Name
+                'cashierName'      => $voucher->cashRegisterSession && $voucher->cashRegisterSession->user
+                    ? $voucher->cashRegisterSession->user->username
+                    : 'N/A',
+
+                // Payment Method Name
+                'paymentMethod'    => $voucher->salePayment ? $voucher->salePayment->payment_name : 'N/A',
+
+                // Items List (Voucher Details)
+                'items'            => $voucher->details ? $voucher->details->map(function ($detail) {
+                    return [
+                        'name'      => $detail->product ? $detail->product->product_name : 'N/A',
+                        'qty'       => $detail->quantity,
+                        'unitPrice' => $detail->unit_price,
+                        'subTotal'  => $detail->sub_total,
+                        'total'     => $detail->total,
+                    ];
+                }) : [],
+            ];
+        });
+
+        return response()->json($vouchers);
+    }
+
+    public function export(Request $request)
+    {
+        $fromDate = $request->input('from_date');
+        $toDate   = $request->input('to_date');
+        $today    = now()->format('Y-m-d');
+
+        if($fromDate && $toDate && $fromDate !== $toDate) {
+            $fileName = "Voucher_History_{$fromDate}_to_{$toDate}.xlsx";
+        } elseif ($fromDate && $toDate && $fromDate === $toDate) {
+            $fileName = "Voucher_History_{$fromDate}.xlsx";
+        } else {
+            $fileName = "Voucher_History_Until_{$today}.xlsx";
+        }
+
+        $filters  = [
+            'search_id'      => $request->input('search_id'),
+            'payment_method' => $request->input('payment_method'),
+            'status'         => $request->input('status'),
+            'from_date'      => $request->input('from_date'),
+            'to_date'        => $request->input('to_date'),
+        ];
+
+        return Excel::download(new VoucherExport($filters), $fileName);
     }
 }

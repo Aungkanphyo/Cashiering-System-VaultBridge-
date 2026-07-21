@@ -13,6 +13,33 @@ services:
     environment:
       - DB_HOST=mysql-db
 
+  reverb:
+    build:
+      context: ./middleware-laravel
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./middleware-laravel:/var/www
+    depends_on:
+      - mysql-db
+    environment:
+      - DB_HOST=mysql-db
+    command: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080"]
+
+  queue-worker:
+    build:
+      context: ./middleware-laravel
+      dockerfile: Dockerfile
+    volumes:
+      - ./middleware-laravel:/var/www
+    depends_on:
+      - mysql-db
+    environment:
+      - DB_HOST=mysql-db
+    command: ["php", "artisan", "queue:work"]
+    restart: always
+
   # React Frontend Service (Vite)
   frontend:
     build:
@@ -51,7 +78,7 @@ services:
   phpmyadmin:
     image: phpmyadmin:latest
     ports:
-      - "8080:80"
+      - "8082:80"
     environment:
       - PMA_HOST=mysql-db
       - PMA_PORT=3306

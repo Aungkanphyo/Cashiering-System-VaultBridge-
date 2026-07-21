@@ -2,6 +2,7 @@ import axios from "axios";
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import api from "../../api/axios";
+import { Eye, EyeOff } from "lucide-react";
 
 
 const ResetPassword = () => {
@@ -13,6 +14,8 @@ const ResetPassword = () => {
     const [errors, setErrors] = useState({});
     const [status, setStatus] = useState("");
     const [processing, setProcessing] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
 
     const token = searchParams.get("token");
     const email = searchParams.get("email");
@@ -22,9 +25,29 @@ const ResetPassword = () => {
         setProcessing(true);
         setErrors({});
 
+        let validationErrors = {};
+
+        if (!password) {
+            validationErrors.password = ["Password is required."];
+        } else if (password.length < 8) {
+            validationErrors.password = ["Password must be at least 8 characters long."];
+        }
+
+        if (!passwordConfirmation) {
+            validationErrors.password_confirmation = ["Confirm Password is required."];
+        } else if (password !== passwordConfirmation) {
+            validationErrors.password_confirmation = ["Password confirmation does not match."];
+        }
+
+        if (Object.keys(validationErrors).length > 0) {
+            setErrors(validationErrors);
+            setProcessing(false);
+            return;
+        }
+
         try {
             await axios.get("http://localhost:8000/sanctum/csrf-cookie", { withCredentials: true });
-            
+
             const response = await api.post("/reset-password", {
                 token,
                 email,
@@ -51,28 +74,53 @@ const ResetPassword = () => {
 
                 {status && <div className="mb-4 text-sm text-green-600 bg-green-50 p-3 rounded-xl">{status} Redirecting to login...</div>}
 
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleSubmit} noValidate>
                     <div className="mb-4">
                         <label className="block mb-2 text-gray-700 font-medium text-sm">New Password</label>
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="w-full h-12 px-4 border border-gray-300 rounded-xl outline-none focus:border-emerald-500"
-                            required
-                        />
+                        <div className="relative">
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className={`w-full h-12 px-4 border rounded-xl outline-none transition-colors ${errors.password
+                                        ? "border-red-400 focus:border-red-500 bg-red-50/10"
+                                        : "border-gray-300 focus:border-emerald-500"
+                                    }`}
+                                required
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                            >
+                                {showPassword ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+                            </button>
+                        </div>
                         {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password[0]}</p>}
                     </div>
 
                     <div className="mb-6">
                         <label className="block mb-2 text-gray-700 font-medium text-sm">Confirm Password</label>
-                        <input
-                            type="password"
-                            value={passwordConfirmation}
-                            onChange={(e) => setPasswordConfirmation(e.target.value)}
-                            className="w-full h-12 px-4 border border-gray-300 rounded-xl outline-none focus:border-emerald-500"
-                            required
-                        />
+                        <div className="relative">
+                            <input
+                                type={showPasswordConfirmation ? "text" : "password"}
+                                value={passwordConfirmation}
+                                onChange={(e) => setPasswordConfirmation(e.target.value)}
+                                className={`w-full h-12 px-4 border rounded-xl outline-none transition-colors ${errors.password_confirmation
+                                        ? "border-red-400 focus:border-red-500 bg-red-50/10"
+                                        : "border-gray-300 focus:border-emerald-500"
+                                    }`}
+                                required
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPasswordConfirmation(!showPasswordConfirmation)}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                            >
+                                {showPasswordConfirmation ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+                            </button>
+                        </div>
+                        {errors.password_confirmation && <p className="text-red-500 text-xs mt-1.5 font-medium">{errors.password_confirmation[0]}</p>}
                     </div>
 
                     <button
