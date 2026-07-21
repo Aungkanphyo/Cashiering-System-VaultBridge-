@@ -50,9 +50,10 @@ const EditCategory = ({ categoryId, onClose, onSuccess, existingCategoryNames = 
     if (tax === "" || Number.isNaN(Number(tax))) {
       errs.tax = "Tax rate is required.";
     }
-    else if (Number(tax) < 0 || Number(tax) > 100) {
-      errs.tax = "Tax rate must be between 0 and 100.";
+   else if (tax !== "" && (Number.isNaN(Number(tax)) || Number(tax) < 0 || Number(tax) > 30)) {
+      errs.tax = "Tax rate must be between 0 and 30.";
     }
+
     if (discount === "" || Number.isNaN(Number(discount))) {
       errs.discount = "Discount rate is required.";
     } else if (Number(discount) < 0 || Number(discount) > 100) {
@@ -169,15 +170,18 @@ const EditCategory = ({ categoryId, onClose, onSuccess, existingCategoryNames = 
                 type="number"
                 step="0.1"
                 min="0"
-                max="100"
+                max="30"
                 value={tax}
                 onChange={(e) => {
                   // Restrict input length to max 4 characters (e.g. "100.0")
-                  if (e.target.value.length <= 5) {
+                  if (e.target.value.length <= 4) {
                     setTax(e.target.value);
                     clearFieldError("tax");
                   }
                 }}
+                 onBlur={() => {
+                if (tax === "") setTax("0.0");
+              }}
                 placeholder="e.g. 5.0"
                 className={`w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:outline-none ${
                   fieldErrors.tax
