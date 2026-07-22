@@ -51,9 +51,7 @@ const EditCategory = ({ categoryId, onClose, onSuccess, existingCategoryNames = 
       errs.tax = "Tax rate must be between 0 and 30.";
     }
 
-    if (discount === "" || Number.isNaN(Number(discount))) {
-      errs.discount = "Discount rate is required.";
-    } else if (Number(discount) < 0 || Number(discount) > 100) {
+    if (discount !== "" && (Number.isNaN(Number(discount)) || Number(discount) < 0 || Number(discount) > 100)) {
       errs.discount = "Discount rate must be between 0 and 100.";
     }
     return errs;
@@ -66,7 +64,7 @@ const EditCategory = ({ categoryId, onClose, onSuccess, existingCategoryNames = 
     const errs = validate();
     setFieldErrors(errs);
     if (Object.keys(errs).length > 0) {
-      setError("Please fix the highlighted fields.");
+    
       return;
     }
 
@@ -208,6 +206,9 @@ const EditCategory = ({ categoryId, onClose, onSuccess, existingCategoryNames = 
                     clearFieldError("discount");
                   }
                 }}
+                onBlur={() => {
+                if (discount === "") setDiscount("0.0");
+              }}
                 placeholder="e.g. 5.0"
                 className={`w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:outline-none ${
                   fieldErrors.discount

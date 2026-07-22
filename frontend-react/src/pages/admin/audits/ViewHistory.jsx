@@ -373,7 +373,7 @@ const ViewHistory = () => {
                           </span>
                         ) : (
                           <div className="flex flex-col items-center gap-0.5">
-                           <span className="inline-block w-[70px] text-center py-1 rounded-lg text-xs font-semibold bg-rose-50 text-red-600 border border-green-200">
+                           <span className="inline-block w-[70px] text-center py-1 rounded-lg text-xs font-semibold bg-rose-50 text-red-600 border border-rose-200">
                             Voided
                           </span>
                             {tx.voidReason && (

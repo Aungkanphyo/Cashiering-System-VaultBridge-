@@ -16,7 +16,7 @@ export default function Dashboard() {
     const today = new Date().toISOString().split("T")[0];
     const stats = [
         {
-            title: "TODAY TOTAL SALES",
+            title: "TOTAL SALES",
             amount: Number(dashboard.totalSales || 0),
             icon: Banknote,
             bg: "bg-emerald-100",
