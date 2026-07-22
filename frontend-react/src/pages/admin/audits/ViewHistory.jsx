@@ -305,7 +305,7 @@ const ViewHistory = () => {
                             }}
                             className="border rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/15 cursor-pointer"
                         >
-                            {[8, 10, 15, 20, 25].map((n) => (
+                            {[10, 15, 20, 25].map((n) => (
                                 <option key={n} value={n}>
                                     {n}
                                 </option>

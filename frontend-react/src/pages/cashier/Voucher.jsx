@@ -244,7 +244,7 @@ const Voucher = ({
                                         value={item.quantity === 0 ? '' : item.quantity}
                                         onChange={(e) => checkAndDirectQtyChange(item, e.target.value)}
                                         onBlur={() => { if (item.quantity === 0) handleDirectQtyChange(item.id, 1); }}
-                                        className="w-8 text-xs font-sans font-bold text-slate-800 text-center focus:outline-none bg-transparent appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                        className="w-8 text-xs font-sans font-bold text-slate-800 text-center focus:outline-none bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                     />
                                     <button onClick={() => checkAndUpdateQty(item, 1)} className="px-2 py-1 text-sm text-black font-bold">+</button>
                                 </div>
