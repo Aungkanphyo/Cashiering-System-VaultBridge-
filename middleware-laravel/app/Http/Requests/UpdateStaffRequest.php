@@ -29,7 +29,7 @@ class UpdateStaffRequest extends FormRequest
             'username' => 'required|string|max:255',
             // to exclude the email of the currently edited user_id when checking for unique
             'email' => 'required|email|unique:users,email,' . $staffId . ',user_id',
-            'phone_number' => 'required|string',
+            'phone_number' => 'required|string|unique:users,phone_number',
             'gender' => 'required|string',
             'date_of_birth' => 'required|date|before_or_equal:' . $eighteenYearsAgo,
             'nrc' => 'required|string',

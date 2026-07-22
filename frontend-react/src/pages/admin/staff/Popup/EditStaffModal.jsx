@@ -149,10 +149,10 @@ const EditStaffModal = ({ onClose, staff, onSuccess }) => {
 
         const errs = validate();
         setFieldErrors(errs);
-        if (Object.keys(errs).length > 0) {
-            setError("Please fix the highlighted fields.");
-            return;
-        }
+        // if (Object.keys(errs).length > 0) {
+        //     setError("Please fix the highlighted fields.");
+        //     return;
+        // }
 
         const combinedNrc = `${nrcState}/${nrcTownship}${nrcType}${nrcNumber}`;
 
@@ -172,10 +172,22 @@ const EditStaffModal = ({ onClose, staff, onSuccess }) => {
             }
         } catch (err) {
             console.error(err);
-            setError(
-                err.response?.data?.message ||
-                "There was an error while editing."
-            );
+            const backendErrors = err.response?.data?.errors;
+
+            if (backendErrors && typeof backendErrors === 'object') {
+                const formattedErrors = {};
+                Object.keys(backendErrors).forEach((field) => {
+                    formattedErrors[field] = Array.isArray(backendErrors[field])
+                        ? backendErrors[field][0]
+                        : backendErrors[field];
+                });
+                setFieldErrors(formattedErrors);
+            } else {
+                setError(
+                    err.response?.data?.message ||
+                    "There was an error while editing."
+                );
+            }
             toast.error('There was an error while editing.');
         } finally {
             setSubmitting(false);
@@ -207,7 +219,7 @@ const EditStaffModal = ({ onClose, staff, onSuccess }) => {
                 </div>
 
                 {/* Form Body */}
-                <form onSubmit={handleSubmit} noValidate className="p-5 space-y-4 text-sm overflow-y-auto flex-1">
+                <form onSubmit={handleSubmit} autoComplete="off" noValidate className="p-5 space-y-4 text-sm overflow-y-auto flex-1">
                     {error && (
                         <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-sm font-medium">
                             {error}

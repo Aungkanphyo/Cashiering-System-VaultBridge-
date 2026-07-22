@@ -112,9 +112,10 @@ const ViewStaff = () => {
         try {
             const response = await api.patch(`/staff/${id}/toggle-status`);
             if (response.data.status === 'success') {
-                setStaffs(staffs.map(staff =>
-                    staff.user_id === id ? { ...staff, status: response.data.updated_status } : staff
-                ));
+                handleTriggerRefresh();
+                // setStaffs(staffs.map(staff =>
+                //     staff.user_id === id ? { ...staff, status: response.data.updated_status } : staff
+                // ));
 
                 if (selectedStaff && selectedStaff.user_id === id) {
                     setSelectedStaff({ ...selectedStaff, status: response.data.updated_status });
@@ -306,7 +307,7 @@ const ViewStaff = () => {
                                             <td className="p-4 font-semibold text-slate-800">{formatDate(staff.join_date)}</td>
                                             <td className="p-4">
                                                 <span
-                                                    className={`inline-block w-[70px] text-center py-1 rounded-lg text-xs font-semibold ${isInactive
+                                                    className={`inline-block w-17.5 text-center py-1 rounded-lg text-xs font-semibold ${isInactive
                                                         ? "bg-red-50 text-red-500 border border-red-200"
                                                         : "bg-green-50 text-green-600 border border-green-200"
                                                         }`}
