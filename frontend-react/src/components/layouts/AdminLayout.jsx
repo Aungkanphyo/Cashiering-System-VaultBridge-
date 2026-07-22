@@ -1,12 +1,14 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { ChevronUp, ChevronDown, Key, LogOut } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import AdminSidebar from "../sidebar/AdminSidebar";
 import { useAuthStore } from "../../stores/authStore";
 import api from "../../api/axios";
 import ChangePassword from "../../pages/admin/ChangePassword";
 
 const AdminLayout = () => {
+    const mainRef = useRef<HTMLDivElement>(null);
+    const currentLocation = useLocation();
     // Show current time in the header
     const [time, setTime] = useState("");
     const [isAdminMenuOpen, setIsAdminMenuOpen] = useState(false);
@@ -15,6 +17,12 @@ const AdminLayout = () => {
 
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+
+    useEffect(() => {
+        if (mainRef.current) {
+            mainRef.current.scrollTop = 0;
+        }
+    }, [currentLocation.pathname, mainRef]);
 
     const handleLogout = async () => {
         setIsConfirmOpen(false);

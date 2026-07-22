@@ -48,6 +48,14 @@ const SaleWorkspace = () => {
                         stock_quantity: incomingProduct.stock_quantity !== undefined ? parseInt(incomingProduct.stock_quantity, 10) : 0
                     };
 
+                    const isExisting = productRef.current.some(p => p.id === formattedProduct.id);
+
+                    if (isExisting) {
+                        toast.success(`"${formattedProduct.name}" has been updated.`);
+                    } else {
+                        toast.success(`New product added: "${formattedProduct.name}"`);
+                    }
+
                     setAvailableProducts((prevProducts) => {
                         // If it's an existing product, it will be updated, if it's a new product, it will be appended.
                         const isExisting = prevProducts.some(p => p.id === formattedProduct.id);
@@ -59,9 +67,6 @@ const SaleWorkspace = () => {
                             return [formattedProduct, ...prevProducts];
                         }
                     });
-
-                    // Notification via Toast so that the cashier can know
-                    toast.success(`"${formattedProduct.name}" has been updated in real-time!`);
                 });
 
             // Disable channel listening when component is unmounted
