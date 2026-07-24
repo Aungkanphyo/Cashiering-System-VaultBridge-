@@ -19,16 +19,16 @@ const AddCategory = ({ onClose, onSuccess, existingCategoryNames = [] }) => {
             (n) => n.trim().toLowerCase() === value.trim().toLowerCase()
         );
 
-    const validate = () => {
-        const errs = {};
-        if (!name.trim()) {
-            errs.name = "Category name is required.";
-        } else if (isDuplicateName(name)) {
-            errs.name = "A category with this name already exists.";
-        }
-        if (tax !== "" && (Number.isNaN(Number(tax)) || Number(tax) < 0 || Number(tax) > 30)) {
-            errs.tax = "Tax rate must be between 0 and 30.";
-        }
+  const validate = () => {
+    const errs = {};
+   if (!name.trim()) {
+      errs.name = "Category name is required.";
+    } else if (isDuplicateName(name)) {
+      errs.name = "A category with this name already exists.";
+    }
+    if (tax !== "" && (Number.isNaN(Number(tax)) || Number(tax) < 0 || Number(tax) > 30)) {
+      errs.tax = "Tax rate must be between 0 and 30.";
+    }
 
         // Discount is optional — an empty box is treated as 0, so only
         // validate the range when the user has actually typed something.
@@ -38,16 +38,16 @@ const AddCategory = ({ onClose, onSuccess, existingCategoryNames = [] }) => {
         return errs;
     };
 
-    // POST /api/categories
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-
-        const errs = validate();
-        setFieldErrors(errs);
-        if (Object.keys(errs).length > 0) {
-
-            return;
-        }
+  // POST /api/categories
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    const errs = validate();
+    setFieldErrors(errs);
+    if (Object.keys(errs).length > 0) {
+      
+      return;
+    }
 
         setSubmitting(true);
         setError("");
@@ -100,100 +100,100 @@ const AddCategory = ({ onClose, onSuccess, existingCategoryNames = [] }) => {
             <form onSubmit={handleSubmit} noValidate className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
 
 
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="col-span-2">
-                        <div className="flex justify-between items-center mb-1">
-                            <label className="block text-sm font-semibold text-slate-600">
-                                Category Name
-                            </label>
-                            <span className="text-xs text-slate-400">
-                                {name.length}/40
-                            </span>
-                        </div>
-                        <input
-                            type="text"
-                            autoFocus
-                            maxLength={40}
-                            value={name}
-                            onChange={(e) => {
-                                setName(e.target.value);
-                                clearFieldError("name");
-                                if (error) setError("");
-                            }}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="col-span-2">
+            <div className="flex justify-between items-center mb-1">
+              <label className="block text-sm font-semibold text-slate-600">
+                Category Name
+              </label>
+              <span className="text-xs text-slate-400">
+                {name.length}/40
+              </span>
+            </div>
+            <input
+              type="text"
+              autoFocus
+              maxLength={40}
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value);
+                clearFieldError("name");
+                if (error) setError("");
+              }}
+              
+              placeholder="e.g. Beverages, Snacks"
+              className={`w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:outline-none ${fieldErrors.name
+                ? "border-rose-400 focus:ring-rose-400"
+                : "border-slate-300 focus:ring-emerald-500"
+                }`}
+            />
+            {fieldErrors.name && (
+              <p className="text-xs text-rose-600 mt-1">{fieldErrors.name}</p>
+            )}
+          </div>
 
-                            placeholder="e.g. Beverages, Snacks"
-                            className={`w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:outline-none ${fieldErrors.name
-                                ? "border-rose-400 focus:ring-rose-400"
-                                : "border-slate-300 focus:ring-emerald-500"
-                                }`}
-                        />
-                        {fieldErrors.name && (
-                            <p className="text-xs text-rose-600 mt-1">{fieldErrors.name}</p>
-                        )}
-                    </div>
+          <div>
+            <label className="block text-sm font-semibold text-slate-600 mb-1">
+              Tax (%)
+            </label>
+            <input
+              type="number"
+              step="0.1"
+              min="0"
+              max="30"
+              value={tax}
+              onChange={(e) => {
+                // Restrict input length to max 4 characters (e.g. "100.0")
+                if (e.target.value.length <= 4) {
+                  setTax(e.target.value);
+                  clearFieldError("tax");
+                }
+              }}
+              onBlur={() => {
+                if (tax === "") setTax("0.0");
+              }}
+              placeholder="e.g. 5.0"
+              className={`w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:outline-none ${fieldErrors.tax
+                ? "border-rose-400 focus:ring-rose-400"
+                : "border-slate-300 focus:ring-emerald-500"
+                }`}
+            />
+            {fieldErrors.tax && (
+              <p className="text-xs text-rose-600 mt-1">{fieldErrors.tax}</p>
+            )}
+          </div>
 
-                    <div>
-                        <label className="block text-sm font-semibold text-slate-600 mb-1">
-                            Tax (%)
-                        </label>
-                        <input
-                            type="number"
-                            step="0.1"
-                            min="0"
-                            max="30"
-                            value={tax}
-                            onChange={(e) => {
-                                // Restrict input length to max 4 characters (e.g. "100.0")
-                                if (e.target.value.length <= 4) {
-                                    setTax(e.target.value);
-                                    clearFieldError("tax");
-                                }
-                            }}
-                            onBlur={() => {
-                                if (tax === "") setTax("0.0");
-                            }}
-                            placeholder="e.g. 5.0"
-                            className={`w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:outline-none ${fieldErrors.tax
-                                ? "border-rose-400 focus:ring-rose-400"
-                                : "border-slate-300 focus:ring-emerald-500"
-                                }`}
-                        />
-                        {fieldErrors.tax && (
-                            <p className="text-xs text-rose-600 mt-1">{fieldErrors.tax}</p>
-                        )}
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-semibold text-slate-600 mb-1">
-                            Discount (%)
-                        </label>
-                        <input
-                            type="number"
-                            step="0.1"
-                            min="0"
-                            max="30"
-                            value={discount}
-                            onChange={(e) => {
-                                // Restrict input length to max 5 characters (e.g. "100.0")
-                                if (e.target.value.length <= 5) {
-                                    setDiscount(e.target.value);
-                                    clearFieldError("discount");
-                                }
-                            }}
-                            onBlur={() => {
-                                if (discount === "") setDiscount("0.0");
-                            }}
-                            placeholder="e.g. 5.0"
-                            className={`w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:outline-none ${fieldErrors.discount
-                                ? "border-rose-400 focus:ring-rose-400"
-                                : "border-slate-300 focus:ring-emerald-500"
-                                }`}
-                        />
-                        {fieldErrors.discount && (
-                            <p className="text-xs text-rose-600 mt-1">{fieldErrors.discount}</p>
-                        )}
-                    </div>
-                </div>
+          <div>
+            <label className="block text-sm font-semibold text-slate-600 mb-1">
+              Discount (%)
+            </label>
+            <input
+              type="number"
+              step="0.1"
+              min="0"
+              max="30"
+              value={discount}
+              onChange={(e) => {
+                // Restrict input length to max 5 characters (e.g. "100.0")
+                if (e.target.value.length <= 5) {
+                  setDiscount(e.target.value);
+                  clearFieldError("discount");
+                }
+              }}
+              onBlur={() => {
+                if (discount === "") setDiscount("0.0");
+              }}
+              placeholder="e.g. 5.0"
+              className={`w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:outline-none ${fieldErrors.discount
+                ? "border-rose-400 focus:ring-rose-400"
+                : "border-slate-300 focus:ring-emerald-500"
+                }`}
+            />
+            {fieldErrors.discount && (
+              <p className="text-xs text-rose-600 mt-1">{fieldErrors.discount}</p>
+            )}
+          </div>
+        </div>
 
                 <div className="flex justify-end space-x-3 pt-1">
                     <button

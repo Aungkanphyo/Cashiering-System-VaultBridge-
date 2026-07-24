@@ -287,7 +287,7 @@ const SaleWorkspace = () => {
     };
 
     return (
-        <div className="w-full min-h-screen bg-[#F8FAFC] font-sans flex text-slate-800 antialiased px-4 pt-0 pb-4 relative">
+        <div className="w-full min-h-screen bg-[#F8FAFC] font-sans flex text-slate-800 antialiased pt-0 pb-4 relative">
             <div className="flex-1 flex flex-col overflow-y-auto">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start flex-1 mt-2">
 

@@ -27,7 +27,7 @@ class CategoryController extends Controller
     {
         $data = $request->validate([
             'category_name' => 'required|string|unique:categories,category_name',
-            'tax' => 'nullable|numeric|min:0',
+            'tax' => 'nullable|numeric|min:0|max:30',
             'discount_category' => 'nullable|numeric|min:0|max:100',
             'status' => 'nullable|in:active,inactive',
         ]);
@@ -49,7 +49,7 @@ class CategoryController extends Controller
                 'sometimes', 'required', 'string',
                 Rule::unique('categories', 'category_name')->ignore($category->category_id, 'category_id'),
             ],
-            'tax' => 'sometimes|nullable|numeric|min:0',
+            'tax' => 'sometimes|nullable|numeric|min:0|max:30',
             'discount_category' => 'sometimes|nullable|numeric|min:0|max:100',
             'status' => 'sometimes|required|in:active,inactive',
         ]);

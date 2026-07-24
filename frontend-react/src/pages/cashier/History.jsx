@@ -41,6 +41,7 @@ export default function History() {
         "Insufficient Funds",
         "Payment Method Failed",
         "Test Transaction",
+        "Other"
     ];
 
     const hasActiveFilters = Boolean(statusFilter || paymentFilter || voucherIdFilter);
@@ -280,36 +281,39 @@ export default function History() {
                                             <td className="p-4 font-semibold text-xs text-emerald-700">
                                                 {Number(sale.grand_total).toLocaleString()}Ks
                                             </td>
-                                            <td className="p-4">
+                                            <td className="p-4 text-center whitespace-nowrap">
                                                 <span
-                                                    className={`font-semibold ${sale.payment === "cash" ? "text-amber-600" : "text-sky-600"
+                                                    className={`inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-bold border ${sale.payment.toLowerCase() === "cash"
+                                                        ? "bg-yellow-50 text-yellow-700 border-yellow-100"
+                                                        : "bg-blue-50 text-blue-600 border-blue-100"
                                                         }`}
                                                 >
                                                     {sale.payment}
                                                 </span>
                                             </td>
-                                            <td className="p-4">
+                                            <td className="p-4 text-center whitespace-nowrap">
                                                 <span
-                                                    className={`px-2.5 py-1 rounded-full text-xs font-semibold ${isVoided ? "text-red-500" : "text-emerald-600"
+                                                    className={`inline-block w-[70px] text-center py-1 rounded-lg text-xs font-semibold ${isVoided
+                                                        ? "bg-rose-50 text-red-600 border border-rose-200"
+                                                        : "bg-green-50 text-green-600 border border-green-200"
                                                         }`}
                                                 >
                                                     {sale.status}
                                                 </span>
                                             </td>
                                             {/* Centered Action Column */}
+                                            {/* Centered Action Column */}
                                             <td className="p-4 text-center">
                                                 <div className="flex justify-center items-center h-full">
                                                     {isVoided ? (
-                                                        <span
-                                                            className="block max-w-[220px] truncate text-xs text-slate-400 mx-auto"
-                                                            title={sale.void_reason}
-                                                        >
-                                                            {sale.void_reason}
+                                                        <span className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg  text-rose-700 text-xs font-medium text-center break-words">
+                                                            <TriangleAlert className="w-3.5 h-3.5 shrink-0" />
+                                                            <span>{sale.void_reason}</span>
                                                         </span>
                                                     ) : (
                                                         <button
                                                             onClick={() => setSaleToDelete(sale)}
-                                                            className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-red-500 hover:bg-red-600 transition cursor-pointer"
+                                                            className="px-5 py-1.5 rounded-lg text-xs font-semibold text-white bg-red-500 hover:bg-red-600 transition cursor-pointer"
                                                         >
                                                             Void
                                                         </button>

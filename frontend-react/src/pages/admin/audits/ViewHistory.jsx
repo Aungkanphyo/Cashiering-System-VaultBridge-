@@ -315,104 +315,105 @@ const ViewHistory = () => {
                     </div>
                 </div>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse min-w-250">
-                        <thead>
-                            <tr className="bg-emerald-700 border-b border-emerald-800 text-white text-xs font-semibold uppercase">
-                                <th className="p-4">Sale ID</th>
-                                <th className="p-4">Date &amp; Time</th>
-                                <th className="p-4 text-right">Total Grand</th>
-                                <th className="p-4 text-right">Change</th>
-                                <th className="p-4 text-center">Payment Method</th>
-                                <th className="p-4 text-center">Status</th>
-                                <th className="p-4 text-center w-32">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 text-sm">
-                            {isLoading && (
-                                <tr>
-                                    <td colSpan={8} className="p-8 text-center text-slate-400">
-                                        <Loader2 className="w-5 h-5 animate-spin inline mr-2" />
-                                        Loading sales history...
-                                    </td>
-                                </tr>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse min-w-[1000px]">
+            <thead>
+              <tr className="bg-emerald-700 border-b border-emerald-800 text-white text-xs font-semibold uppercase">
+                <th className="p-4">Sale ID</th>
+                <th className="p-4">Date &amp; Time</th>
+                <th className="p-4 text-right">Total Grand</th>
+                <th className="p-4 text-right">Change</th>
+                <th className="p-4 text-center">Payment Method</th>
+                <th className="p-4 text-center">Status</th>
+                <th className="p-4 text-center w-32">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-sm">
+              {isLoading && (
+                <tr>
+                  <td colSpan={8} className="p-8 text-center text-slate-400">
+                    <Loader2 className="w-5 h-5 animate-spin inline mr-2" />
+                    Loading sales history...
+                  </td>
+                </tr>
+              )}
+              {!isLoading && transactions.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="p-8 text-center text-slate-400">
+                    No sales history matches the selected filters.
+                  </td>
+                </tr>
+              )}
+              {!isLoading &&
+                transactions.map((tx, idx) => {
+                  const isVoided = tx.status?.toLowerCase() === "voided";
+                  const isCash = tx.paymentMethod?.toLowerCase().includes("cash");
+                  return (
+                    <tr
+                      key={`${tx.id}-${idx}`}
+                      className={`hover:bg-slate-50 transition`}>
+                      <td className="p-4 font-semibold text-slate-800">
+                        {tx.id}
+                      </td>
+                      <td className="p-4 font-semibold text-xs text-slate-800 whitespace-nowrap">
+                        {tx.dateTime}
+                      </td>
+                      <td className="p-4 text-right text-xs font-semibold text-slate-800 whitespace-nowrap">
+                        
+                          {(tx.finalAmount || 0).toLocaleString()} Ks
+                        
+                      </td>
+                      <td className="p-4 text-right text-xs font-semibold text-slate-800 whitespace-nowrap">
+                        <span>{(tx.changeAmount || 0).toLocaleString()} Ks</span>
+                      </td>
+                      <td className="p-4 text-center whitespace-nowrap">
+                        <span
+                          className={`inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-bold border ${isCash
+                              ? "bg-yellow-50 text-yellow-700 border-yellow-100"
+                              : "bg-blue-50 text-blue-600 border-blue-100"
+                            }`}
+                        >
+                          
+                          {tx.paymentMethod}
+                        </span>
+                      </td>
+                      <td className="p-4 text-center whitespace-nowrap">
+                        {!isVoided ? (
+                          <span className="inline-block w-[70px] text-center py-1 rounded-lg text-xs font-semibold bg-green-50 text-green-600 border border-green-200">
+                            Completed
+                          </span>
+                        ) : (
+                          <div className="flex flex-col items-center gap-0.5">
+                           <span className="inline-block w-[70px] text-center py-1 rounded-lg text-xs font-semibold bg-rose-50 text-red-600 border border-rose-200">
+                            Voided
+                          </span>
+                            {tx.voidReason && (
+                              <span
+                                className="text-[10px] text-rose-400 italic max-w-[140px] truncate"
+                                title={tx.voidReason}
+                              >
+                                
+                              </span>
                             )}
-                            {!isLoading && transactions.length === 0 && (
-                                <tr>
-                                    <td colSpan={8} className="p-8 text-center text-slate-400">
-                                        No sales history matches the selected filters.
-                                    </td>
-                                </tr>
-                            )}
-                            {!isLoading &&
-                                transactions.map((tx, idx) => {
-                                    const isVoided = tx.status?.toLowerCase() === "voided";
-                                    const isCash = tx.paymentMethod?.toLowerCase().includes("cash");
-                                    return (
-                                        <tr
-                                            key={`${tx.id}-${idx}`}
-                                            className={`hover:bg-slate-50 transition`}>
-                                            <td className="p-4 font-semibold text-slate-800">
-                                                {tx.id}
-                                            </td>
-                                            <td className="p-4 font-semibold text-xs text-slate-800 whitespace-nowrap">
-                                                {tx.dateTime}
-                                            </td>
-                                            <td className="p-4 text-right text-xs font-semibold text-slate-800 whitespace-nowrap">
+                          </div>
 
-                                                {(tx.finalAmount || 0).toLocaleString()} Ks
-
-                                            </td>
-                                            <td className="p-4 text-right text-xs font-semibold text-slate-800 whitespace-nowrap">
-                                                <span>{(tx.changeAmount || 0).toLocaleString()} Ks</span>
-                                            </td>
-                                            <td className="p-4 text-center whitespace-nowrap">
-                                                <span
-                                                    className={`inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-bold border ${isCash
-                                                        ? "bg-yellow-50 text-yellow-700 border-yellow-100"
-                                                        : "bg-blue-50 text-blue-600 border-blue-100"
-                                                        }`}
-                                                >
-
-                                                    {tx.paymentMethod}
-                                                </span>
-                                            </td>
-                                            <td className="p-4 text-center whitespace-nowrap">
-                                                {!isVoided ? (
-                                                    <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 font-bold text-[10px] uppercase tracking-wide">
-                                                        Completed
-                                                    </span>
-                                                ) : (
-                                                    <div className="flex flex-col items-center gap-0.5">
-                                                        <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-rose-100 text-rose-700 font-bold text-[10px] uppercase tracking-wide">
-                                                            Voided
-                                                        </span>
-                                                        {tx.voidReason && (
-                                                            <span
-                                                                className="text-[10px] text-rose-400 italic max-w-[140px] truncate"
-                                                                title={tx.voidReason}
-                                                            >
-                                                                {tx.voidReason}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </td>
-                                            <td className="p-4 text-center">
-                                                <button
-                                                    onClick={() => handleViewVoucher(tx)}
-                                                    className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 transition cursor-pointer"
-                                                >
-                                                    <Eye className="w-3.5 h-3.5" />
-                                                    View
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                        </tbody>
-                    </table>
-                </div>
+                        )}
+                      </td>
+                      <td className="p-4 text-center">
+                        <button
+                          onClick={() => handleViewVoucher(tx)}
+                          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 transition cursor-pointer"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+            </tbody>
+          </table>
+        </div>
 
                 <Pagination
                     currentPage={currentPage}

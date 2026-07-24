@@ -76,13 +76,7 @@ const ViewCategory = () => {
   const handleTaxChange = async (categoryId, value) => {
     const tax = parseFloat(value);
 
-    if (Number.isNaN(tax) || tax < 0 || tax > 100) {
-      setTaxError((prev) => ({
-        ...prev,
-        [categoryId]: "Tax rate must be between 0 and 100.",
-      }));
-      return;
-    }
+   
 
     setTaxError((prev) => ({ ...prev, [categoryId]: "" }));
 

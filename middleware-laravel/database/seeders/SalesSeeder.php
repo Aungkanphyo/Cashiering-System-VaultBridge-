@@ -31,6 +31,7 @@ class SalesSeeder extends Seeder
             "Insufficient Funds",
             "Payment Method Failed",
             "Test Transaction",
+            "Other"
         ];
 
         // Loop over the last 20 days up to today
