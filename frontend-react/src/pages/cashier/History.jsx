@@ -297,6 +297,7 @@ export default function History() {
                                                 </span>
                                             </td>
                                             {/* Centered Action Column */}
+                                            {/* Centered Action Column */}
                                             <td className="p-4 text-center">
                                                 <div className="flex justify-center items-center h-full">
                                                     {isVoided ? (
