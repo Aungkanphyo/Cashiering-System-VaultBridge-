@@ -63,7 +63,7 @@ const AppRoutes = () => {
 				</Route>
 			</Route>
 
-			{/* Cashier Terminal Routes */}
+			{/* Cashier Panel Routes */}
 			<Route element={<ProtectedRoute allowedRoles={["cashier"]} />}>
 				<Route path="/cashier" element={<CashierLayout />}>
 					<Route index element={<Navigate to="sale" replace />} />
