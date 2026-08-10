@@ -1,6 +1,6 @@
 # 🛒 VaultBridge: COBOL-Integrated Mini Mart Cashiering System
 
-![License](https://img.shields.io/badge/License-MIT-blue.svg)
+![License](https://img.shields.io/badge/License-All__Rights__Reserved-red.svg)
 ![React](https://img.shields.io/badge/Frontend-React-61DAFB?logo=react&logoColor=black)
 ![Laravel](https://img.shields.io/badge/Middleware-Laravel-FF2D20?logo=laravel)
 ![Node.js](https://img.shields.io/badge/RealTime-Node.js%2FSocket.io-339933?logo=node.js)
