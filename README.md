@@ -38,7 +38,6 @@ graph TD
 
 ## 📁 Repository Structure
 
-```directory
 Cashiering-System-VaultBridge/
 ├── 📂 barcode-backend/       # Node.js + Socket.io server for real-time mobile scanning
 ├── 📂 cobol-core/             # COBOL programs for financial data crunching & total sales aggregation
@@ -83,19 +82,23 @@ Cashiering-System-VaultBridge/
 Run with Docker Compose: docker-compose up --build -d
 Database Migration & Seeding: docker-compose exec backend php artisan migrate --seed
 
-## 👥 Authors & Team Members
-
+👥 Authors & Team Members
 This project was collaboratively developed as a team project during our internship program.
 
-* **Aung Kan Phyo**
-  * **GitHub:** [@Aungkanphyo](https://github.com/Aungkanphyo)
-  * **Portfolio:** [Aung Kan Phyo Portfolio](https://aungkanphyo-portfolio.vercel.app/)
+Aung Kan Phyo
 
-* **Yu Khaing Mar Myint**
-  * **GitHub:** [@msyukhaingmarmyint](https://github.com/msyukhaingmarmyint)
+GitHub: @Aungkanphyo
 
-* **Swan Yi Lin**
-  * **GitHub:** [@SwamYi23](https://github.com/SwamYi23)
+Portfolio: Aung Kan Phyo Portfolio
 
-* **Pan Ei Hlaing**
-  * **GitHub:** [@Loey456](https://github.com/Loey456)
+Yu Khaing Mar Myint
+
+GitHub: @msyukhaingmarmyint
+
+Swan Yi Lin
+
+GitHub: @SwamYi23
+
+Pan Ei Hlaing
+
+GitHub: @Loey456
