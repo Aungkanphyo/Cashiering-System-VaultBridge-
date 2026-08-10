@@ -37,7 +37,7 @@ graph TD
 ---
 
 ## 📁 Repository Structure
-
+```text
 Cashiering-System-VaultBridge/
 ├── 📂 barcode-backend/       # Node.js + Socket.io server for real-time mobile scanning
 ├── 📂 cobol-core/             # COBOL programs for financial data crunching & total sales aggregation
@@ -45,6 +45,7 @@ Cashiering-System-VaultBridge/
 ├── 📂 middleware-laravel/     # Laravel REST API framework, Auth, Database Seeders, & Business Logic
 ├── 📄 docker-compose.yml      # Orchestration file for containerized environment setup
 └── 📄 .gitignore
+```
 
 ---
 
