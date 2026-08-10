@@ -85,3 +85,20 @@ phpMyAdmin (Database Dashboard): http://localhost:8082
 
 Run with Docker Compose: docker-compose up --build -d
 Database Migration & Seeding: docker-compose exec backend php artisan migrate --seed
+
+## 👥 Authors & Team Members
+
+This project was collaboratively developed as a team project during our internship program.
+
+* **Aung Kan Phyo**
+  * **GitHub:** [@Aungkanphyo](https://github.com/Aungkanphyo)
+  * **Portfolio:** [Aung Kan Phyo Portfolio](https://aungkanphyo-portfolio.vercel.app/)
+
+* **Yu Khaing Mar Myint**
+  * **GitHub:** [@msyukhaingmarmyint](https://github.com/msyukhaingmarmyint)
+
+* **Swan Yi Lin**
+  * **GitHub:** [@SwamYi23](https://github.com/SwamYi23)
+
+* **Pan Ei Hlaing**
+  * **GitHub:** [@Loey456](https://github.com/Loey456)
