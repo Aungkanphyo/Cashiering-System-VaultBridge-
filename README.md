@@ -47,41 +47,38 @@ Cashiering-System-VaultBridge/
 ├── 📄 docker-compose.yml      # Orchestration file for containerized environment setup
 └── 📄 .gitignore
 
-🛠️ Tech Stack
-Frontend: React.js, Tailwind CSS
+---
 
-Middleware & API: Laravel (PHP)
+## 🛠️ Tech Stack
 
-Real-time Engine: Node.js, Socket.io
+* **Frontend:** React.js, Tailwind CSS
+* **Middleware & API:** Laravel (PHP)
+* **Real-time Engine:** Node.js, Socket.io
+* **Core Calculation:** COBOL
+* **Database:** MySQL
+* **Containerization:** Docker & Docker Compose
 
-Core Calculation: COBOL
+---
 
-Database: MySQL
+## 🚀 Getting Started
 
-Containerization: Docker & Docker Compose
+### Prerequisites
 
-🚀 Getting Started
-Prerequisites
-Docker & Docker Compose
+* Docker & Docker Compose
+* Node.js (v18+)
+* PHP 8.2+ & Composer
+* GnuCOBOL / COBOL Compiler (if running core outside Docker)
 
-Node.js (v18+)
+---
 
-PHP 8.2+ & Composer
+## 🌐 Accessing the App
 
-GnuCOBOL / COBOL Compiler (if running core outside Docker)
-
-🌐 Accessing the App
-Web App / POS UI (React + Vite): http://localhost:5173
-
-Laravel API Gateway: http://localhost:8000
-
-Barcode Backend (Socket.io): http://localhost:5000
-
-COBOL Core Service: http://localhost:4000
-
-Laravel Reverb (WebSocket): http://localhost:8080
-
-phpMyAdmin (Database Dashboard): http://localhost:8082
+* **Web App / POS UI (React + Vite):** http://localhost:5173
+* **Laravel API Gateway:** http://localhost:8000
+* **Barcode Backend (Socket.io):** http://localhost:5000
+* **COBOL Core Service:** http://localhost:4000
+* **Laravel Reverb (WebSocket):** http://localhost:8080
+* **phpMyAdmin (Database Dashboard):** http://localhost:8082
 
 Run with Docker Compose: docker-compose up --build -d
 Database Migration & Seeding: docker-compose exec backend php artisan migrate --seed
