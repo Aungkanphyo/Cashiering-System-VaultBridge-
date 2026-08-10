@@ -81,8 +81,10 @@ Cashiering-System-VaultBridge/
 * **Laravel Reverb (WebSocket):** http://localhost:8080
 * **phpMyAdmin (Database Dashboard):** http://localhost:8082
 
+```bash
 Run with Docker Compose: docker-compose up --build -d
 Database Migration & Seeding: docker-compose exec backend php artisan migrate --seed
+```
 
 ## 👥 Authors & Team Members
 
